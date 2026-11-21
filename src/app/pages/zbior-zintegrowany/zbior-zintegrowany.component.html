@@ -159,31 +159,15 @@
             </div>
             <p class="zz-podpowiedz">
               CSV w UTF-8 (RFC 4180), JSON (RFC 8259) i GeoJSON (WGS84) mają te same pola wzorca AED v1.2. Pole
-              <code>zrodlo_danych</code> to adres zbioru źródłowego na dane.gov.pl. Eksport nie zawiera danych
-              fikcyjnych. Uznanie autorstwa wymagane licencjami źródeł (np. „Źródło: Urząd Miasta Marki, dane.gov.pl, CC
-              BY 4.0”) jest w pliku „Źródła i licencje” i w GeoJSON.
+              <code>zrodlo_danych</code> to adres zbioru źródłowego na dane.gov.pl. Uznanie autorstwa wymagane
+              licencjami źródeł (np. „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0”) jest w pliku „Źródła i
+              licencje” i w GeoJSON.
               @if (pominieteKolumny.length) {
                 Pominięto kolumny puste we wszystkich rekordach (Standard techniczny, s. 21):
                 <code>{{ pominieteKolumny.join(', ') }}</code
                 >.
               }
             </p>
-
-            <!-- dane fikcyjne: domyślnie wyłączone -->
-            <div class="form-check zz-demo">
-              <input
-                id="zz-demo"
-                class="form-check-input"
-                type="checkbox"
-                aria-describedby="zz-demo-opis"
-                [ngModel]="pokazDemo()"
-                (ngModelChange)="pokazDemo.set($event)" />
-              <label class="form-check-label" for="zz-demo">Pokaż przykładowe dane fikcyjne</label>
-              <p id="zz-demo-opis" class="zz-podpowiedz">
-                Tylko do demonstracji filtrów dostępu, godzin i położenia, których prawdziwe źródła nie podają. Rekordy
-                fikcyjne są oznaczone „DANE FIKCYJNE” na liście i na mapie i nie trafiają do eksportu.
-              </p>
-            </div>
 
             <!-- filtry -->
             <form

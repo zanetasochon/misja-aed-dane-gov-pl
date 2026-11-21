@@ -24,7 +24,7 @@ import { DATA_AKTUALIZACJI, OPIS_ZBIORU, SLOWA_KLUCZOWE, TYTUL_ZBIORU } from './
 import { doCsv, doCsvZrodel, doGeoJson, doJson, kolumnyEksportu, opisyZrodel, pobierzPlik } from './lib/eksport';
 import { czyDostepnyTeraz } from './lib/godziny';
 import { integruj } from './lib/harmonizacja';
-import { ZRODLA, ZRODLA_NIEDOSTEPNE, ZRODLO_DEMO } from './lib/zrodla';
+import { ZRODLA, ZRODLA_NIEDOSTEPNE } from './lib/zrodla';
 import type { RaportZrodla, RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
@@ -68,17 +68,11 @@ export const LOKALIZACJA_PRZYKLADOWA: Lokalizacja = {
   styleUrl: './zbior-zintegrowany.component.scss',
 })
 export class ZbiorZintegrowanyComponent {
-  // Prawdziwe źródła; dane fikcyjne tylko po włączeniu przełącznika i nigdy w eksporcie.
-  private readonly wynikBezDemo = integruj(ZRODLA);
-  private readonly wynikZDemo = integruj([...ZRODLA, ZRODLO_DEMO]);
-  readonly pokazDemo = signal(false);
+  // Tylko prawdziwe źródła (przełącznik danych fikcyjnych usunięty 21.11 na prośbę Żanety).
+  readonly wynik = integruj(ZRODLA);
   readonly niedostepne = ZRODLA_NIEDOSTEPNE;
-  get wynik() {
-    return this.pokazDemo() ? this.wynikZDemo : this.wynikBezDemo;
-  }
-  /** Eksport zawsze bez danych fikcyjnych. */
-  readonly doEksportu = this.wynikBezDemo.rekordy;
-  readonly opisyZrodelEksportu = opisyZrodel(this.wynikBezDemo.raporty, ZRODLA_NIEDOSTEPNE);
+  readonly doEksportu = this.wynik.rekordy;
+  readonly opisyZrodelEksportu = opisyZrodel(this.wynik.raporty, ZRODLA_NIEDOSTEPNE);
   /** Ten sam tytuł, opis i słowa kluczowe co na liście zbiorów. */
   readonly tytul = TYTUL_ZBIORU;
   readonly opis = OPIS_ZBIORU;

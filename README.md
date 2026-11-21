@@ -22,7 +22,7 @@ Dane o defibrylatorach AED są rozproszone: na dane.gov.pl jest kilka zbiorów A
 | [Lokalizacje AED w Przemyślu](https://dane.gov.pl/pl/dataset/4581,lokalizacje-aed-automatycznych-defibrylatorow-zewn) (zasób 62095, dane z 2024-11-06) | Urząd Miejski w Przemyślu | CC0 1.0 | **prawdziwe**, plik bez zmian (współrzędne w kolumnie `geometry` jako GeoJSON) |
 | [Defibrylatory na terenie Miasta Marki](https://dane.gov.pl/pl/dataset/4955,defibrylatory-zlokalizowane-na-terenie-miasta-markI) (zasób 68353, dane z 2025-07-10) | Urząd Miasta Marki | CC BY 4.0 – „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0” | **prawdziwe**, plik bez zmian (uszkodzony u źródła, naprawiany przy odczycie) |
 | [Lokalizacja defibrylatorów (AED)](https://dane.gov.pl/pl/dataset/39512,lokalizacja-defibryzatorow-aed) | Urząd m.st. Warszawy | CC BY 4.0 | **niewykorzystane**: źródło niedostępne maszynowo (link prowadzi do strony HTML); nie pobieramy danych ze strony |
-| DANE FIKCYJNE – defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. | – | **fikcyjne**, domyślnie wyłączone; po włączeniu oznaczone na liście i mapie, nigdy w eksporcie |
+| DANE FIKCYJNE – defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. | – | **fikcyjne**, plik zostaje w kodzie (`dane/port-lotniczy.ts`), ale strona go nie pokazuje (przełącznik usunięty 21.11) i nie trafia do eksportu |
 
 Pliki leżą w `src/app/pages/zbior-zintegrowany/dane/`, a w nagłówku każdego pliku jest źródło, licencja i data pobrania (2026-11-21).
 
