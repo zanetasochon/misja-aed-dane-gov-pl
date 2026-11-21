@@ -1,4 +1,81 @@
-# Otwarte Dane 2025 Frontend App
+# Misja AED – zbiór zintegrowany na dane.gov.pl (HackNation 2026)
+
+Prototyp na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek”. To zmodyfikowany fork frontendu portalu dane.gov.pl, na licencji GNU GPL v3.
+
+**To nie jest oficjalny portal dane.gov.pl.** Wszystkie zmiany w plikach portalu opisuje [ZMIANY-HACKNATION.md](ZMIANY-HACKNATION.md). Pierwszy commit (`chore: import original …`) to niezmieniony kod portalu, więc `git diff` między nim a kolejnymi commitami pokazuje dokładnie naszą pracę.
+
+## Na czym polega rozwiązanie
+
+Dane o defibrylatorach AED są rozproszone: na dane.gov.pl jest kilka zbiorów AED od różnych urzędów, każdy w innym układzie kolumn. Prototyp pokazuje w zakładce „Dane” dodatkowy **zbiór zintegrowany**:
+
+- łączy zbiory AED od różnych dostawców w jeden zbiór według **wzorcowego zakresu danych AED v1.1**;
+- **każdy dostawca nadal odpowiada za swój zbiór źródłowy**, a każdy rekord zachowuje `zrodlo_danych` (identyfikator zbioru źródłowego) i `data_aktualizacji` ze źródła;
+- dane można przeglądać na liście i na mapie, z filtrami i wyszukiwaniem, oraz pobrać w CSV, JSON i GeoJSON;
+- dostawca może sprawdzić swój plik narzędziem „Sprawdź zgodność ze wzorcem” i pobrać wersję gotową do publikacji jako zasób swojego zbioru.
+
+### Źródła danych w prototypie
+
+| Źródło | Dostawca | Licencja | Charakter |
+| --- | --- | --- | --- |
+| [Defibrylatory zlokalizowane w Mieście Krosno](https://dane.gov.pl/pl/dataset/3624,defibrylatory-zlokalizowane-w-miescie-krosno) (zasób 54632, dane z 2024-02-19) | Urząd Miasta Krosna | CC0 1.0 | **prawdziwe**, plik bez zmian |
+| [Zdrowie – wykaz defibrylatorów AED w Legionowie](https://dane.gov.pl/pl/dataset/40593,zdowie) (zasób 2625221, dane z 2026-09-14) | Urząd Miasta Legionowo | CC0 1.0 | **prawdziwe**, plik bez zmian |
+| Defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. | – | **fikcyjne** (nazwa i dane wymyślone) |
+
+Pliki leżą w `src/app/pages/zbior-zintegrowany/dane/`, a w nagłówku każdego pliku jest źródło, licencja i data pobrania (2026-11-21).
+
+## Uruchomienie
+
+Wymagany Node.js w wersji 20 lub nowszej (testowane na 22).
+
+```bash
+npm ci
+npm run start:public -- --port 4300
+```
+
+Prototyp będzie pod adresem http://localhost:4300/pl/dataset. Konfiguracja `public` kieruje zapytania przez proxy deweloperskie, tylko do odczytu, na publiczne API `https://api.dane.gov.pl/1.4`. Lista zbiorów pokazuje więc prawdziwe dane portalu. Zbiór zintegrowany jest liczony w przeglądarce z plików źródłowych dołączonych do kodu.
+
+Build i lint:
+
+```bash
+npx ng build --configuration development
+npx eslint src/app/pages/zbior-zintegrowany
+```
+
+## Jak przetestować
+
+1. **Lista zbiorów:** otwórz http://localhost:4300/pl/dataset. Nad wynikami jest karta **„Zbiór zintegrowany – Defibrylatory AED”** z listą zbiorów źródłowych. Wpisz w wyszukiwarkę portalu „defibrylator”: zobaczysz prawdziwe, osobne zbiory AED różnych urzędów.
+2. **Zbiór zintegrowany:** kliknij tytuł karty (adres `/pl/dataset/zbior-zintegrowany-aed`).
+   - **Informacje o zbiorze:** opis, kategoria, częstotliwość aktualizacji, licencja, data aktualizacji oraz „Prowadzący zbiór zintegrowany: do ustalenia”.
+   - **Zbiory źródłowe:** dostawca, format, licencja i data danych.
+   - **Raport harmonizacji** dla każdego źródła: mapowanie kolumn na pola wzorca, kompletność pól wymaganych (Krosno i Legionowo 5/9, port lotniczy 9/9), odrzucone wiersze z powodem i ostrzeżenia, np. adres w jednym polu albo brak numeru budynku.
+   - **Możliwe duplikaty:** 2 pary w prawdziwych danych. Nie usuwamy ich automatycznie, bo w jednym budynku mogą być dwa AED.
+3. **Filtry i wyszukiwanie:** w sekcji „Dane: lista i mapa” wpisz nazwę albo ulicę i użyj filtrów: miejscowość, dostęp, wewnątrz lub na zewnątrz, dostawca źródłowy, „Dostępny teraz”. Liczba wyników jest ogłaszana czytnikom ekranu.
+4. **Mapa:** znaczniki AED na podkładzie OpenStreetMap. Można przesuwać strzałkami, gdy mapa ma fokus, albo przyciskami „Przesuń…”, „Przybliż”, „Oddal”. Do znaczników prowadzi klawisz Tab, a Enter pokazuje opis. Lista pod mapą jest jej pełnym tekstowym odpowiednikiem. Na telefonie domyślnie widać listę, a mapę włącza przycisk „Pokaż mapę”.
+5. **Eksport:** przyciski „Pobierz CSV”, „Pobierz JSON” i „Pobierz GeoJSON”. CSV jest w UTF-8, zgodnie z RFC 4180, bez całkowicie pustych kolumn (Standard techniczny, s. 21). JSON i GeoJSON mają te same pola wzorca.
+6. **Narzędzie zgodności:** przycisk „Sprawdź zgodność ze wzorcem” (adres `/pl/dataset/zgodnosc-ze-wzorcem`).
+   - Wgraj własny CSV albo kliknij „Użyj przykładu: prawdziwy plik z Krosna”.
+   - Zobaczysz propozycję mapowania kolumn, którą możesz zmienić, oraz raport zgodności („Spełnione / Niespełnione”): pola wymagane, adres w osobnych polach, formaty wartości i współrzędne.
+   - Pobierz plik zgodny ze wzorcem (CSV albo JSON). Plik nie opuszcza przeglądarki.
+
+## Ograniczenia prototypu
+
+- Zbiór zintegrowany jest liczony w przeglądarce z dołączonych plików. Docelowo powstaje jako zwykły zbiór na dane.gov.pl, z zasobem generowanym przez narzędzie integrujące. Kto go prowadzi, trzeba ustalić.
+- Prawdziwe źródła nie mają godzin, dostępu ani informacji o wnętrzu budynku. Filtr „Dostępny teraz” obejmuje więc tylko AED z godzinami. To brak w danych źródłowych, który wzorzec ma uzupełnić.
+- Współrzędne nie są geokodowane z adresu. Rekordy bez współrzędnych są odrzucane.
+- Nowe ekrany są tylko po polsku. Teksty nie są w plikach tłumaczeń portalu.
+- Brak formularza do ręcznego wpisania AED w tym forku.
+- Prototyp nie jest wdrożony publicznie. Uruchamia się lokalnie z proxy do publicznego API.
+
+## Licencje
+
+- **Kod:** GNU GPL v3, jak kod portalu dane.gov.pl. Nasze pliki są w `src/app/pages/zbior-zintegrowany/` i mają nagłówek z datą. Zmiany w plikach portalu opisuje `ZMIANY-HACKNATION.md`.
+- **Dane źródłowe:** Krosno i Legionowo na CC0 1.0. Źródło „Port Lotniczy Przykładowo” jest fikcyjne.
+- **Podkład mapy:** © OpenStreetMap contributors (ODbL). Atrybucja jest widoczna na mapie.
+- **Biblioteka mapy:** Leaflet 1.9 (BSD-2-Clause), już będąca zależnością portalu.
+
+---
+
+# Oryginalna dokumentacja frontendu portalu (Otwarte Dane 2025 Frontend App)
 
 ## Installation
 
