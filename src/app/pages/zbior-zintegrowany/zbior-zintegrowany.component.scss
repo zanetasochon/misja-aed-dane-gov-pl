@@ -510,34 +510,6 @@
   }
 }
 
-// „Jak czytać tę stronę” – ramka z lewą krawędzią jak alerty portalu (_notifications.scss).
-.zz-wprowadzenie {
-  margin: 1rem 0 1.5rem;
-  padding: 1rem 1.25rem;
-  border-left: 5px solid v.$color-blue-light;
-  background: v.$color-white;
-
-  ul {
-    margin-bottom: 0.5rem;
-    padding-left: 1.25rem;
-  }
-}
-
-.zz-wprowadzenie__tytul {
-  font-size: 1.125rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-:host-context(.black-white),
-:host-context(.black-yellow),
-:host-context(.yellow-black) {
-  .zz-wprowadzenie {
-    border-left-color: var(--contrast-primary);
-    background: var(--contrast-secondary);
-  }
-}
-
 .zz-nowrap {
   white-space: nowrap;
 }
