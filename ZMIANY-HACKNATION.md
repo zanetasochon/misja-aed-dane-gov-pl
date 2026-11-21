@@ -33,6 +33,7 @@ Prototyp powstał na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek�
 | 2026-11-21 | `package.json` | `engines.node`: `>=20` → `22.x`, żeby Vercel uruchamiał funkcję i build na Node 22 (domyślnie ustawił 26.x, którego Angular 18 nie wspiera). |
 | 2026-11-21 | `src/scss/layout/_layout.scss` | Poprawka dostępności: `.btn-outline-primary` w stanach `:hover`, `:focus`, `:active` dostaje biały tekst. W oryginale tło zmieniało się na `$primary-hover` (#0753a4), a tekst zostawał `$primary` (#0865c9), więc kliknięty przycisk miał kontrast ok. 1,3:1 (WCAG 1.4.3 wymaga 4,5:1). Dotyczy całego portalu. |
 | 2026-11-21 | `src/app/user/auth/login/login.component.html`, `login.component.ts` | Przycisk „Wejdź jako dostawca (demo)” pod kafelkami logowania (atrapa dla jury). Ustawia flagę w `sessionStorage` (`lib/tryb-demo.ts`) i przechodzi do narzędzia „Sprawdź zgodność ze wzorcem”. Bez hasła i bez wywołań API auth; logika prawdziwego logowania bez zmian. |
+| 2026-11-21 | `src/assets/hacknation/aed-plik-testowy-dostawcy.csv` (nowy) | Plik testowy dla jury: 8 fikcyjnych AED w fikcyjnej miejscowości „Przykładowo” (kody 00-00x), z celowymi błędami do pokazania raportu zgodności. Plik CSV nie ma nagłówka z licencją, bo zepsułby format; licencja jak całego forka (GPL-3.0). |
 
 Uruchomienie: `npm ci`, a potem `npm run start:public -- --port 4300`.
 

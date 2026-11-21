@@ -1,0 +1,9 @@
+ID,Nazwa obiektu,Gdzie,Ulica,Nr,Kod,Miasto,Szerokosc,Dlugosc,W_budynku,Dostepnosc,Godziny,Dysponent
+T-001,Urząd Miejski (dane testowe),"Hol główny, przy portierni",ul. Testowa,1,00-001,Przykładowo,51.9500,19.1500,true,publiczny,Mo-Fr 07:30-15:30,Urząd Miasta – demo
+T-002,Hala sportowa (dane testowe),Przy wejściu do szatni,ul. Sportowa,12,00-002,Przykładowo,51.9512,19.1531,true,klienci,Mo-Su 08:00-22:00,Urząd Miasta – demo
+T-003,Rynek – kapsuła zewnętrzna (dane testowe),Ściana ratusza od strony rynku,pl. Rynek,1,00-001,Przykładowo,51.9493,19.1488,false,publiczny,24/7,Urząd Miasta – demo
+T-004,Przychodnia (dane testowe),"Rejestracja, parter",ul. Zdrowa,5,00-0003,Przykładowo,51.9475,19.1550,TAK,publiczny,24/7,Urząd Miasta – demo
+T-005,Dworzec autobusowy (dane testowe),"Poczekalnia, obok kasy",ul. Dworcowa,3,00-004,Przykładowo,19.1470,51.9530,true,publiczny,24/7,Urząd Miasta – demo
+T-006,Szkoła Podstawowa nr 1 (dane testowe),Korytarz przy sali gimnastycznej,ul. Szkolna,8,00-005,Przykładowo,51.9541,19.1462,true,ograniczony,pn-pt 8-16,Urząd Miasta – demo
+T-007,Basen miejski (dane testowe),Przy kasach,ul. Wodna,2,00-006,Przykładowo,,,true,klienci,Mo-Su 06:00-22:00,Urząd Miasta – demo
+T-008,Biblioteka (dane testowe),"Wypożyczalnia, parter",ul. Książkowa,4,00-007,Przykładowo,51.9466,19.1479,true,wszyscy,Mo-Sa 09:00-18:00,Urząd Miasta – demo

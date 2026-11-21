@@ -124,7 +124,7 @@ export class MapaAedComponent implements OnDestroy {
     });
     for (const r of this.rekordy()) {
       const adres = [r.ulica, r.numer_budynku, r.miejscowosc].filter(Boolean).join(' ');
-      const etykieta = `${r.fikcyjne ? 'DANE FIKCYJNE – ' : ''}AED: ${r.nazwa_miejsca}${adres ? ', ' + adres : ''}`;
+      const etykieta = `${r.fikcyjne ? 'DANE TESTOWE – ' : ''}AED: ${r.nazwa_miejsca}${adres ? ', ' + adres : ''}`;
       const m = L.marker([r.szerokosc_geograficzna, r.dlugosc_geograficzna], {
         icon: r.fikcyjne ? ikonaFikcyjna : ikona,
         keyboard: true,
@@ -190,7 +190,7 @@ export class MapaAedComponent implements OnDestroy {
     }
     if (r.fikcyjne) {
       const f = document.createElement('strong');
-      f.textContent = 'DANE FIKCYJNE – nie wskazują prawdziwego AED.';
+      f.textContent = 'DANE TESTOWE – nie wskazują prawdziwego AED.';
       div.prepend(f);
     }
     return div;

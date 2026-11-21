@@ -34,6 +34,7 @@ import { doCsv, doCsvZrodel, doGeoJson, doJson, opisyZrodel, pobierzPlik } from 
 import { czyDostepnyTeraz } from './lib/godziny';
 import { integruj } from './lib/harmonizacja';
 import { ZRODLA, ZRODLA_NIEDOSTEPNE } from './lib/zrodla';
+import { NAZWA_DOSTAWCY_DEMO, usunDaneDemo, wczytajDaneDemo, zrodloDemo } from './lib/tryb-demo';
 import type { RaportZrodla, RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
@@ -79,10 +80,22 @@ export const PROMIEN_AWARYJNY_M = 250;
   styleUrl: './zbior-zintegrowany.component.scss',
 })
 export class ZbiorZintegrowanyComponent {
-  readonly wynik = integruj(ZRODLA);
+  // Dane opublikowane w trybie demo (narzędzie zgodności, krok 5) – tylko w tej przeglądarce, nigdy w eksporcie.
+  readonly daneDemo = wczytajDaneDemo();
+  readonly nazwaDostawcyDemo = NAZWA_DOSTAWCY_DEMO;
+  readonly wynik = integruj(this.daneDemo ? [...ZRODLA, zrodloDemo(this.daneDemo)] : ZRODLA);
   readonly niedostepne = ZRODLA_NIEDOSTEPNE;
-  readonly doEksportu = this.wynik.rekordy;
-  readonly opisyZrodelEksportu = opisyZrodel(this.wynik.raporty, ZRODLA_NIEDOSTEPNE);
+  readonly doEksportu = this.wynik.rekordy.filter((r) => !r.fikcyjne);
+  readonly opisyZrodelEksportu = opisyZrodel(
+    this.wynik.raporty.filter((r) => r.zrodlo.prawdziwe),
+    ZRODLA_NIEDOSTEPNE,
+  );
+  readonly liczbaDemo = this.wynik.rekordy.length - this.doEksportu.length;
+
+  usunDaneTestowe(): void {
+    usunDaneDemo();
+    location.reload();
+  }
   /** Ten sam tytuł, opis i słowa kluczowe co na liście zbiorów. */
   readonly tytul = TYTUL_ZBIORU;
   readonly opis = OPIS_ZBIORU;
