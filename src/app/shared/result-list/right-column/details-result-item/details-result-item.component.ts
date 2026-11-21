@@ -115,8 +115,11 @@ export class DetailsResultItemComponent implements OnInit, OnDestroy {
   @Input() isDatasetView = false;
 
   @Input() datasetId: string | null = null;
-  /** HackNation 2026 (zmiana 2026-11-21): pokazuje sam licznik ulubionych, bez przycisku (np. zbiór spoza API). */
-  @Input() favoritesCounterOnly = false;
+  /**
+   * HackNation 2026 (zmiana 2026-11-21): klucz ulubionych zapisywanych tylko w przeglądarce (localStorage)
+   * dla zbioru, którego nie ma w API (zbiór zintegrowany). Placeholder do czasu publikacji zbioru w portalu.
+   */
+  @Input() localFavoriteKey: string | null = null;
   /** 1-based position of the item on the current list page (saved for returning after login) */
   @Input() listPosition = 1;
   @Input() favorite = false;
@@ -165,12 +168,39 @@ export class DetailsResultItemComponent implements OnInit, OnDestroy {
         this.iconName = 'resource';
         break;
     }
-    this.resumeFavouriteAfterLogin();
+    if (this.localFavoriteKey) this.loadLocalFavourite();
+    else this.resumeFavouriteAfterLogin();
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // HackNation 2026 (zmiana 2026-11-21): ulubione tylko w tej przeglądarce, bez wywołań API.
+  private localFavouriteStorageKey(): string {
+    return `hacknation-favourite-${this.localFavoriteKey}`;
+  }
+
+  private loadLocalFavourite(): void {
+    try {
+      const isFavorite = localStorage.getItem(this.localFavouriteStorageKey()) === 'true';
+      this.favoriteState.set(isFavorite);
+      this.likesCountState.set(isFavorite ? 1 : 0);
+    } catch {
+      // brak dostępu do localStorage (np. tryb prywatny) – zostaje stan początkowy
+    }
+  }
+
+  private toggleLocalFavourite(): void {
+    const newFavoriteState = !this.isFavorite();
+    this.favoriteState.set(newFavoriteState);
+    this.likesCountState.set(newFavoriteState ? 1 : 0);
+    try {
+      localStorage.setItem(this.localFavouriteStorageKey(), String(newFavoriteState));
+    } catch {
+      // brak dostępu do localStorage – stan zostaje tylko w pamięci
+    }
   }
 
   private resumeFavouriteAfterLogin(): void {
@@ -202,6 +232,10 @@ export class DetailsResultItemComponent implements OnInit, OnDestroy {
    * and sets state according to the server response.
    */
   protected toggleFavourite(): void {
+    if (this.localFavoriteKey) {
+      this.toggleLocalFavourite();
+      return;
+    }
     if (!this.datasetId || this.isRequestPending()) {
       return;
     }

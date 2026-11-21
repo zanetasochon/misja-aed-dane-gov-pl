@@ -17,7 +17,7 @@
           [titleTranslationKey]="item.titleTranslationKey"
           [isDatasetView]="isDatasetView(item)"
           [datasetId]="isDatasetView(item) && !item.zbiorZintegrowany ? item.id : null"
-          [favoritesCounterOnly]="!!item.zbiorZintegrowany"
+          [localFavoriteKey]="item.zbiorZintegrowany ? item.id : null"
           [listPosition]="index + 1"
           [favorite]="item.attributes.is_liked_by_current_user === true"
           [likesCount]="item.attributes.likes_count ?? 0"

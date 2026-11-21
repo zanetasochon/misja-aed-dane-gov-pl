@@ -1,6 +1,11 @@
 <ng-container *ngIf="item">
-  <div *ngIf="item.attributes.is_promoted" class="result-item-promoted__left--promoted-tex-pill">
-    <span class="bg-custom">{{ 'Attribute.PromotedData' | translate }}</span>
+  <!-- HackNation 2026 (zmiana 2026-11-21): etykieta „Zbiór zintegrowany” w miejscu „Dane promowane” -->
+  <div
+    *ngIf="item.attributes.is_promoted || item.zbiorZintegrowany"
+    class="result-item-promoted__left--promoted-tex-pill">
+    <span class="bg-custom">{{
+      (item.zbiorZintegrowany ? 'Datasets.Integrated' : 'Attribute.PromotedData') | translate
+    }}</span>
   </div>
   <h2 class="heading heading--primary-link heading--sm highlight result-item-heading">
     <a
@@ -48,6 +53,16 @@
       tabindex="0">
       <use href="assets/icomoon/SVG/ic-research-data.svg#ic-research-data"></use>
     </svg>
+    <!-- HackNation 2026 (zmiana 2026-11-21): ikona zbioru zintegrowanego z opisem -->
+    <span
+      *ngIf="item.zbiorZintegrowany"
+      class="ml-2 d-inline-block"
+      role="img"
+      tabindex="0"
+      appTooltip="{{ 'Datasets.IntegratedTooltip' | translate }}"
+      [attr.aria-label]="'Datasets.Integrated' | translate">
+      <img class="result-list-svg" src="assets/icomoon/SVG/database.svg" alt="" />
+    </span>
     <svg
       *ngIf="item.attributes.contains_protected_data"
       class="ml-2 result-list-svg"

@@ -54,7 +54,8 @@
 
     <!-- favorite -->
     <!-- button -->
-    <div *ngIf="isDatasetView && datasetId">
+    <!-- HackNation 2026 (zmiana 2026-11-21): przycisk także dla zbioru spoza API (localFavoriteKey) -->
+    <div *ngIf="isDatasetView && (datasetId || localFavoriteKey)">
       <app-favorite-button
         class="d-flex"
         tooltipTitle="{{ 'Favorites.Hint.Title' | translate }}"
@@ -65,8 +66,7 @@
         [useConfirmation]="useConfirmation()" />
     </div>
     <!-- counter -->
-    <!-- HackNation 2026 (zmiana 2026-11-21): favoritesCounterOnly – sam licznik bez przycisku (placeholder) -->
-    <div *ngIf="isDatasetView && (datasetId || favoritesCounterOnly)">
+    <div *ngIf="isDatasetView && (datasetId || localFavoriteKey)">
       <app-favorite-counter [favoritesCount]="favoritesCount()" />
     </div>
   </div>

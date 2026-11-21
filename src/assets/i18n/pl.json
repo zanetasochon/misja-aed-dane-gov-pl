@@ -435,6 +435,7 @@
     "Self": "Zbiory danych",
     "Single": "Zbiór danych",
     "Integrated": "Zbiór zintegrowany",
+    "IntegratedTooltip": "Zbiór zintegrowany: łączy zbiory o tej samej tematyce od różnych dostawców według wzorcowego zakresu danych. Każdy rekord wskazuje zbiór źródłowy.",
     "Genitive": "Zbioru danych",
     "Choose": "Wybierz zbiór danych",
     "SearchFor": "Wyszukaj zbiór danych",
