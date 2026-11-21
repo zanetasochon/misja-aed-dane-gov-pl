@@ -156,7 +156,9 @@ export class DetailsResultItemComponent implements OnInit, OnDestroy {
     }
 
     switch (this.titleTranslationKey) {
+      // HackNation 2026 (zmiana 2026-11-21): zbiór zintegrowany ma tę samą ikonę co zbiór danych
       case 'Datasets.Single':
+      case 'Datasets.Integrated':
         this.iconName = 'dataset';
         break;
       case 'Resources.Single':

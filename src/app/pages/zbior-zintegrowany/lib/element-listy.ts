@@ -32,8 +32,8 @@ export function elementZbioruZintegrowanego(): ElementZbioruZintegrowanego {
     type: 'dataset',
     zbiorZintegrowany: true,
     url: `../${RouterEndpoints.DATASETS}/${ID_ZBIORU_ZINTEGROWANEGO}`,
-    // Brak tłumaczenia dla tego klucza → pipe translate pokaże go wprost, w miejscu „Zbiór danych”.
-    titleTranslationKey: 'Zbiór zintegrowany',
+    // Klucz dodany do assets/i18n (pl: „Zbiór zintegrowany”, en: „Integrated dataset”).
+    titleTranslationKey: 'Datasets.Integrated',
     detailsData: [
       { titleTranslationKey: 'Attribute.UpdateDate', data: DATA_AKTUALIZACJI, isDate: true, dateFormat: 'D MMMM YYYY' },
     ],

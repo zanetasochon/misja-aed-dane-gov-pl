@@ -434,6 +434,7 @@
   "Datasets": {
     "Self": "Datasets",
     "Single": "Dataset",
+    "Integrated": "Integrated dataset",
     "Genitive": "Dataset",
     "Choose": "Select dataset",
     "SearchFor": "Search for dataset",
