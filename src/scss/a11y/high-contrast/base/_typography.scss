@@ -1,0 +1,12 @@
+.heading {
+  &--separator {
+    &::after {
+      background-color: $hcPrimary;
+    }
+  }
+
+  :hover:not(mark) {
+    border-color: inherit;
+    color: inherit;
+  }
+}

@@ -1,0 +1,36 @@
+.info-tooltip {
+  color: $color-blue-light;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+
+  .icon {
+    fill: currentColor;
+    pointer-events: none;
+    height: 20px;
+    width: 20px;
+  }
+}
+
+.custom-form label,
+.item-view__header,
+.data-item-view__header {
+  .info-tooltip {
+    width: 20px;
+    height: 20px;
+
+    .icon {
+      height: inherit;
+      width: inherit;
+    }
+  }
+}
+
+.item-view__header {
+  .info-tooltip {
+    display: block;
+  }
+}

@@ -1,0 +1,124 @@
+@use 'base/variables';
+
+.btn-primary {
+  background-color: variables.$color-form-blue;
+  border-color: variables.$color-form-blue;
+  padding: 11px 24px;
+  border-radius: 10px;
+
+  &:hover,
+  &:active {
+    background-color: variables.$color-form-blue-light;
+    border-color: variables.$color-form-blue-light;
+  }
+
+  &:disabled {
+    background-color: variables.$color-heading;
+    border-color: variables.$color-heading;
+    color: variables.$color-white;
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px variables.$color-white,
+      0 0 0 4px variables.$color-form-blue-light;
+  }
+}
+
+.btn-outline-primary {
+  color: variables.$color-form-blue;
+  border-color: variables.$color-form-blue;
+
+  &:hover,
+  &:focus,
+  &:active {
+    color: variables.$color-white;
+    background-color: variables.$color-form-blue;
+  }
+}
+
+.btn-outline-danger {
+  color: variables.$color-darker-red;
+  border-color: variables.$color-darker-red;
+
+  &:hover,
+  &:focus,
+  &:active {
+    color: variables.$color-white;
+    background-color: variables.$color-darker-red;
+  }
+}
+
+.input-group > .form-control-plaintext {
+  color: currentColor;
+  position: relative;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+}
+
+.alert {
+  --bs-alert-margin-bottom: 18px;
+  --bs-alert-border-radius: 10px;
+}
+
+:host-context(.black-white) {
+  --contrast-primary: #{variables.$color-white};
+  --contrast-secondary: #{variables.$color-black};
+}
+
+:host-context(.black-yellow) {
+  --contrast-primary: #{variables.$color-yellow};
+  --contrast-secondary: #{variables.$color-black};
+}
+
+:host-context(.yellow-black) {
+  --contrast-primary: #{variables.$color-black};
+  --contrast-secondary: #{variables.$color-yellow};
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  .btn-primary {
+    background-color: var(--contrast-primary);
+    border-color: var(--contrast-primary);
+    color: var(--contrast-secondary);
+
+    &:hover,
+    &:active {
+      background-color: var(--contrast-secondary);
+      color: var(--contrast-primary);
+    }
+
+    &:focus,
+    &:focus-visible {
+      box-shadow:
+        0 0 0 2px var(--contrast-secondary),
+        0 0 0 4px var(--contrast-primary);
+    }
+  }
+
+  .btn-outline-primary,
+  .btn-outline-danger {
+    background-color: var(--contrast-secondary);
+  }
+
+  .dropdown-item {
+    --bs-dropdown-link-color: var(--contrast-primary);
+
+    &:hover,
+    &:focus {
+      color: var(--contrast-secondary);
+      background-color: var(--contrast-primary);
+    }
+  }
+
+  .alert {
+    border: 1px solid var(--contrast-primary);
+  }
+}

@@ -1,0 +1,61 @@
+// bootstratp override
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  .pagination {
+    margin: 0;
+    .page-item {
+      .page-link {
+        border: 0;
+        padding: 2px 8px;
+        line-height: 1.5rem;
+        background-color: transparent;
+        color: $primary;
+        text-decoration: underline;
+
+        &--as-icon {
+          font-size: 200%;
+          padding: 0 10px 2px 10px;
+          text-decoration: none;
+        }
+      }
+
+      &--ellipsis {
+        cursor: default;
+        text-decoration: none !important;
+      }
+
+      &.active {
+        .page-link {
+          font-weight: bold;
+          background-color: $color-blue-light;
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+body.black-white .page-item--ellipsis {
+  color: inherit;
+}
+
+body.black-yellow .page-item--ellipsis {
+  color: inherit;
+}
+
+body.yellow-black .page-item--ellipsis {
+  color: inherit;
+}
+
+body.black-white .pager .pagination .page-item .page-link {
+  color: white;
+}
+
+body.black-yellow .pager .pagination .page-item .page-link {
+  color: $color-yellow;
+}
+
+body.yellow-black .pager .pagination .page-item .page-link {
+  color: black;
+}

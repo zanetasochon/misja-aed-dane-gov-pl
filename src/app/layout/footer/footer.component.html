@@ -1,0 +1,22 @@
+<footer class="page-footer outline-light" id="main-footer" tabindex="-1">
+  <!-- navigation -->
+  <cms-landing-page context="footer" [widgetFooterSubject]="cmsFooterNavigationPage"></cms-landing-page>
+
+  <!-- LOGOs -->
+  <div class="external-logos">
+    <cms-block2
+      class="pt-3 pb-3 external-logos--cms-block external-logos--cms-block__elements-{{
+        (cmsFooterLogoSection | async)?.length
+      }}"
+      [widgetsSubject]="cmsFooterLogoSection"
+      [isFooterLogos]="true"
+      [isFullWidth]="true"></cms-block2>
+  </div>
+
+  <ng-template #rodoModalTemplate>
+    <app-rodo-modal (isModalClosed)="rodoModalClose()"></app-rodo-modal>
+  </ng-template>
+
+
+  <div hidden>version: {{ currentVersion }}</div>
+</footer>

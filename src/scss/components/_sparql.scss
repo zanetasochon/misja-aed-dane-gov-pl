@@ -1,0 +1,36 @@
+.sparql {
+  #editor,
+  #prefixes {
+    width: 100%;
+    height: 140px;
+    border: 1px solid #e5e5e5;
+  }
+
+  #sparqlResult {
+    @extend #editor;
+    height: 210px;
+  }
+
+  .sparql-editor--wrapper {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+  }
+
+  .sparql--example {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    box-sizing: border-box;
+  }
+
+  @include media-breakpoint-up(md) {
+    .sparql-editor--select-container {
+      width: 240px;
+    }
+  }
+
+  @include media-breakpoint-down(md) {
+    .sparql-editor--btn {
+      width: 100%;
+    }
+  }
+}

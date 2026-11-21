@@ -1,0 +1,14 @@
+.idea/
+.dockerignore
+Dockerfile
+db.sqlite3
+#docker/
+coverage/
+.cache
+.gitlab-ci.yml
+*.log
+.git
+temp/
+
+*.pid
+node_modules/

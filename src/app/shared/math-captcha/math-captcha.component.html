@@ -1,0 +1,60 @@
+<!-- captcha -->
+<div
+  class="form-group captcha"
+  [class.form-group-invalid]="control.invalid && control.touched"
+  [class.new-captcha]="newStyle()">
+  <label for="captcha" class="d-block" [class.m-0]="newStyle()">
+    <span class="font-weight-normal d-block" [class.mb-2]="newStyle()">
+      {{ 'Captcha.Description' | translate }}
+      <small class="visually-hidden">({{ 'Validation.RequiredField' | translate | lowercase }})</small>
+    </span>
+
+    <span class="d-inline-block" [class.font-weight-bold]="!newStyle()">
+      {{ 'Captcha.Label' | translate }}:
+      <span class="captcha__equation" [class.mr-1]="newStyle()"> {{ equationLabel }} = </span>
+      <input
+        type="text"
+        class="form-control d-inline-block"
+        id="captcha"
+        [class.scroll-invalid]="newStyle() && control.invalid && control.touched"
+        style="width: 2.8125rem"
+        autocomplete="off"
+        required
+        [formControl]="control"
+        [attr.aria-describedby]="'captcha_required_error captcha_number_error'"
+        [attr.aria-invalid]="control.invalid && control.touched"
+        (keydown.enter)="$event.preventDefault()" />
+    </span>
+  </label>
+
+  <!-- captcha validation errors -->
+  <ng-container *ngIf="control.invalid && control.touched && control.errors">
+    <!-- required error -->
+    <small
+      class="form-text text-danger"
+      [class.d-block]="!newStyle()"
+      [class.mt-2]="newStyle()"
+      role="alert"
+      aria-live="polite"
+      id="captcha_required_error"
+      *ngIf="control.errors['required'] && (!control.dirty || (control.dirty && !control.value))"
+      @toggleVertically>
+      <span class="visually-hidden">{{ 'Forms.General.ErrorPrefix' | translate }}</span>
+      {{ validationRequiredText() || ('Validation.VarRequired' | translate: { param: 'Captcha.Label' | translate }) }}
+    </small>
+
+    <!-- invalid number error -->
+    <small
+      class="form-text text-danger"
+      [class.d-block]="!newStyle()"
+      [class.mt-2]="newStyle()"
+      role="alert"
+      aria-live="polite"
+      id="captcha_number_error"
+      *ngIf="control.errors['invalidNumber'] && control.dirty && control.value"
+      @toggleVertically>
+      <span class="visually-hidden">{{ 'Forms.General.ErrorPrefix' | translate }}</span>
+      {{ validationInvalidNumberText() || ('Validation.InvalidNumber' | translate) }}
+    </small>
+  </ng-container>
+</div>
