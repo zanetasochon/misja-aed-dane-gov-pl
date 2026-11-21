@@ -216,7 +216,8 @@ export function sprawdzZgodnosc(
     const { rekord, bledy, ostrzezenia } = walidujRekord(wej);
     for (const o of ostrzezenia) zglos(kolumnaPola.get(o.pole) ?? o.pole, o.opis, o.wartosc);
     if (bledy.length) {
-      odrzucone.push({ wiersz: i + 1, nazwa: rekord.nazwa_miejsca ?? '(brak)', powod: bledy.join(' ') });
+      // Numer wiersza tak, jak widać go w arkuszu: wiersz 1 to nagłówek.
+      odrzucone.push({ wiersz: i + 2, nazwa: rekord.nazwa_miejsca ?? '(brak)', powod: bledy.join(' ') });
       return;
     }
     const idZrodlowe = typeof wej.id_aed === 'string' ? wej.id_aed : '';

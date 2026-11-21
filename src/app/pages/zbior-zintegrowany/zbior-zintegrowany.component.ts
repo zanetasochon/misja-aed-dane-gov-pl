@@ -25,7 +25,7 @@ import { doCsv, doCsvZrodel, doGeoJson, doJson, kolumnyEksportu, opisyZrodel, po
 import { czyDostepnyTeraz } from './lib/godziny';
 import { integruj } from './lib/harmonizacja';
 import { ZRODLA, ZRODLA_NIEDOSTEPNE, ZRODLO_DEMO } from './lib/zrodla';
-import type { RekordZintegrowany } from './lib/harmonizacja';
+import type { RaportZrodla, RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
 import { odlegloscM } from './lib/geometria';
@@ -285,6 +285,13 @@ export class ZbiorZintegrowanyComponent {
     const dzien = d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
     const godzina = d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
     return `${dzien}, ${godzina}`;
+  }
+
+  /** Etykiety pól wymaganych, których źródło nie dostarcza w żadnym rekordzie. */
+  brakujaceWymagane(r: RaportZrodla): string[] {
+    return r.kompletnosc
+      .filter((k) => k.wypelnione === 0 && this.polaWymagane.includes(k.pole))
+      .map((k) => ETYKIETY[k.pole]);
   }
 
   /** Dane starsze niż 12 miesięcy dostają ostrzeżenie tekstowe (nie tylko kolor – WCAG 1.4.1). */

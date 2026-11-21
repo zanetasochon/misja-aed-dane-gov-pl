@@ -1,5 +1,7 @@
 <!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
-     Układ jak w formularzach portalu (shared/forms: form-header, form-part, fieldset-header, form-field). -->
+     Układ jak w formularzach portalu (shared/forms: form-header, form-part, fieldset-header, form-field).
+     Prowadzenie użytkownika: lista 4 kroków (USWDS Step indicator, DS Gov.pl Stepper), werdykt na początku
+     raportu, „Jak poprawić” przy każdym problemie i „Co dalej” na końcu. -->
 <section class="container">
   <h1 class="form-header">Sprawdź zgodność ze wzorcem AED</h1>
   <div class="form-description col-md-10 col-lg-8">
@@ -11,15 +13,48 @@
     <p>Plik nie jest nigdzie wysyłany: sprawdzanie działa w Twojej przeglądarce.</p>
   </div>
 
+  <!-- LISTA KROKÓW: status tekstem, aria-current tylko na bieżącym kroku -->
+  <nav class="zg-kroki" aria-label="Kroki sprawdzania pliku">
+    <ol>
+      @for (k of kroki; track k.id; let n = $index) {
+        <li
+          class="zg-krok"
+          [class.zg-krok--biezacy]="biezacyKrok() === n + 1"
+          [class.zg-krok--ukonczony]="biezacyKrok() > n + 1"
+          [attr.aria-current]="biezacyKrok() === n + 1 ? 'step' : null">
+          <span class="zg-krok__numer" aria-hidden="true">{{ biezacyKrok() > n + 1 ? '✓' : n + 1 }}</span>
+          @if (n === 0 || plik()) {
+            <a href="#{{ k.id }}" (click)="przejdzDo($event, k.id)">{{ k.nazwa }}</a>
+          } @else {
+            <span>{{ k.nazwa }}</span>
+          }
+          <span class="zg-krok__stan">
+            {{
+              biezacyKrok() > n + 1
+                ? 'ukończony'
+                : biezacyKrok() === n + 1
+                  ? 'bieżący krok'
+                  : plik()
+                    ? 'do zrobienia'
+                    : 'po wybraniu pliku'
+            }}
+          </span>
+        </li>
+      }
+    </ol>
+  </nav>
+
   <div class="form-wrapper">
     <!-- 1. PLIK -->
-    <fieldset class="form-part col-md-10 col-lg-8">
+    <fieldset id="zg-krok-1" class="form-part col-md-10 col-lg-8" tabindex="-1">
       <legend class="fieldset-header fieldset-header--compact">
-        <h2>1. Wybierz plik</h2>
-        <p>Plik CSV w kodowaniu UTF-8, z wierszem nagłówka. Separator: przecinek albo średnik. Najwyżej 2 MB.</p>
+        <h2>Krok 1 z 4: Wybierz plik</h2>
       </legend>
       <div class="form-field">
         <label for="zg-plik-input" class="form-label">Plik CSV z danymi o AED</label>
+        <small id="zg-plik-opis" class="field-hint">
+          Plik CSV w kodowaniu UTF-8, z wierszem nagłówka. Separator: przecinek albo średnik. Najwyżej 2 MB.
+        </small>
         <div class="input-wrapper" [class.is-invalid]="blad()">
           <input
             id="zg-plik-input"
@@ -28,7 +63,7 @@
             class="form-control"
             [class.is-invalid]="blad()"
             [attr.aria-invalid]="blad() ? true : null"
-            [attr.aria-describedby]="blad() ? 'zg-plik-blad' : null"
+            [attr.aria-describedby]="blad() ? 'zg-plik-opis zg-plik-blad' : 'zg-plik-opis'"
             (change)="naPlik($event)" />
         </div>
         @if (blad()) {
@@ -38,6 +73,7 @@
         }
       </div>
       <div class="form-field">
+        <p class="zz-podpowiedz mb-2">Nie masz pliku pod ręką? Sprawdź, jak działa narzędzie, na prawdziwych danych:</p>
         <button type="button" class="btn btn-outline-primary" (click)="uzyjPrzykladu()">
           Użyj przykładu: prawdziwy plik z Krosna (dane.gov.pl, CC0 1.0)
         </button>
@@ -50,14 +86,26 @@
     @if (plik(); as p) {
       @if (raport(); as r) {
         <!-- 2. MAPOWANIE -->
-        <fieldset class="form-part">
-          <legend class="fieldset-header">
-            <h2>2. Mapowanie kolumn</h2>
+        <section id="zg-krok-2" class="form-part" aria-labelledby="zg-mapowanie" tabindex="-1">
+          <div class="fieldset-header">
+            <h2 id="zg-mapowanie">Krok 2 z 4: Sprawdź dopasowanie kolumn</h2>
             <p>
-              Dla każdej kolumny zaproponowaliśmy pole wzorca na podstawie jej nazwy. Sprawdź propozycję i popraw ją,
-              jeśli trzeba – raport niżej aktualizuje się od razu.
+              Dla każdej kolumny Twojego pliku zaproponowaliśmy pole wzorca na podstawie jej nazwy i zawartości. Jeśli
+              propozycja jest zła, wybierz inne pole – raport w kroku 3 zmieni się od razu.
             </p>
-          </legend>
+          </div>
+          <p class="zg-podsumowanie">
+            Dopasowano {{ dopasowane() }} z {{ p.naglowki.length }} kolumn.
+            @if (r.brakujaceWymagane.length) {
+              Brakuje {{ r.brakujaceWymagane.length }} z {{ polaWymagane.length }} pól wymaganych:
+              @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
+                {{ etykietaPola(b) }}{{ ostatni ? '.' : ',' }}
+              }
+              Jeśli masz je w innej kolumnie, wybierz ją niżej.
+            } @else {
+              Plik ma wszystkie pola wymagane.
+            }
+          </p>
           <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-mapowanie-podpis" tabindex="0">
             <table class="datagrid">
               <caption id="zg-mapowanie-podpis" class="zz-podpis">
@@ -72,6 +120,7 @@
                   <th class="datagrid__heading" scope="col">Kolumna w pliku</th>
                   <th class="datagrid__heading" scope="col">Przykładowa wartość</th>
                   <th class="datagrid__heading" scope="col">Pole wzorca</th>
+                  <th class="datagrid__heading" scope="col">Stan</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,134 +137,190 @@
                         [id]="'zg-map-' + i"
                         [ngModel]="mapowanie()[i]"
                         (ngModelChange)="zmienMapowanie(i, $event)">
-                        @for (o of opcje; track o.wartosc) {
-                          <option [ngValue]="o.wartosc">{{ o.etykieta }}</option>
+                        <option [ngValue]="pominOpcja.wartosc">{{ pominOpcja.etykieta }}</option>
+                        @for (g of grupyOpcji; track g.etykieta) {
+                          <optgroup [label]="g.etykieta">
+                            @for (o of g.opcje; track o.wartosc) {
+                              <option [ngValue]="o.wartosc">{{ o.etykieta }}</option>
+                            }
+                          </optgroup>
                         }
                       </select>
                     </td>
+                    <td class="datagrid__cell">{{ stanMapowania(i) }}</td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
-        </fieldset>
+        </section>
 
-        <!-- 3. RAPORT -->
-        <section class="form-part" aria-labelledby="zg-raport">
+        <!-- 3. RAPORT: najpierw werdykt, potem trzy grupy -->
+        <section id="zg-krok-3" class="form-part" aria-labelledby="zg-raport" tabindex="-1">
           <div class="fieldset-header">
-            <h2 id="zg-raport">3. Raport zgodności</h2>
+            <h2 id="zg-raport">Krok 3 z 4: Przeczytaj raport</h2>
             <p>Wynik dla {{ r.wierszy }} wierszy pliku {{ p.nazwa }}.</p>
           </div>
+
+          @if (werdykt(); as w) {
+            <div class="alert zg-werdykt" [class]="'alert-' + w.poziom">
+              <span class="zg-werdykt__ikona" aria-hidden="true">{{ w.ikona }}</span>
+              <div>
+                <p class="zg-werdykt__tekst">{{ w.tekst }}</p>
+                <p class="mb-0">{{ w.opis }}</p>
+              </div>
+            </div>
+          }
+
           <ul class="vertical-list zg-raport">
             <li class="vertical-list__item">
-              <span class="vertical-list__item-label">
-                {{ r.brakujaceWymagane.length === 0 ? 'Spełnione' : 'Niespełnione' }} – pola wymagane:
-              </span>
-              masz {{ polaWymagane.length - r.brakujaceWymagane.length }} z {{ polaWymagane.length }} (wzorzec v1.2;
-              pola id_aed, zrodlo_danych i data_aktualizacji nadaje narzędzie).
-              @if (r.brakujaceWymagane.length) {
-                Brakuje:
+              <span class="vertical-list__item-label">Pola wymagane:</span>
+              {{ polaWymagane.length - r.brakujaceWymagane.length }} z {{ polaWymagane.length }} (pola id_aed,
+              zrodlo_danych i data_aktualizacji nadaje narzędzie).
+            </li>
+            <li class="vertical-list__item">
+              <span class="vertical-list__item-label">Wiersze w pliku wynikowym:</span>
+              {{ r.rekordy.length }} z {{ r.wierszy }}.
+            </li>
+            <li class="vertical-list__item">
+              <span class="vertical-list__item-label">Adres w osobnych polach (Standard techniczny, s. 16):</span>
+              {{ r.adresWJednymPolu ? 'nie – narzędzie rozbije go automatycznie.' : 'tak.' }}
+            </li>
+          </ul>
+
+          <!-- DO POPRAWY -->
+          @if (r.brakujaceWymagane.length || r.odrzucone.length) {
+            <h3 class="zz-h4 zg-grupa">
+              <span class="zg-grupa__ikona zg-grupa__ikona--blad" aria-hidden="true">✕</span>Do poprawy
+            </h3>
+            @if (r.brakujaceWymagane.length) {
+              <p>
+                Brakujące pola wymagane:
                 @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
                   <code>{{ b }}</code> ({{ etykietaPola(b) }}){{ ostatni ? '.' : ',' }}
                 }
-              }
-            </li>
-            <li class="vertical-list__item">
-              <span class="vertical-list__item-label">
-                {{ r.adresWJednymPolu ? 'Niespełnione' : 'Spełnione' }} – adres w osobnych polach (Standard techniczny,
-                s. 16):
-              </span>
-              @if (r.adresWJednymPolu) {
-                adres jest w jednym polu – w pliku wynikowym rozbijamy go na ulicę, numer, kod i miejscowość.
-              } @else {
-                ulica, numer, kod i miejscowość są w osobnych kolumnach.
-              }
-            </li>
-            <li class="vertical-list__item">
-              <span class="vertical-list__item-label">
-                {{ r.problemy.length === 0 ? 'Spełnione' : 'Niespełnione' }} – formaty wartości:
-              </span>
-              {{ r.problemy.length === 0 ? 'bez problemów.' : 'rodzaje problemów: ' + r.problemy.length + '.' }}
-            </li>
-            <li class="vertical-list__item">
-              <span class="vertical-list__item-label">
-                {{ r.odrzucone.length === 0 ? 'Spełnione' : 'Niespełnione' }} – wszystkie wiersze można wykorzystać:
-              </span>
-              @if (r.odrzucone.length) {
-                {{ r.odrzucone.length }} wierszy nie trafi do pliku wynikowego (lista niżej).
-              } @else {
-                tak.
-              }
-            </li>
-            @if (r.staleKolumny.length) {
-              <li class="vertical-list__item">
-                <span class="vertical-list__item-label">Uwaga – kolumny z tą samą wartością w każdym wierszu:</span>
-                <code>{{ r.staleKolumny.join(', ') }}</code
-                >. Sprawdź, czy niosą informację (np. kolumna „Nazwa” = „Defibrylator”).
-              </li>
+                Jak poprawić: dodaj te kolumny do swoich danych. Opis każdego pola jest w arkuszu „Zakres danych”
+                wzorca.
+              </p>
             }
-          </ul>
-
-          @if (r.odrzucone.length) {
-            <h3 class="zz-h4">Wiersze odrzucone</h3>
-            <ul>
-              @for (o of r.odrzucone.slice(0, 50); track o.wiersz) {
-                <li>Wiersz {{ o.wiersz }} („{{ o.nazwa }}”): {{ o.powod }}</li>
+            @if (r.odrzucone.length) {
+              <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-odrzucone-podpis" tabindex="0">
+                <table class="datagrid">
+                  <caption id="zg-odrzucone-podpis" class="zz-podpis">
+                    Wiersze, które nie trafią do pliku wynikowego ({{
+                      r.odrzucone.length
+                    }})
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th class="datagrid__heading" scope="col">Wiersz w pliku</th>
+                      <th class="datagrid__heading" scope="col">Nazwa miejsca</th>
+                      <th class="datagrid__heading" scope="col">Problem</th>
+                      <th class="datagrid__heading" scope="col">Jak poprawić</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (o of r.odrzucone.slice(0, 50); track o.wiersz) {
+                      <tr class="datagrid__row">
+                        <th class="datagrid__cell zz-wiersz-naglowek" scope="row">{{ o.wiersz }}</th>
+                        <td class="datagrid__cell">{{ o.nazwa }}</td>
+                        <td class="datagrid__cell">{{ o.powod }}</td>
+                        <td class="datagrid__cell">{{ porada(o.powod) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              @if (r.odrzucone.length > 50) {
+                <p>… i {{ r.odrzucone.length - 50 }} kolejnych.</p>
               }
-            </ul>
-            @if (r.odrzucone.length > 50) {
-              <p>… i {{ r.odrzucone.length - 50 }} kolejnych.</p>
             }
           }
 
-          @if (r.problemy.length) {
-            <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-problemy-podpis" tabindex="0">
-              <table class="datagrid">
-                <caption id="zg-problemy-podpis" class="zz-podpis">
-                  Problemy z formatem wartości
-                </caption>
-                <thead>
-                  <tr>
-                    <th class="datagrid__heading" scope="col">Kolumna</th>
-                    <th class="datagrid__heading" scope="col">Problem</th>
-                    <th class="datagrid__heading" scope="col">Liczba wierszy</th>
-                    <th class="datagrid__heading" scope="col">Przykład</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (pr of r.problemy; track pr.kolumna + pr.opis) {
-                    <tr class="datagrid__row">
-                      <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
-                        <code>{{ pr.kolumna }}</code>
-                      </th>
-                      <td class="datagrid__cell">{{ pr.opis }}</td>
-                      <td class="datagrid__cell">{{ pr.liczba }}</td>
-                      <td class="datagrid__cell">{{ pr.przyklad }}</td>
+          <!-- WARTO POPRAWIĆ -->
+          @if (grupyProblemow().doPoprawy.length || r.staleKolumny.length) {
+            <h3 class="zz-h4 zg-grupa">
+              <span class="zg-grupa__ikona zg-grupa__ikona--uwaga" aria-hidden="true">!</span>Warto poprawić
+            </h3>
+            @if (r.staleKolumny.length) {
+              <p>
+                Kolumny z tą samą wartością w każdym wierszu: <code>{{ r.staleKolumny.join(', ') }}</code
+                >. Jak poprawić: sprawdź, czy niosą informację – np. kolumna „Nazwa” z wartością „Defibrylator” w każdym
+                wierszu nie opisuje miejsca.
+              </p>
+            }
+            @if (grupyProblemow().doPoprawy.length) {
+              <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-problemy-podpis" tabindex="0">
+                <table class="datagrid">
+                  <caption id="zg-problemy-podpis" class="zz-podpis">
+                    Wartości w złym formacie – w pliku wynikowym te pola będą puste
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th class="datagrid__heading" scope="col">Kolumna</th>
+                      <th class="datagrid__heading" scope="col">Problem</th>
+                      <th class="datagrid__heading" scope="col">Liczba wierszy</th>
+                      <th class="datagrid__heading" scope="col">Przykład</th>
+                      <th class="datagrid__heading" scope="col">Jak poprawić</th>
                     </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    @for (pr of grupyProblemow().doPoprawy; track pr.kolumna + pr.opis) {
+                      <tr class="datagrid__row">
+                        <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
+                          <code>{{ pr.kolumna }}</code>
+                        </th>
+                        <td class="datagrid__cell">{{ pr.opis }}</td>
+                        <td class="datagrid__cell">{{ pr.liczba }}</td>
+                        <td class="datagrid__cell">{{ pr.przyklad }}</td>
+                        <td class="datagrid__cell">{{ pr.porada }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+
+          <!-- POPRAWIONE AUTOMATYCZNIE -->
+          @if (grupyProblemow().automatycznie.length || r.adresWJednymPolu) {
+            <h3 class="zz-h4 zg-grupa">
+              <span class="zg-grupa__ikona zg-grupa__ikona--ok" aria-hidden="true">✓</span>Poprawione automatycznie
+            </h3>
+            <ul>
+              @if (r.adresWJednymPolu) {
+                <li>Adres z jednego pola rozbito na ulicę, numer budynku, kod pocztowy i miejscowość.</li>
+              }
+              @for (pr of grupyProblemow().automatycznie; track pr.kolumna + pr.opis) {
+                <li>
+                  <code>{{ pr.kolumna }}</code
+                  >: {{ pr.opis }} (wierszy: {{ pr.liczba }})
+                </li>
+              }
+            </ul>
           }
         </section>
 
         <!-- 4. POBIERZ -->
-        <fieldset class="form-part col-md-10 col-lg-8">
+        <fieldset id="zg-krok-4" class="form-part col-md-10 col-lg-8" tabindex="-1">
           <legend class="fieldset-header">
-            <h2>4. Pobierz plik zgodny ze wzorcem</h2>
-            <p>
-              Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy: CSV w UTF-8 (RFC 4180) albo JSON,
-              kolumny w kolejności wzorca v1.2. Pole data_aktualizacji: {{ dataPliku() }} (data i godzina ostatniej
-              zmiany wgranego pliku).
-              @if (pominiete().length) {
-                Pominięte kolumny puste we wszystkich wierszach (Standard techniczny, s. 21):
-                <code>{{ pominiete().join(', ') }}</code
-                >.
-              }
-            </p>
+            <h2>Krok 4 z 4: Pobierz plik zgodny ze wzorcem</h2>
           </legend>
+          <p>
+            Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy: CSV w UTF-8 (RFC 4180) albo JSON, kolumny
+            w kolejności wzorca v1.2. Pole data_aktualizacji: {{ dataPliku() }} (data i godzina ostatniej zmiany
+            wgranego pliku).
+            @if (pominiete().length) {
+              Pominięte kolumny puste we wszystkich wierszach (Standard techniczny, s. 21):
+              <code>{{ pominiete().join(', ') }}</code
+              >.
+            }
+          </p>
           <div class="form-field">
-            <label for="zg-identyfikator" class="form-label">Identyfikator Twojego zbioru (pole zrodlo_danych)</label>
+            <label for="zg-identyfikator" class="form-label">Adres Twojego zbioru na dane.gov.pl</label>
+            <small id="zg-identyfikator-opis" class="field-hint">
+              Trafi do pola zrodlo_danych w każdym wierszu, np. https://dane.gov.pl/pl/dataset/1234.
+            </small>
             <div class="input-wrapper">
               <input
                 id="zg-identyfikator"
@@ -225,9 +330,6 @@
                 [ngModel]="identyfikator()"
                 (ngModelChange)="identyfikator.set($event)" />
             </div>
-            <small id="zg-identyfikator-opis" class="field-hint">
-              Np. adres zbioru na dane.gov.pl: dane.gov.pl/dataset/1234.
-            </small>
           </div>
           <div class="zz-przyciski">
             <button type="button" class="btn btn-primary" (click)="pobierz('csv')">
@@ -236,6 +338,30 @@
             <button type="button" class="btn btn-outline-primary" (click)="pobierz('json')">Pobierz JSON</button>
           </div>
         </fieldset>
+
+        <!-- CO DALEJ -->
+        <section class="form-part col-md-10 col-lg-8" aria-labelledby="zg-co-dalej">
+          <h2 id="zg-co-dalej" class="heading heading--sm">Co dalej</h2>
+          <ol class="zg-co-dalej">
+            @if (r.brakujaceWymagane.length || r.odrzucone.length || grupyProblemow().doPoprawy.length) {
+              <li>Popraw dane według raportu w kroku 3 i sprawdź plik jeszcze raz.</li>
+            }
+            <li>Pobierz plik zgodny ze wzorcem (krok 4).</li>
+            <li>
+              Opublikuj go na dane.gov.pl jako nowy zasób <strong>swojego</strong> zbioru – za dane odpowiadasz Ty.
+            </li>
+            <li>Ustaw częstotliwość aktualizacji zbioru i aktualizuj plik po każdej zmianie AED.</li>
+            <li>Zbiór zintegrowany AED pobierze Twoje dane przy najbliższym przeliczeniu.</li>
+          </ol>
+        </section>
+      }
+    } @else {
+      <!-- kroki 2–4 widoczne od początku: użytkownik wie, co go czeka -->
+      @for (k of kroki.slice(1); track k.id; let n = $index) {
+        <section class="form-part col-md-10 col-lg-8 zg-krok-zapowiedz" [attr.aria-labelledby]="k.id + '-zapowiedz'">
+          <h2 [id]="k.id + '-zapowiedz'" class="zg-krok-zapowiedz__tytul">Krok {{ n + 2 }} z 4: {{ k.nazwa }}</h2>
+          <p class="zz-podpowiedz">Ten krok pojawi się po wybraniu pliku.</p>
+        </section>
       }
     }
 

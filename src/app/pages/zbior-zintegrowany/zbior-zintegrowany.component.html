@@ -81,6 +81,30 @@
           </a>
         </div>
 
+        <!-- JAK CZYTAĆ TĘ STRONĘ (GOV.UK Inset text): krótko, bez tooltipów -->
+        <section class="zz-wprowadzenie" aria-labelledby="zz-wprowadzenie-tytul">
+          <h2 id="zz-wprowadzenie-tytul" class="zz-wprowadzenie__tytul">Jak czytać tę stronę</h2>
+          <ul>
+            <li>
+              <strong>Lista i mapa</strong> – wszystkie AED ze zbiorów źródłowych, z wyszukiwarką, filtrami i AED w
+              pobliżu.
+            </li>
+            <li>
+              <strong>Zbiory źródłowe</strong> – kto publikuje dane i na jakiej licencji. Za każdy rekord odpowiada
+              dostawca jego zbioru.
+            </li>
+            <li>
+              <strong>Raport harmonizacji</strong> – jak dane z każdego źródła pasują do wzorcowego zakresu danych AED.
+            </li>
+          </ul>
+          <p class="mb-0">
+            Jesteś dostawcą danych o AED?
+            <a [routerLink]="['/!dataset', '!zgodnosc-ze-wzorcem'] | localize"
+              >Sprawdź, czy Twój plik jest zgodny ze wzorcem</a
+            >.
+          </p>
+        </section>
+
         <!-- TABS: ANCHORS -->
         <div class="tabs">
           <ul class="tab-list row no-gutters" role="tablist" aria-label="Zawartość zbioru zintegrowanego">
@@ -554,6 +578,48 @@
               puste, żeby nie udawać danych, których nie ma.
             </p>
 
+            <!-- porównanie źródeł w jednej tabeli (zakładki i sekcje utrudniają porównywanie) -->
+            <div
+              class="scrollable-table-wrapper mb-4"
+              role="region"
+              aria-labelledby="zz-porownanie-podpis"
+              tabindex="0">
+              <table class="datagrid">
+                <caption id="zz-porownanie-podpis" class="zz-podpis">
+                  Porównanie zbiorów źródłowych
+                </caption>
+                <thead>
+                  <tr>
+                    <th class="datagrid__heading" scope="col">Źródło</th>
+                    <th class="datagrid__heading" scope="col">Pola wymagane</th>
+                    <th class="datagrid__heading" scope="col">Brakujące pola wymagane</th>
+                    <th class="datagrid__heading" scope="col">Przyjęte AED</th>
+                    <th class="datagrid__heading" scope="col">Odrzucone</th>
+                    <th class="datagrid__heading" scope="col">Ostrzeżenia</th>
+                    <th class="datagrid__heading" scope="col">Data danych</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of wynik.raporty; track r.zrodlo.id) {
+                    <tr class="datagrid__row">
+                      <th class="datagrid__cell zz-wiersz-naglowek" scope="row">{{ r.zrodlo.dostawca }}</th>
+                      <td class="datagrid__cell">{{ r.polaWymaganeObecne }} z {{ polaWymagane.length }}</td>
+                      <td class="datagrid__cell">{{ brakujaceWymagane(r).join(', ') || 'brak' }}</td>
+                      <td class="datagrid__cell">{{ r.przyjete }} z {{ r.wierszy }}</td>
+                      <td class="datagrid__cell">{{ r.odrzucone.length }}</td>
+                      <td class="datagrid__cell">{{ r.ostrzezenia.length }}</td>
+                      <td class="datagrid__cell zz-nowrap">
+                        {{ r.zrodlo.dataDanych }}
+                        @if (nieaktualne(r.zrodlo.dataDanych)) {
+                          <span class="zz-ostrzezenie">starsze niż rok</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
             @for (r of wynik.raporty; track r.zrodlo.id) {
               <section class="zz-raport" [attr.aria-labelledby]="'zz-raport-' + r.zrodlo.id">
                 <h3 [id]="'zz-raport-' + r.zrodlo.id" class="heading heading--sm">{{ r.zrodlo.dostawca }}</h3>
@@ -575,6 +641,12 @@
                     <span class="text-data">{{ r.ostrzezenia.length }}</span>
                   </li>
                 </ul>
+                @if (brakujaceWymagane(r).length) {
+                  <p>
+                    <strong>Brakujące pola wymagane:</strong> {{ brakujaceWymagane(r).join(', ') }}. Integracja ich nie
+                    uzupełnia – może je dodać tylko dostawca źródła.
+                  </p>
+                }
                 @if (r.zrodlo.uwagiDoPliku?.length) {
                   <h4 class="zz-h4">Problemy pliku źródłowego</h4>
                   <ul>

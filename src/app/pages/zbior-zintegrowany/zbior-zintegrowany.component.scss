@@ -373,3 +373,180 @@
     color: var(--contrast-secondary);
   }
 }
+
+// ---- narzędzie zgodności: lista kroków, werdykt, grupy problemów ----
+
+.zg-kroki ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem 1.5rem;
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.zg-krok {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  align-content: start;
+  align-items: center;
+  gap: 0 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 3px solid transparent;
+
+  a,
+  > span:not(.zg-krok__numer):not(.zg-krok__stan) {
+    font-weight: bold;
+  }
+
+  > span:not(.zg-krok__numer):not(.zg-krok__stan) {
+    color: v.$color-grey-dark;
+  }
+
+  &--biezacy {
+    border-bottom-color: v.$color-blue-light;
+  }
+}
+
+.zg-krok__numer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid v.$color-blue-light;
+  border-radius: 50%;
+  color: v.$color-blue-light;
+  font-weight: bold;
+
+  .zg-krok--biezacy &,
+  .zg-krok--ukonczony & {
+    background: v.$color-blue-light;
+    color: v.$color-white;
+  }
+}
+
+.zg-krok__stan {
+  grid-column: 2;
+  font-size: 0.875rem;
+  color: v.$color-grey-dark;
+}
+
+.zg-krok-zapowiedz__tytul {
+  font-size: 1.25rem;
+  color: v.$color-grey-dark;
+}
+
+.zg-podsumowanie {
+  font-weight: bold;
+}
+
+.zg-werdykt {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.zg-werdykt__ikona,
+.zg-grupa__ikona {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: v.$color-heading;
+  color: v.$color-white;
+  font-weight: bold;
+}
+
+.zg-werdykt__tekst {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.zg-grupa {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.zg-grupa__ikona {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.875rem;
+
+  &--blad {
+    background: v.$color-darker-red;
+  }
+
+  &--ok {
+    background: v.$color-heading;
+  }
+}
+
+.zg-co-dalej li + li {
+  margin-top: 0.375rem;
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  .zg-krok > span:not(.zg-krok__numer):not(.zg-krok__stan),
+  .zg-krok__stan,
+  .zg-krok-zapowiedz__tytul,
+  .zg-krok__numer {
+    color: var(--contrast-primary);
+  }
+
+  .zg-krok--biezacy {
+    border-bottom-color: var(--contrast-primary);
+  }
+
+  .zg-krok__numer {
+    border-color: var(--contrast-primary);
+  }
+
+  .zg-krok--biezacy .zg-krok__numer,
+  .zg-krok--ukonczony .zg-krok__numer,
+  .zg-werdykt__ikona,
+  .zg-grupa__ikona {
+    background: var(--contrast-primary);
+    color: var(--contrast-secondary);
+  }
+}
+
+// „Jak czytać tę stronę” – ramka z lewą krawędzią jak alerty portalu (_notifications.scss).
+.zz-wprowadzenie {
+  margin: 1rem 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border-left: 5px solid v.$color-blue-light;
+  background: v.$color-white;
+
+  ul {
+    margin-bottom: 0.5rem;
+    padding-left: 1.25rem;
+  }
+}
+
+.zz-wprowadzenie__tytul {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  .zz-wprowadzenie {
+    border-left-color: var(--contrast-primary);
+    background: var(--contrast-secondary);
+  }
+}
+
+.zz-nowrap {
+  white-space: nowrap;
+}
