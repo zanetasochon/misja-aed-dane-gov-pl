@@ -55,6 +55,9 @@ import type { RekordZintegrowany } from './lib/harmonizacja';
 })
 export class MapaAedComponent implements OnDestroy {
   rekordy = input.required<RekordZintegrowany[]>();
+  /** Lokalizacja użytkownika („W pobliżu”) – punkt i okrąg promienia na mapie. */
+  lokalizacja = input<{ szer: number; dlug: number; opis: string } | null>(null);
+  promienM = input<number | null>(null);
 
   @ViewChild('kontener', { static: true }) kontener!: ElementRef<HTMLDivElement>;
 
@@ -80,6 +83,8 @@ export class MapaAedComponent implements OnDestroy {
     });
     effect(() => {
       this.rekordy();
+      this.lokalizacja();
+      this.promienM();
       this.rysuj();
     });
   }
@@ -110,6 +115,23 @@ export class MapaAedComponent implements OnDestroy {
         .addTo(this.warstwa);
       m.on('add', () => m.getElement()?.setAttribute('aria-label', etykieta));
       m.getElement()?.setAttribute('aria-label', etykieta);
+    }
+    const lok = this.lokalizacja();
+    if (lok) {
+      const promien = this.promienM();
+      if (promien)
+        L.circle([lok.szer, lok.dlug], { radius: promien, color: '#0865c9', weight: 2, fillOpacity: 0.08 }).addTo(
+          this.warstwa,
+        );
+      L.circleMarker([lok.szer, lok.dlug], {
+        radius: 9,
+        color: '#ffffff',
+        weight: 3,
+        fillColor: '#0865c9',
+        fillOpacity: 1,
+      })
+        .bindTooltip(lok.opis)
+        .addTo(this.warstwa);
     }
     this.dopasuj();
   }
@@ -167,6 +189,13 @@ export class MapaAedComponent implements OnDestroy {
     const L = this.L;
     const r = this.rekordy();
     if (!L || !this.mapa) return;
+    const lok = this.lokalizacja();
+    const promien = this.promienM();
+    if (lok && promien) {
+      // Widok obejmuje okrąg promienia wokół użytkownika.
+      this.mapa.fitBounds(L.latLng(lok.szer, lok.dlug).toBounds(promien * 2), { padding: [24, 24] });
+      return;
+    }
     if (r.length === 0) this.mapa.setView([52.0, 19.4], 6);
     else
       this.mapa.fitBounds(L.latLngBounds(r.map((x) => [x.szerokosc_geograficzna, x.dlugosc_geograficzna])), {

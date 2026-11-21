@@ -222,6 +222,54 @@
                     }
                   </select>
                 </div>
+                <!-- W POBLIŻU: lokalizacja tylko w przeglądarce, promień domyślnie 500 m -->
+                <fieldset class="zz-pole zz-pole--szerokie zz-w-poblizu" aria-describedby="zz-w-poblizu-opis">
+                  <legend class="form-label">W pobliżu</legend>
+                  <p class="alert alert-warning zz-112" role="note">
+                    <strong>W nagłym wypadku dzwoń 112.</strong> Dyspozytor wskaże najbliższy AED. Ten zbiór obejmuje
+                    tylko kilka miast i nie zastępuje numeru alarmowego.
+                  </p>
+                  <p id="zz-w-poblizu-opis" class="zz-podpowiedz">
+                    AED powinien być w zasięgu ok. 1,5–2,5 minuty szybkiego marszu (wytyczne AHA dla miejsc pracy),
+                    dlatego domyślny promień to 500 m. Lokalizacja jest liczona tylko w Twojej przeglądarce i nigdzie
+                    nie jest wysyłana.
+                  </p>
+                  <div class="zz-w-poblizu__akcje">
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      [attr.aria-busy]="ustalaLokalizacje() || null"
+                      (click)="uzyjMojejLokalizacji()">
+                      {{ ustalaLokalizacje() ? 'Ustalam lokalizację…' : 'Użyj mojej lokalizacji' }}
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" (click)="uzyjLokalizacjiPrzykladowej()">
+                      Przykładowa lokalizacja (Legionowo)
+                    </button>
+                    @if (lokalizacja()) {
+                      <button type="button" class="btn btn-outline-primary" (click)="wyczyscLokalizacje()">
+                        Wyczyść lokalizację
+                      </button>
+                    }
+                  </div>
+                  @if (bladLokalizacji()) {
+                    <p class="zz-ostrzezenie">{{ bladLokalizacji() }}</p>
+                  }
+                  @if (lokalizacja(); as lok) {
+                    <p class="zz-lokalizacja">Szukam od: {{ lok.opis }}.</p>
+                  }
+                  <label class="form-label" for="zz-promien">Promień</label>
+                  <select
+                    id="zz-promien"
+                    class="form-select zz-promien"
+                    name="promien"
+                    [ngModel]="promien()"
+                    (ngModelChange)="promien.set(+$event)">
+                    @for (m of promienie; track m) {
+                      <option [ngValue]="m">{{ opisPromienia(m) }}{{ m === 500 ? ' (domyślnie)' : '' }}</option>
+                    }
+                  </select>
+                </fieldset>
+
                 <div class="zz-pole form-check">
                   <input
                     id="zz-teraz"
@@ -246,8 +294,24 @@
 
               <!-- liczba wyników: role="status" zawsze w DOM, zmienia się tylko treść (WCAG 4.1.3) -->
               <p role="status" class="zz-status">
-                Znaleziono {{ wyniki().length }} z {{ wynik.rekordy.length }} AED. {{ komunikat() }}
+                Znaleziono {{ wyniki().length }} z {{ wynik.rekordy.length }} AED
+                @if (lokalizacja()) {
+                  w promieniu {{ opisPromienia(promien()) }}
+                }
+                . {{ komunikat() }}
               </p>
+
+              @if (najblizszyPozaPromieniem(); as n) {
+                <p class="alert alert-info">
+                  W promieniu {{ opisPromienia(promien()) }} nie ma AED. Najbliższy:
+                  <strong>{{ n.r.nazwa_miejsca }}</strong
+                  >, {{ [n.r.ulica, n.r.numer_budynku].join(' ').trim() }} {{ n.r.miejscowosc }} –
+                  {{ opisOdleglosci(n.m ?? 0) }}.
+                  <button type="button" class="btn btn-link p-0 align-baseline" (click)="promien.set(2000)">
+                    Pokaż w promieniu 2 km
+                  </button>
+                </p>
+              }
 
               <p class="zz-przelacznik-mapy">
                 <button
@@ -261,7 +325,10 @@
               </p>
 
               <div id="zz-mapa" class="zz-mapa" [class.zz-mapa--widoczna]="mapaNaTelefonie()">
-                <app-mapa-aed [rekordy]="wyniki()"></app-mapa-aed>
+                <app-mapa-aed
+                  [rekordy]="wyniki()"
+                  [lokalizacja]="lokalizacja()"
+                  [promienM]="lokalizacja() ? promien() : null"></app-mapa-aed>
               </div>
 
               <div
@@ -279,6 +346,9 @@
                   <thead>
                     <tr>
                       <th class="datagrid__heading" scope="col">Nazwa miejsca</th>
+                      @if (lokalizacja()) {
+                        <th class="datagrid__heading" scope="col">Odległość</th>
+                      }
                       <th class="datagrid__heading" scope="col">Adres</th>
                       <th class="datagrid__heading" scope="col">Dostęp</th>
                       <th class="datagrid__heading" scope="col">Godziny</th>
@@ -300,6 +370,9 @@
                             <span class="zz-opis">{{ r.opis_lokalizacji }}</span>
                           }
                         </th>
+                        @if (lokalizacja()) {
+                          <td class="datagrid__cell">{{ opisOdleglosci(odleglosc(r) ?? 0) }}</td>
+                        }
                         <td class="datagrid__cell">
                           {{ [r.ulica, r.numer_budynku].join(' ').trim() || '–' }}<br />{{ r.kod_pocztowy ?? '' }}
                           {{ r.miejscowosc ?? '' }}
@@ -333,7 +406,9 @@
                       </tr>
                     } @empty {
                       <tr class="datagrid__row">
-                        <td class="datagrid__cell" colspan="8">Brak AED dla wybranych filtrów.</td>
+                        <td class="datagrid__cell" [attr.colspan]="lokalizacja() ? 9 : 8">
+                          Brak AED dla wybranych filtrów{{ lokalizacja() ? ' w wybranym promieniu' : '' }}.
+                        </td>
                       </tr>
                     }
                   </tbody>

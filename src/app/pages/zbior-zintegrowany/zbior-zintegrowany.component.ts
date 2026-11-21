@@ -28,10 +28,27 @@ import { ZRODLA, ZRODLA_NIEDOSTEPNE, ZRODLO_DEMO } from './lib/zrodla';
 import type { RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
+import { odlegloscM } from './lib/geometria';
 import { MapaAedComponent } from './mapa-aed.component';
 
 type TakNie = '' | 'tak' | 'nie' | 'brak';
 type Zakladka = 'dane' | 'zrodla' | 'raport';
+
+export interface Lokalizacja {
+  szer: number;
+  dlug: number;
+  opis: string;
+}
+
+/** Średnie tempo marszu do szacowania czasu dojścia: 5 km/h ≈ 83 m na minutę. */
+const METRY_NA_MINUTE = 5000 / 60;
+
+/** Przykładowa lokalizacja do pokazu (jury raczej nie będzie w żadnym z 4 miast ze zbioru). */
+export const LOKALIZACJA_PRZYKLADOWA: Lokalizacja = {
+  szer: 52.4012,
+  dlug: 20.9265,
+  opis: 'przykładowa lokalizacja: centrum Legionowa',
+};
 
 @Component({
   selector: 'app-zbior-zintegrowany',
@@ -97,14 +114,23 @@ export class ZbiorZintegrowanyComponent {
   readonly mapaNaTelefonie = signal(false);
   readonly komunikat = signal('');
 
+  // „W pobliżu”: lokalizacja użytkownika liczona tylko w przeglądarce (niczego nie wysyłamy).
+  readonly lokalizacja = signal<Lokalizacja | null>(null);
+  readonly promien = signal(500);
+  readonly promienie = [300, 500, 1000, 2000];
+  readonly ustalaLokalizacje = signal(false);
+  readonly bladLokalizacji = signal('');
+
   /** Czas liczymy dopiero w przeglądarce, żeby render serwerowy i kliencki dały to samo. */
   readonly teraz = signal<Date | null>(null);
   private readonly wPrzegladarce = isPlatformBrowser(inject(PLATFORM_ID));
 
-  readonly wyniki = computed(() => {
+  /** Rekordy po filtrach (bez promienia), z odległością od lokalizacji użytkownika. */
+  private readonly poFiltrach = computed(() => {
     const q = this.normalizuj(this.szukaj());
     const teraz = this.teraz();
-    return this.wynik.rekordy.filter((r) => {
+    const lok = this.lokalizacja();
+    const lista = this.wynik.rekordy.filter((r) => {
       if (q && !this.normalizuj([r.nazwa_miejsca, r.ulica, r.miejscowosc].join(' ')).includes(q)) return false;
       if (this.miejscowosc() && r.miejscowosc !== this.miejscowosc()) return false;
       if (this.dostep() === 'brak' ? r.dostep !== null : this.dostep() && r.dostep !== this.dostep()) return false;
@@ -116,7 +142,86 @@ export class ZbiorZintegrowanyComponent {
       if (this.tylkoTeraz() && (!teraz || czyDostepnyTeraz(r.godziny_dostepnosci, teraz) !== true)) return false;
       return true;
     });
+    if (!lok) return lista.map((r) => ({ r, m: null as number | null }));
+    return lista
+      .map((r) => ({ r, m: odlegloscM(lok, { szer: r.szerokosc_geograficzna, dlug: r.dlugosc_geograficzna }) }))
+      .sort((a, b) => a.m - b.m);
   });
+
+  /** Wyniki listy i mapy: przy ustalonej lokalizacji tylko AED w promieniu, od najbliższego. */
+  readonly wyniki = computed(() => {
+    const lok = this.lokalizacja();
+    const p = this.promien();
+    return this.poFiltrach()
+      .filter((x) => !lok || (x.m ?? 0) <= p)
+      .map((x) => x.r);
+  });
+
+  /** Najbliższy AED, gdy w promieniu nie ma żadnego – żeby lista nigdy nie była bezużyteczna. */
+  readonly najblizszyPozaPromieniem = computed(() => {
+    if (!this.lokalizacja() || this.wyniki().length) return null;
+    return this.poFiltrach()[0] ?? null;
+  });
+
+  /** Odległość w metrach od lokalizacji użytkownika (null bez lokalizacji). */
+  odleglosc(r: RekordZintegrowany): number | null {
+    const lok = this.lokalizacja();
+    return lok ? odlegloscM(lok, { szer: r.szerokosc_geograficzna, dlug: r.dlugosc_geograficzna }) : null;
+  }
+
+  opisOdleglosci(m: number): string {
+    const tekst = m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`;
+    return `${tekst} (ok. ${Math.max(1, Math.ceil(m / METRY_NA_MINUTE))} min pieszo)`;
+  }
+
+  opisPromienia(m: number): string {
+    return m < 1000 ? `${m} m` : `${m / 1000} km`;
+  }
+
+  uzyjMojejLokalizacji(): void {
+    if (this.ustalaLokalizacje()) return;
+    if (!this.wPrzegladarce || !('geolocation' in navigator)) {
+      this.bladLokalizacji.set(
+        'Ta przeglądarka nie udostępnia lokalizacji. Użyj przykładowej lokalizacji albo filtra miejscowości.',
+      );
+      return;
+    }
+    this.ustalaLokalizacje.set(true);
+    this.bladLokalizacji.set('');
+    this.komunikat.set('Ustalam Twoją lokalizację…');
+    navigator.geolocation.getCurrentPosition(
+      (poz) => {
+        this.ustalaLokalizacje.set(false);
+        this.lokalizacja.set({
+          szer: poz.coords.latitude,
+          dlug: poz.coords.longitude,
+          opis: `Twoja lokalizacja (dokładność ok. ${Math.round(poz.coords.accuracy)} m)`,
+        });
+        this.komunikat.set('Ustalono lokalizację. Lista pokazuje AED w wybranym promieniu, od najbliższego.');
+      },
+      (err) => {
+        this.ustalaLokalizacje.set(false);
+        const tresc =
+          err.code === err.PERMISSION_DENIED
+            ? 'Nie udzielono zgody na lokalizację. Możesz użyć przykładowej lokalizacji albo filtra miejscowości.'
+            : 'Nie udało się ustalić lokalizacji. Spróbuj ponownie albo użyj przykładowej lokalizacji.';
+        this.bladLokalizacji.set(tresc);
+        this.komunikat.set(tresc);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  }
+
+  uzyjLokalizacjiPrzykladowej(): void {
+    this.bladLokalizacji.set('');
+    this.lokalizacja.set(LOKALIZACJA_PRZYKLADOWA);
+    this.komunikat.set('Ustawiono przykładową lokalizację: centrum Legionowa.');
+  }
+
+  wyczyscLokalizacje(): void {
+    this.lokalizacja.set(null);
+    this.komunikat.set('Wyczyszczono lokalizację. Lista pokazuje wszystkie AED.');
+  }
 
   get bezGodzin(): number {
     return this.wynik.rekordy.filter((r) => !r.godziny_dostepnosci).length;
@@ -199,6 +304,8 @@ export class ZbiorZintegrowanyComponent {
     this.tylkoTeraz.set(false);
     this.wewnatrz.set('');
     this.dostawca.set('');
+    this.lokalizacja.set(null);
+    this.promien.set(500);
     this.komunikat.set('Wyczyszczono filtry.');
   }
 

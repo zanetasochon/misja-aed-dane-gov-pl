@@ -156,6 +156,36 @@
   }
 }
 
+// W pobliżu
+.zz-w-poblizu {
+  border: 1px solid v.$color-grey-light-6;
+  padding: 1rem;
+
+  legend {
+    float: none;
+    width: auto;
+    padding: 0 0.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+  }
+}
+
+.zz-w-poblizu__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.zz-promien {
+  max-width: 14rem;
+}
+
+.zz-lokalizacja {
+  font-weight: bold;
+}
+
 // Telefon: najpierw lista; mapa po przełączniku.
 .zz-mapa {
   display: none;
