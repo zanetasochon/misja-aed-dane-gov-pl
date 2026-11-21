@@ -164,7 +164,8 @@ export class ZbiorZintegrowanyComponent {
   readonly wewnatrz = signal<TakNie>('');
   readonly dostawca = signal('');
   readonly mapaNaTelefonie = signal(false);
-  readonly komunikat = signal('');
+  /** Komunikat po pobraniu pliku – pokazywany pod przyciskami „Pobierz zbiór”. */
+  readonly komunikatPobierania = signal('');
 
   // Lokalizacja użytkownika – liczona tylko w przeglądarce, niczego nie wysyłamy.
   readonly lokalizacja = signal<Lokalizacja | null>(null);
@@ -272,7 +273,6 @@ export class ZbiorZintegrowanyComponent {
     else if (klucz === 'dostawca') this.dostawca.set('');
     else if (klucz === 'teraz') this.tylkoTeraz.set(false);
     else if (klucz === 'lokalizacja') this.lokalizacja.set(null);
-    this.komunikat.set('Usunięto filtr.');
     setTimeout(() => {
       const tagi = document.querySelectorAll<HTMLButtonElement>('.zz-tagi button');
       (tagi[Math.min(indeks, tagi.length - 1)] ?? document.getElementById('zz-szukaj'))?.focus();
@@ -311,7 +311,6 @@ export class ZbiorZintegrowanyComponent {
     }
     this.ustalaLokalizacje.set(true);
     this.bladLokalizacji.set('');
-    this.komunikat.set('Ustalam Twoją lokalizację…');
     navigator.geolocation.getCurrentPosition(
       (poz) => {
         this.ustalaLokalizacje.set(false);
@@ -322,7 +321,6 @@ export class ZbiorZintegrowanyComponent {
           dlug: poz.coords.longitude,
           opis: `Twoja lokalizacja (dokładność ok. ${Math.round(poz.coords.accuracy)} m)`,
         });
-        this.komunikat.set('');
       },
       (err) => {
         this.ustalaLokalizacje.set(false);
@@ -331,7 +329,6 @@ export class ZbiorZintegrowanyComponent {
             ? 'Nie udzielono zgody na lokalizację.'
             : 'Nie udało się ustalić Twojej lokalizacji.',
         );
-        this.komunikat.set('');
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
@@ -342,7 +339,6 @@ export class ZbiorZintegrowanyComponent {
     this.lokalizacja.set(null);
     this.tylkoTeraz.set(false);
     this.bladLokalizacji.set('');
-    this.komunikat.set('Lista pokazuje wszystkie AED.');
   }
 
   constructor() {
@@ -437,7 +433,6 @@ export class ZbiorZintegrowanyComponent {
     this.lokalizacja.set(null);
     this.promien.set(PROMIEN_AWARYJNY_M);
     this.bladLokalizacji.set('');
-    this.komunikat.set('Wyczyszczono filtry.');
   }
 
   tekstWynikow(): string {
@@ -451,7 +446,7 @@ export class ZbiorZintegrowanyComponent {
     if (format === 'zrodla') {
       const nazwaZ = 'defibrylatory-aed-zbior-zintegrowany-zrodla-i-licencje.csv';
       pobierzPlik(doCsvZrodel(this.opisyZrodelEksportu), nazwaZ, 'text/csv;charset=utf-8');
-      this.komunikat.set(`Pobrano plik ${nazwaZ} (źródła, licencje i wymagane uznanie autorstwa).`);
+      this.komunikatPobierania.set(`Pobrano plik ${nazwaZ} (źródła, licencje i wymagane uznanie autorstwa).`);
       return;
     }
     const r = this.doEksportu;
@@ -459,7 +454,7 @@ export class ZbiorZintegrowanyComponent {
     if (format === 'csv') pobierzPlik(doCsv(r), nazwa, 'text/csv;charset=utf-8');
     else if (format === 'json') pobierzPlik(doJson(r), nazwa, 'application/json');
     else pobierzPlik(doGeoJson(r, this.opisyZrodelEksportu), nazwa, 'application/geo+json');
-    this.komunikat.set(`Pobrano plik ${nazwa} (${r.length} rekordów).`);
+    this.komunikatPobierania.set(`Pobrano plik ${nazwa} (rekordy: ${r.length}).`);
   }
 }
 

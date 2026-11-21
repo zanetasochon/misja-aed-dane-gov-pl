@@ -79,7 +79,9 @@ export class ZgodnoscComponent {
   /** Data i godzina ostatniej zmiany pliku – trafia do data_aktualizacji (nie dzisiejsza data). */
   readonly dataPliku = signal('');
   readonly blad = signal('');
-  readonly komunikat = signal('');
+  /** Komunikat po wczytaniu pliku (pod polem pliku) i po pobraniu pliku wynikowego (w kroku 2.4). */
+  readonly komunikat = signal<{ tekst: string; typ: 'success' | 'danger' } | null>(null);
+  readonly komunikatPobierania = signal('');
 
   readonly raport = computed(() => {
     const p = this.plik();
@@ -161,16 +163,18 @@ export class ZgodnoscComponent {
       this.mapowanie.set(propozycja);
       this.propozycja.set(propozycja);
       this.pobrano.set(false);
+      this.komunikatPobierania.set('');
       this.blad.set('');
-      this.komunikat.set(
-        `Wczytano plik ${nazwa}: ${wiersze.length} wierszy, ${naglowki.length} kolumn. Sprawdź dopasowanie kolumn w kroku 2.`,
-      );
+      this.komunikat.set({
+        tekst: `Wczytano plik ${nazwa}: ${wiersze.length} wierszy, ${naglowki.length} kolumn. Sprawdź dopasowanie kolumn w kroku 2.`,
+        typ: 'success',
+      });
     } catch (e) {
       this.plik.set(null);
       const tresc =
         e instanceof BladCsv ? e.message : 'Nie udało się odczytać pliku. Zapisz go jako CSV w kodowaniu UTF-8.';
       this.blad.set(tresc);
-      this.komunikat.set(`Nie wczytano pliku. ${tresc}`);
+      this.komunikat.set({ tekst: `Nie wczytano pliku. ${tresc}`, typ: 'danger' });
     }
   }
 
@@ -188,7 +192,7 @@ export class ZgodnoscComponent {
     if (blad) {
       this.plik.set(null);
       this.blad.set(blad);
-      this.komunikat.set(`Nie wczytano pliku. ${blad}`);
+      this.komunikat.set({ tekst: `Nie wczytano pliku. ${blad}`, typ: 'danger' });
       return;
     }
     this.wczytaj(f.name, await f.text(), new Date(f.lastModified).toISOString());
@@ -233,6 +237,6 @@ export class ZgodnoscComponent {
     if (format === 'csv') pobierzPlik(doCsv(r.rekordy), nazwa, 'text/csv;charset=utf-8');
     else pobierzPlik(doJson(r.rekordy), nazwa, 'application/json');
     this.pobrano.set(true);
-    this.komunikat.set(`Pobrano plik ${nazwa} (${r.rekordy.length} rekordów). Zobacz „Co dalej” poniżej.`);
+    this.komunikatPobierania.set(`Pobrano plik ${nazwa} (rekordy: ${r.rekordy.length}). Zobacz „Co dalej” poniżej.`);
   }
 }

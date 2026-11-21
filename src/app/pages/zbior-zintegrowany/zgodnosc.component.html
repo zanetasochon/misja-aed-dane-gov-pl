@@ -93,7 +93,11 @@
       </div>
     </fieldset>
 
-    <p role="status" class="zz-status col-md-10 col-lg-8">{{ komunikat() }}</p>
+    <div role="status" class="col-md-10 col-lg-8">
+      @if (komunikat(); as k) {
+        <p class="alert" [class]="'alert-' + k.typ">{{ k.tekst }}</p>
+      }
+    </div>
 
     @if (plik(); as p) {
       @if (raport(); as r) {
@@ -355,6 +359,11 @@
               Pobierz CSV zgodny ze wzorcem
             </button>
             <button type="button" class="btn btn-outline-primary" (click)="pobierz('json')">Pobierz JSON</button>
+          </div>
+          <div role="status">
+            @if (komunikatPobierania()) {
+              <p class="alert alert-success mt-3 mb-0">{{ komunikatPobierania() }}</p>
+            }
           </div>
         </fieldset>
 

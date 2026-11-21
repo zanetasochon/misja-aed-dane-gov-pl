@@ -160,6 +160,9 @@
                 (click)="pokazNajblizszeDostepne()">
                 {{ ustalaLokalizacje() ? 'Ustalam Twoją lokalizację…' : 'Pokaż najbliższe dostępne defibrylatory' }}
               </button>
+              <p role="status" class="visually-hidden">
+                {{ ustalaLokalizacje() ? 'Ustalam Twoją lokalizację…' : '' }}
+              </p>
               <p id="zz-awaryjne-opis" class="zz-podpowiedz">
                 Pokazuje AED dostępne o aktualnej porze w promieniu {{ opisPromienia(promien()) }} od Ciebie. Twoja
                 lokalizacja nie jest nigdzie wysyłana.
@@ -203,6 +206,11 @@
               <button type="button" class="btn btn-outline-primary btn-sm" (click)="pobierz('zrodla')">
                 Źródła i licencje (CSV, {{ rozmiary.zrodla }})
               </button>
+            </div>
+            <div role="status">
+              @if (komunikatPobierania()) {
+                <p class="alert alert-success mb-2">{{ komunikatPobierania() }}</p>
+              }
             </div>
             <p class="zz-podpowiedz">
               Korzystając z danych, podaj ich źródła – lista dostawców i licencji jest w pliku „Źródła i licencje”.
@@ -302,7 +310,7 @@
               </div>
             }
 
-            <p role="status" class="zz-status">{{ tekstWynikow() }} {{ komunikat() }}</p>
+            <p role="status" class="zz-status">{{ tekstWynikow() }}</p>
 
             <p class="zz-przelacznik-mapy">
               <button
