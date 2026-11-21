@@ -45,13 +45,6 @@
             >
           </div>
         </div>
-        <!-- HackNation 2026 (zmiana 2026-11-21): wejście demo dla jury – bez hasła i bez wywołań API auth -->
-        <div class="my-4">
-          <p>Prototyp HackNation 2026: możesz wejść jako przykładowy dostawca danych bez logowania.</p>
-          <button type="button" class="btn btn-outline-primary" (click)="wejdzJakoDostawcaDemo()">
-            Wejdź jako dostawca (demo)
-          </button>
-        </div>
         <div>
           {{ 'Login.NoAccount' | translate
           }}<a [routerLink]="['/', '!user', '!register'] | localize">

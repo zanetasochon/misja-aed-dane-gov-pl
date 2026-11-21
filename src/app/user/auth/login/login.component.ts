@@ -18,7 +18,6 @@ import { SeoService } from '@app/services/seo.service';
 import { UserService } from '@app/services/user.service';
 import { NotificationsFrontComponent } from '@app/shared/notifications-front/notifications-front.component';
 import { NotificationsServerComponent } from '@app/shared/notifications-server/notifications-server.component';
-import { wlaczTrybDemo } from '@app/pages/zbior-zintegrowany/lib/tryb-demo';
 
 /**
  * Login Component
@@ -113,14 +112,6 @@ export class LoginComponent implements OnInit, OnDestroy {
       } else {
         this.router.navigate(this.localizeRouterService.translateRoute(['/!user', '!dashboard']) as []);
       }
-    });
-  }
-
-  // HackNation 2026 (zmiana 2026-11-21): atrapa logowania dostawcy dla jury, bez API auth.
-  wejdzJakoDostawcaDemo() {
-    wlaczTrybDemo();
-    this.router.navigate(this.localizeRouterService.translateRoute(['/!dataset', '!zgodnosc-ze-wzorcem']) as [], {
-      state: { fokusNaTytul: true },
     });
   }
 

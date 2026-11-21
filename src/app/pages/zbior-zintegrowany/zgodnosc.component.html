@@ -1,13 +1,6 @@
 <!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21. -->
 <section class="container">
-  <h1 id="zg-tytul" class="form-header" tabindex="-1">Sprawdź zgodność ze wzorcem AED</h1>
-  @if (trybDemo()) {
-    <div class="alert alert-warning zg-demo col-md-10 col-lg-8">
-      <p class="mb-1"><strong>Tryb demonstracyjny – bez prawdziwego logowania.</strong></p>
-      <p class="mb-2">Zalogowano jako: {{ nazwaDostawcyDemo }}</p>
-      <button type="button" class="btn btn-outline-primary btn-sm" (click)="wylogujDemo()">Wyloguj (demo)</button>
-    </div>
-  }
+  <h1 class="form-header">Sprawdź zgodność ze wzorcem AED</h1>
   <div class="form-description col-md-10 col-lg-8">
     <p>
       Wgraj plik CSV ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych AED (v1.2) masz, których
@@ -19,7 +12,7 @@
 
   <nav class="zg-kroki" aria-label="Kroki sprawdzania pliku">
     <ol>
-      @for (k of kroki(); track k.id; let n = $index) {
+      @for (k of kroki; track k.id; let n = $index) {
         <li
           class="zg-krok"
           [class.zg-krok--biezacy]="biezacyKrok() === n + 1"
@@ -51,7 +44,7 @@
     <!-- 1. PLIK -->
     <fieldset id="zg-krok-1" class="form-part col-md-10 col-lg-8" tabindex="-1">
       <legend class="fieldset-header fieldset-header--compact">
-        <h2>Krok 1 z {{ liczbaKrokow() }}: Wybierz plik</h2>
+        <h2>Krok 1 z 4: Wybierz plik</h2>
       </legend>
       <div class="form-field">
         <label for="zg-plik-input" class="form-label">Plik CSV z danymi o AED</label>
@@ -81,14 +74,6 @@
           Użyj przykładu: prawdziwy plik z Krosna (dane.gov.pl, CC0 1.0)
         </button>
       </div>
-      <div class="form-field">
-        <p class="zz-podpowiedz mb-2">
-          Możesz też pobrać plik testowy dostawcy (fikcyjne AED, z kilkoma celowymi błędami) i wgrać go w polu wyżej:
-        </p>
-        <a class="btn btn-outline-primary" href="/assets/hacknation/aed-plik-testowy-dostawcy.csv" download>
-          Pobierz plik testowy (CSV, 1 kB)
-        </a>
-      </div>
     </fieldset>
 
     <p role="status" class="zz-status col-md-10 col-lg-8">{{ komunikat() }}</p>
@@ -98,7 +83,7 @@
         <!-- 2. MAPOWANIE -->
         <section id="zg-krok-2" class="form-part" aria-labelledby="zg-mapowanie" tabindex="-1">
           <div class="fieldset-header">
-            <h2 id="zg-mapowanie">Krok 2 z {{ liczbaKrokow() }}: Sprawdź dopasowanie kolumn</h2>
+            <h2 id="zg-mapowanie">Krok 2 z 4: Sprawdź dopasowanie kolumn</h2>
             <p>
               Dla każdej kolumny Twojego pliku zaproponowaliśmy pole wzorca na podstawie jej nazwy i zawartości. Jeśli
               propozycja jest zła, wybierz inne pole – raport w kroku 3 zmieni się od razu.
@@ -168,7 +153,7 @@
         <!-- 3. RAPORT -->
         <section id="zg-krok-3" class="form-part" aria-labelledby="zg-raport" tabindex="-1">
           <div class="fieldset-header">
-            <h2 id="zg-raport">Krok 3 z {{ liczbaKrokow() }}: Przeczytaj raport</h2>
+            <h2 id="zg-raport">Krok 3 z 4: Przeczytaj raport</h2>
             <p>Wynik dla {{ r.wierszy }} wierszy pliku {{ p.nazwa }}.</p>
           </div>
 
@@ -314,7 +299,7 @@
         <!-- 4. POBIERZ -->
         <fieldset id="zg-krok-4" class="form-part col-md-10 col-lg-8" tabindex="-1">
           <legend class="fieldset-header">
-            <h2>Krok 4 z {{ liczbaKrokow() }}: Pobierz plik zgodny ze wzorcem</h2>
+            <h2>Krok 4 z 4: Pobierz plik zgodny ze wzorcem</h2>
           </legend>
           <p>
             Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy: CSV w UTF-8 (RFC 4180) albo JSON, kolumny
@@ -349,42 +334,6 @@
           </div>
         </fieldset>
 
-        <!-- 5. OPUBLIKUJ (TRYB DEMO) -->
-        @if (trybDemo()) {
-          <section id="zg-krok-5" class="form-part col-md-10 col-lg-8" aria-labelledby="zg-publikacja" tabindex="-1">
-            <div class="fieldset-header">
-              <h2 id="zg-publikacja">Krok 5 z {{ liczbaKrokow() }}: Opublikuj w zbiorze zintegrowanym (demo)</h2>
-              <p>
-                W portalu dostawca publikuje plik jako zasób swojego zbioru, a zbiór zintegrowany pobiera go przy
-                przeliczeniu. W trybie demo {{ r.rekordy.length }} przyjętych AED trafi do zbioru zintegrowanego od razu
-                – tylko w tej przeglądarce, jako „DANE TESTOWE”, bez plików do pobrania.
-              </p>
-            </div>
-            @if (opublikowano() === null) {
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="r.rekordy.length === 0"
-                (click)="opublikujDemo()">
-                Opublikuj w zbiorze zintegrowanym (demo)
-              </button>
-              @if (r.rekordy.length === 0) {
-                <p class="zz-podpowiedz">Plik nie ma żadnego wiersza, który można opublikować.</p>
-              }
-            } @else {
-              <div class="alert alert-success zg-werdykt">
-                <span class="zg-werdykt__ikona" aria-hidden="true">✓</span>
-                <div>
-                  <p class="zg-werdykt__tekst">Opublikowano {{ opublikowano() }} AED (tryb demo).</p>
-                  <a [routerLink]="['/!dataset', '!zbior-zintegrowany-aed'] | localize">
-                    Zobacz je w zbiorze zintegrowanym AED
-                  </a>
-                </div>
-              </div>
-            }
-          </section>
-        }
-
         <!-- CO DALEJ -->
         <section class="form-part col-md-10 col-lg-8" aria-labelledby="zg-co-dalej">
           <h2 id="zg-co-dalej" class="heading heading--sm">Co dalej</h2>
@@ -402,11 +351,9 @@
         </section>
       }
     } @else {
-      @for (k of kroki().slice(1); track k.id; let n = $index) {
+      @for (k of kroki.slice(1); track k.id; let n = $index) {
         <section class="form-part col-md-10 col-lg-8 zg-krok-zapowiedz" [attr.aria-labelledby]="k.id + '-zapowiedz'">
-          <h2 [id]="k.id + '-zapowiedz'" class="zg-krok-zapowiedz__tytul">
-            Krok {{ n + 2 }} z {{ liczbaKrokow() }}: {{ k.nazwa }}
-          </h2>
+          <h2 [id]="k.id + '-zapowiedz'" class="zg-krok-zapowiedz__tytul">Krok {{ n + 2 }} z 4: {{ k.nazwa }}</h2>
           <p class="zz-podpowiedz">Ten krok pojawi się po wybraniu pliku.</p>
         </section>
       }

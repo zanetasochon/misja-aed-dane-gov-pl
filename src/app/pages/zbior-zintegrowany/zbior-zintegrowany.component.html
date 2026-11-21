@@ -150,19 +150,6 @@
             tabindex="0">
             <h2 class="heading heading--sm">Lista i mapa AED</h2>
 
-            @if (daneDemo) {
-              <div class="alert alert-warning">
-                <p class="mb-1">
-                  <strong>Tryb demonstracyjny:</strong> zbiór zawiera {{ liczbaDemo }} AED z pliku testowego dostawcy
-                  „{{ nazwaDostawcyDemo }}”. Są oznaczone „DANE TESTOWE”, widać je tylko w tej przeglądarce i nie
-                  trafiają do plików do pobrania.
-                </p>
-                <button type="button" class="btn btn-outline-primary btn-sm" (click)="usunDaneTestowe()">
-                  Usuń dane testowe
-                </button>
-              </div>
-            }
-
             <section class="zz-awaryjne" aria-labelledby="zz-awaryjne-przycisk">
               <button
                 id="zz-awaryjne-przycisk"
@@ -353,7 +340,7 @@
                     <article class="zz-karta">
                       <h4 class="zz-karta__tytul">
                         @if (r.fikcyjne) {
-                          <span class="zz-fikcyjne">DANE TESTOWE</span>
+                          <span class="zz-fikcyjne">DANE FIKCYJNE</span>
                         }
                         {{ r.nazwa_miejsca }}
                       </h4>
@@ -425,7 +412,7 @@
                       <tr class="datagrid__row">
                         <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
                           @if (r.fikcyjne) {
-                            <span class="zz-fikcyjne">DANE TESTOWE</span>
+                            <span class="zz-fikcyjne">DANE FIKCYJNE</span>
                           }
                           {{ r.nazwa_miejsca }}
                           @if (r.opis_lokalizacji) {
@@ -520,7 +507,7 @@
                     <div class="result-item-attributes">
                       <div class="result-item-attributes__heading">
                         <p class="result-item-attributes__text">
-                          {{ r.zrodlo.prawdziwe ? 'Zbiór danych' : 'Plik testowy (tryb demo)' }}
+                          {{ r.zrodlo.prawdziwe ? 'Zbiór danych' : 'Zbiór danych (fikcyjny)' }}
                         </p>
                       </div>
                       <div class="result-item-attributes__list">

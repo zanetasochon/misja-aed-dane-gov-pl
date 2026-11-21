@@ -3,7 +3,7 @@
  * Strona „Sprawdź zgodność ze wzorcem” dla dostawców danych o AED.
  */
 
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
@@ -15,7 +15,6 @@ import { doDatyCzasuWzorca } from './lib/wiek-danych';
 import { ZRODLA } from './lib/zrodla';
 import type { PoleRekordu } from './lib/model';
 import { czyPoprawioneAutomatycznie, jakPoprawic } from './lib/porady';
-import { czyTrybDemo, NAZWA_DOSTAWCY_DEMO, wylaczTrybDemo, zapiszDaneDemo } from './lib/tryb-demo';
 import { OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
 import type { Cel } from './lib/zgodnosc';
 
@@ -42,8 +41,6 @@ const KROKI = [
   { id: 'zg-krok-4', nazwa: 'Pobierz plik zgodny ze wzorcem' },
 ] as const;
 
-const KROK_DEMO = { id: 'zg-krok-5', nazwa: 'Opublikuj w zbiorze zintegrowanym (demo)' } as const;
-
 @Component({
   selector: 'app-zgodnosc',
   standalone: true,
@@ -57,8 +54,7 @@ const KROK_DEMO = { id: 'zg-krok-5', nazwa: 'Opublikuj w zbiorze zintegrowanym (
 })
 export class ZgodnoscComponent {
   readonly etykiety = ETYKIETY;
-  readonly kroki = computed(() => (this.trybDemo() ? [...KROKI, KROK_DEMO] : [...KROKI]));
-  readonly liczbaKrokow = computed(() => this.kroki().length);
+  readonly kroki = KROKI;
   readonly pominOpcja: Opcja = { wartosc: '', etykieta: 'Pomiń tę kolumnę' };
   /** Opcje pola wzorca w grupach (optgroup): najpierw pola wymagane. */
   readonly grupyOpcji: { etykieta: string; opcje: Opcja[] }[] = [
@@ -70,45 +66,11 @@ export class ZgodnoscComponent {
     },
   ];
 
-  readonly trybDemo = signal(false);
-  readonly nazwaDostawcyDemo = NAZWA_DOSTAWCY_DEMO;
-
-  constructor() {
-    afterNextRender(() => {
-      this.trybDemo.set(czyTrybDemo());
-      // Po wejściu z ekranu logowania fokus trafia na nagłówek strony.
-      if ((history.state as { fokusNaTytul?: boolean } | null)?.fokusNaTytul) this.fokusNaTytul();
-    });
-  }
-
-  /** Krok 5 w trybie demo: przyjęte wiersze trafiają do zbioru zintegrowanego w tej przeglądarce. */
-  opublikujDemo(): void {
-    const r = this.raport();
-    const p = this.plik();
-    if (!r || !p || r.rekordy.length === 0) return;
-    zapiszDaneDemo({ csv: doCsv(r.rekordy), plik: p.nazwa, opublikowano: new Date().toISOString() });
-    this.opublikowano.set(r.rekordy.length);
-    this.komunikat.set(`Opublikowano ${r.rekordy.length} AED w zbiorze zintegrowanym (tryb demo).`);
-  }
-
-  wylogujDemo(): void {
-    wylaczTrybDemo();
-    this.trybDemo.set(false);
-    this.opublikowano.set(null);
-    this.komunikat.set('Wylogowano z trybu demonstracyjnego.');
-    this.fokusNaTytul();
-  }
-
-  private fokusNaTytul(): void {
-    document.getElementById('zg-tytul')?.focus();
-  }
-
   readonly plik = signal<Plik | null>(null);
   readonly mapowanie = signal<Cel[]>([]);
   /** Propozycja narzędzia – do oznaczenia „dopasowano automatycznie” / „wybrano ręcznie”. */
   readonly propozycja = signal<Cel[]>([]);
   readonly pobrano = signal(false);
-  readonly opublikowano = signal<number | null>(null);
   readonly identyfikator = signal('moj-zbior-aed');
   readonly polaWymagane = POLA_WYMAGANE;
   /** Data i godzina ostatniej zmiany pliku – trafia do data_aktualizacji (nie dzisiejsza data). */
@@ -129,12 +91,7 @@ export class ZgodnoscComponent {
   });
 
   /** Bieżący krok: 1 bez pliku, 2 po wczytaniu (sprawdź mapowanie i raport), 4 po pobraniu. */
-  readonly biezacyKrok = computed(() => {
-    if (!this.plik()) return 1;
-    if (this.opublikowano() !== null) return 6;
-    if (this.pobrano()) return this.trybDemo() ? 5 : 4;
-    return 2;
-  });
+  readonly biezacyKrok = computed(() => (!this.plik() ? 1 : this.pobrano() ? 4 : 2));
 
   readonly dopasowane = computed(() => this.mapowanie().filter((c) => c !== '').length);
 
@@ -201,7 +158,6 @@ export class ZgodnoscComponent {
       this.mapowanie.set(propozycja);
       this.propozycja.set(propozycja);
       this.pobrano.set(false);
-      this.opublikowano.set(null);
       this.blad.set('');
       this.komunikat.set(
         `Wczytano plik ${nazwa}: ${wiersze.length} wierszy, ${naglowki.length} kolumn. Sprawdź dopasowanie kolumn w kroku 2.`,
