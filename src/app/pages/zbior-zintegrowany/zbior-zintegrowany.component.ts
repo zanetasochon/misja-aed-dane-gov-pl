@@ -43,12 +43,11 @@ export interface Lokalizacja {
 /** Średnie tempo marszu do szacowania czasu dojścia: 5 km/h ≈ 83 m na minutę. */
 const METRY_NA_MINUTE = 5000 / 60;
 
-/** Przykładowa lokalizacja do pokazu (jury raczej nie będzie w żadnym z 4 miast ze zbioru). */
-export const LOKALIZACJA_PRZYKLADOWA: Lokalizacja = {
-  szer: 52.4012,
-  dlug: 20.9265,
-  opis: 'przykładowa lokalizacja: centrum Legionowa',
-};
+/**
+ * Promień przycisku awaryjnego „Pokaż najbliższe dostępne defibrylatory” (decyzja Żanety, 21.11):
+ * AED, do którego świadek zdąży dojść i wrócić w ciągu ok. 3 minut (AHA: 1,5–2,5 min ≈ 150–250 m w jedną stronę).
+ */
+export const PROMIEN_AWARYJNY_M = 250;
 
 @Component({
   selector: 'app-zbior-zintegrowany',
@@ -118,8 +117,7 @@ export class ZbiorZintegrowanyComponent {
 
   // „W pobliżu”: lokalizacja użytkownika liczona tylko w przeglądarce (niczego nie wysyłamy).
   readonly lokalizacja = signal<Lokalizacja | null>(null);
-  readonly promien = signal(500);
-  readonly promienie = [300, 500, 1000, 2000];
+  readonly promien = signal(PROMIEN_AWARYJNY_M);
   readonly ustalaLokalizacje = signal(false);
   readonly bladLokalizacji = signal('');
 
@@ -194,11 +192,10 @@ export class ZbiorZintegrowanyComponent {
     });
   }
 
-  /** Najbliższy AED, gdy w promieniu nie ma żadnego – żeby lista nigdy nie była bezużyteczna. */
-  readonly najblizszyPozaPromieniem = computed(() => {
-    if (!this.lokalizacja() || this.wyniki().length) return null;
-    return this.poFiltrach()[0] ?? null;
-  });
+  /** Tryb awaryjny bez wyników: brak AED dostępnego teraz w promieniu 250 m → czerwony komunikat „dzwoń 112”. */
+  readonly brakDostepnychWPoblizu = computed(
+    () => !!this.lokalizacja() && this.tylkoTeraz() && this.wyniki().length === 0,
+  );
 
   /** Odległość w metrach od lokalizacji użytkownika (null bez lokalizacji). */
   odleglosc(r: RekordZintegrowany): number | null {
@@ -215,12 +212,14 @@ export class ZbiorZintegrowanyComponent {
     return m < 1000 ? `${m} m` : `${m / 1000} km`;
   }
 
-  uzyjMojejLokalizacji(): void {
+  /**
+   * Przycisk awaryjny: lokalizacja z przeglądarki, potem AED dostępne teraz w promieniu 250 m, od najbliższego.
+   * Lokalizacja zostaje w przeglądarce. Gdy nie da się jej ustalić albo nie ma wyników – czerwony komunikat 112.
+   */
+  pokazNajblizszeDostepne(): void {
     if (this.ustalaLokalizacje()) return;
     if (!this.wPrzegladarce || !('geolocation' in navigator)) {
-      this.bladLokalizacji.set(
-        'Ta przeglądarka nie udostępnia lokalizacji. Użyj przykładowej lokalizacji albo filtra miejscowości.',
-      );
+      this.bladLokalizacji.set('Ta przeglądarka nie udostępnia lokalizacji.');
       return;
     }
     this.ustalaLokalizacje.set(true);
@@ -229,39 +228,34 @@ export class ZbiorZintegrowanyComponent {
     navigator.geolocation.getCurrentPosition(
       (poz) => {
         this.ustalaLokalizacje.set(false);
+        this.promien.set(PROMIEN_AWARYJNY_M);
+        this.tylkoTeraz.set(true);
         this.lokalizacja.set({
           szer: poz.coords.latitude,
           dlug: poz.coords.longitude,
           opis: `Twoja lokalizacja (dokładność ok. ${Math.round(poz.coords.accuracy)} m)`,
         });
-        this.komunikat.set('Ustalono lokalizację. Lista pokazuje AED w wybranym promieniu, od najbliższego.');
+        this.komunikat.set('');
       },
       (err) => {
         this.ustalaLokalizacje.set(false);
-        const tresc =
+        this.bladLokalizacji.set(
           err.code === err.PERMISSION_DENIED
-            ? 'Nie udzielono zgody na lokalizację. Możesz użyć przykładowej lokalizacji albo filtra miejscowości.'
-            : 'Nie udało się ustalić lokalizacji. Spróbuj ponownie albo użyj przykładowej lokalizacji.';
-        this.bladLokalizacji.set(tresc);
-        this.komunikat.set(tresc);
+            ? 'Nie udzielono zgody na lokalizację.'
+            : 'Nie udało się ustalić Twojej lokalizacji.',
+        );
+        this.komunikat.set('');
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
   }
 
-  uzyjLokalizacjiPrzykladowej(): void {
-    this.bladLokalizacji.set('');
-    this.lokalizacja.set(LOKALIZACJA_PRZYKLADOWA);
-    this.komunikat.set('Ustawiono przykładową lokalizację: centrum Legionowa.');
-  }
-
-  wyczyscLokalizacje(): void {
+  /** Wyjście z trybu awaryjnego: znów wszystkie AED. */
+  pokazWszystkie(): void {
     this.lokalizacja.set(null);
-    this.komunikat.set('Wyczyszczono lokalizację. Lista pokazuje wszystkie AED.');
-  }
-
-  get bezGodzin(): number {
-    return this.wynik.rekordy.filter((r) => !r.godziny_dostepnosci).length;
+    this.tylkoTeraz.set(false);
+    this.bladLokalizacji.set('');
+    this.komunikat.set('Lista pokazuje wszystkie AED.');
   }
 
   constructor() {
@@ -349,12 +343,15 @@ export class ZbiorZintegrowanyComponent {
     this.wewnatrz.set('');
     this.dostawca.set('');
     this.lokalizacja.set(null);
-    this.promien.set(500);
+    this.promien.set(PROMIEN_AWARYJNY_M);
+    this.bladLokalizacji.set('');
     this.komunikat.set('Wyczyszczono filtry.');
   }
 
   /** Treść komunikatu o liczbie wyników – jedno zdanie, bez spacji przed kropką. */
   tekstWynikow(): string {
+    if (this.lokalizacja() && this.tylkoTeraz())
+      return `Znaleziono ${this.wyniki().length} AED dostępnych teraz w promieniu ${this.opisPromienia(this.promien())} od Ciebie.`;
     const promien = this.lokalizacja() ? ` w promieniu ${this.opisPromienia(this.promien())}` : '';
     return `Znaleziono ${this.wyniki().length} z ${this.wynik.rekordy.length} AED${promien}.`;
   }

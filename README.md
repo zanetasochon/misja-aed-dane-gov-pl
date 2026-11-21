@@ -62,13 +62,15 @@ npx eslint src/app/pages/zbior-zintegrowany
    - Zobaczysz propozycję mapowania kolumn, którą możesz zmienić, oraz raport zgodności („Spełnione / Niespełnione”): pola wymagane, adres w osobnych polach, formaty wartości i współrzędne.
    - Pobierz plik zgodny ze wzorcem (CSV albo JSON). Plik nie opuszcza przeglądarki.
 
-### Dlaczego domyślny promień „W pobliżu” to 500 m
+### Przycisk „Pokaż najbliższe dostępne defibrylatory” (promień 250 m)
 
-Nie ma jednego standardu promienia. Zalecenia mówią o czasie dotarcia do AED:
-- wytyczne AHA dla miejsc pracy: AED osiągalny w 3–5 minut w obie strony, czyli w ok. 1,5–2,5 minuty szybkiego marszu w jedną stronę (ok. 150–250 m);
-- badania rozmieszczenia AED przyjmują ok. 100 m jako zasięg, który świadek pokona z AED w obie strony w 3 minuty.
+Przycisk jest na górze zakładki „Lista i mapa” i służy sytuacji awaryjnej: ktoś obok zasłabł, a świadek szuka AED, po który zdąży pójść. Po kliknięciu przeglądarka ustala lokalizację, a lista i mapa pokazują tylko AED **dostępne teraz** (według godzin z pola `godziny_dostepnosci`) w promieniu **250 m**, od najbliższego. Lokalizacja jest liczona tylko w przeglądarce i nigdzie nie jest wysyłana.
 
-500 m (ok. 6 minut marszu) to świadomy kompromis zespołu. Zbiór obejmuje dziś tylko kilka miast, więc przy 150–250 m lista byłaby często pusta. Użytkownik może wybrać 300 m. Gdy w promieniu nie ma AED, strona pokazuje najbliższy z odległością. Lokalizacja jest liczona tylko w przeglądarce i nigdzie nie jest wysyłana. Na stronie zawsze widnieje komunikat „W nagłym wypadku dzwoń 112”.
+Gdy w promieniu nie ma AED, o którym wiadomo, że jest teraz dostępny, albo gdy nie da się ustalić lokalizacji, strona pokazuje czerwony komunikat „Dzwoń 112” z przyciskiem „Zadzwoń 112” (`tel:112`).
+
+Dlaczego 250 m: wytyczne AHA dla miejsc pracy zakładają AED osiągalny w 3–5 minut w obie strony, czyli ok. 1,5–2,5 minuty szybkiego marszu w jedną stronę (ok. 150–250 m). Badania rozmieszczenia AED przyjmują nawet ok. 100 m.
+
+Ograniczenie: żaden obecny zbiór źródłowy nie podaje godzin dostępności, więc przy prawdziwych danych przycisk zawsze kończy się komunikatem 112. To uczciwy wynik: AED o nieznanych godzinach może być zamknięty. Pokazuje też, po co we wzorcu jest wymagane pole `godziny_dostepnosci`.
 
 Źródła: [AHA – AED Implementation Guide (2023)](https://ECCGuidelines.Heart.org/-/media/CPR-Files/Training-Programs/AED-Implementation/2023-updates/KJ1683-AED-Guide.pdf), [badanie rozmieszczenia AED – PMC4992180](https://pmc.ncbi.nlm.nih.gov/articles/PMC4992180).
 

@@ -645,3 +645,30 @@
     background: var(--contrast-secondary);
   }
 }
+
+// ---- przycisk awaryjny i komunikat 112 ----
+.zz-awaryjne {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid v.$color-grey-light-6;
+}
+
+.zz-awaryjne__przycisk {
+  width: 100%;
+  min-height: 3.5rem;
+  font-weight: bold;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
+}
+
+.zz-112__tytul {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.alert-danger .zz-112__ikona {
+  background: v.$color-darker-red;
+}
