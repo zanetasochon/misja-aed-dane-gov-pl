@@ -29,6 +29,7 @@ import type { RaportZrodla, RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
 import { odlegloscM } from './lib/geometria';
+import { TooltipDirective } from '@app/shared/tooltip/tooltip.directive';
 import { MapaAedComponent } from './mapa-aed.component';
 
 type TakNie = '' | 'tak' | 'nie' | 'brak';
@@ -62,6 +63,7 @@ export const PROMIEN_AWARYJNY_M = 250;
     MapaAedComponent,
     CollapsibleTextComponent,
     FavoriteCounterComponent,
+    TooltipDirective,
   ],
   templateUrl: './zbior-zintegrowany.component.html',
   styleUrl: './zbior-zintegrowany.component.scss',
@@ -80,10 +82,26 @@ export class ZbiorZintegrowanyComponent {
   // Układ strony zbioru jak w portalu: pasek boczny ze szczegółami i zakładki.
   readonly szczegolyWidoczne = signal(true);
   readonly zakladka = signal<Zakladka>('dane');
-  readonly zakladki: { id: Zakladka; etykieta: string }[] = [
-    { id: 'dane', etykieta: 'Lista i mapa' },
-    { id: 'zrodla', etykieta: 'Zbiory źródłowe' },
-    { id: 'raport', etykieta: 'Raport harmonizacji' },
+  /** Zakładki z podpowiedziami jak w portalu (dataset-item: „Dane”, „Warunki wykorzystywania”, „Historia zbioru”). */
+  readonly zakladki: { id: Zakladka; etykieta: string; podpowiedz: string }[] = [
+    {
+      id: 'dane',
+      etykieta: 'Lista i mapa',
+      podpowiedz:
+        'Wszystkie AED ze zbiorów źródłowych na liście i mapie. Możesz je przeszukiwać, filtrować, znaleźć najbliższe dostępne i pobrać zbiór w CSV, JSON albo GeoJSON.',
+    },
+    {
+      id: 'zrodla',
+      etykieta: 'Zbiory źródłowe',
+      podpowiedz:
+        'Zbiory o AED opublikowane na dane.gov.pl przez różnych dostawców, z licencją i datą danych. Za dane w każdym zbiorze odpowiada jego dostawca.',
+    },
+    {
+      id: 'raport',
+      etykieta: 'Raport harmonizacji',
+      podpowiedz:
+        'Jak dane z każdego źródła pasują do wzorcowego zakresu danych AED: mapowanie kolumn, brakujące pola wymagane, odrzucone wiersze i możliwe duplikaty.',
+    },
   ];
   readonly etykiety = ETYKIETY;
   readonly polaWymagane = POLA_WYMAGANE;
