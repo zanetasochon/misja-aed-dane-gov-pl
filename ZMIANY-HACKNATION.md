@@ -8,6 +8,9 @@ Prototyp powstał na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek�
 
 | Data | Plik | Zmiana |
 |---|---|---|
+| 2026-11-21 | `COPYING` (nowy) | Pełny tekst GNU GPL v3.0 (https://www.gnu.org/licenses/gpl-3.0.txt). |
+| 2026-11-21 | `src/app/layout/main-layout/main-layout.component.html` | Pasek na górze każdej strony: „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.” |
+| 2026-11-21 | `src/app/layout/footer/footer.component.html` | W stopce informacja o licencji GPL-3.0, braku gwarancji, liście zmian i link do kodu źródłowego (GPL §5d). |
 | 2026-11-21 | `proxy.public.conf.json` (nowy) | Proxy deweloperskie do publicznego API produkcyjnego `api.dane.gov.pl/1.4`. Tylko do odczytu. |
 | 2026-11-21 | `angular.json` | Nowa konfiguracja `serve` o nazwie `public`, korzystająca z proxy powyżej. |
 | 2026-11-21 | `package.json` | Nowy skrypt `start:public`. |
