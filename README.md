@@ -46,19 +46,31 @@ npx eslint src/app/pages/zbior-zintegrowany
 
 ## Jak przetestować
 
-1. **Lista zbiorów:** otwórz http://localhost:4300/pl/dataset. Nad wynikami jest karta **„Defibrylatory AED w Polsce – zbiór zintegrowany”** z listą zbiorów źródłowych. Wpisz w wyszukiwarkę portalu „defibrylator”: zobaczysz prawdziwe, osobne zbiory AED różnych urzędów.
-2. **Zbiór zintegrowany:** kliknij tytuł karty (adres `/pl/dataset/zbior-zintegrowany-aed`).
+1. **Lista zbiorów:** otwórz http://localhost:4300/pl/dataset. Pierwszy na liście jest zbiór **„Defibrylatory AED w Polsce – zbiór zintegrowany”**, wyróżniony niebieską ramką i etykietą „Zbiór zintegrowany”. Wpisz w wyszukiwarkę portalu „defibrylator”: zobaczysz prawdziwe, osobne zbiory AED różnych urzędów.
+2. **Zbiór zintegrowany:** kliknij jego tytuł (adres `/pl/dataset/zbior-zintegrowany-aed`).
    - **Informacje o zbiorze:** opis, kategoria, częstotliwość aktualizacji, licencja, data aktualizacji oraz „Prowadzący zbiór zintegrowany: Ministerstwo Cyfryzacji (administrator portalu). Za treść rekordów odpowiadają dostawcy zbiorów źródłowych.”
    - **Zbiory źródłowe:** dostawca, format, licencja i data danych.
    - **Raport harmonizacji** dla każdego źródła: mapowanie kolumn na pola wzorca, kompletność pól wymaganych (Krosno i Legionowo 5/9, port lotniczy 9/9), odrzucone wiersze z powodem i ostrzeżenia, np. adres w jednym polu albo brak numeru budynku.
    - **Możliwe duplikaty:** 2 pary w prawdziwych danych. Nie usuwamy ich automatycznie, bo w jednym budynku mogą być dwa AED.
 3. **Filtry i wyszukiwanie:** w sekcji „Dane: lista i mapa” wpisz nazwę albo ulicę i użyj filtrów: miejscowość, dostęp, wewnątrz lub na zewnątrz, dostawca źródłowy, „Dostępny teraz”. Liczba wyników jest ogłaszana czytnikom ekranu.
-4. **Mapa:** znaczniki AED na podkładzie OpenStreetMap. Można przesuwać strzałkami, gdy mapa ma fokus, albo przyciskami „Przesuń…”, „Przybliż”, „Oddal”. Do znaczników prowadzi klawisz Tab, a Enter pokazuje opis. Lista pod mapą jest jej pełnym tekstowym odpowiednikiem. Na telefonie domyślnie widać listę, a mapę włącza przycisk „Pokaż mapę”.
-5. **Eksport:** przyciski „Pobierz CSV”, „Pobierz JSON” i „Pobierz GeoJSON”. CSV jest w UTF-8, zgodnie z RFC 4180, bez całkowicie pustych kolumn (Standard techniczny, s. 21). JSON i GeoJSON mają te same pola wzorca.
-6. **Narzędzie zgodności:** przycisk „Sprawdź zgodność ze wzorcem” (adres `/pl/dataset/zgodnosc-ze-wzorcem`).
+4. **W pobliżu:** kliknij „Przykładowa lokalizacja (Legionowo)” albo „Użyj mojej lokalizacji” i wybierz promień. Lista pokazuje AED od najbliższego, z odległością i czasem dojścia. Z przykładowej lokalizacji w promieniu 500 m są 4 AED.
+
+5. **Mapa:** znaczniki AED na podkładzie OpenStreetMap. Można przesuwać strzałkami, gdy mapa ma fokus, albo przyciskami „Przesuń…”, „Przybliż”, „Oddal”. Do znaczników prowadzi klawisz Tab, a Enter pokazuje opis. Lista pod mapą jest jej pełnym tekstowym odpowiednikiem. Na telefonie domyślnie widać listę, a mapę włącza przycisk „Pokaż mapę”.
+6. **Eksport:** przyciski „Pobierz CSV”, „Pobierz JSON” i „Pobierz GeoJSON”. CSV jest w UTF-8, zgodnie z RFC 4180, bez całkowicie pustych kolumn (Standard techniczny, s. 21). JSON i GeoJSON mają te same pola wzorca.
+7. **Narzędzie zgodności:** przycisk „Sprawdź zgodność ze wzorcem” (adres `/pl/dataset/zgodnosc-ze-wzorcem`).
    - Wgraj własny CSV albo kliknij „Użyj przykładu: prawdziwy plik z Krosna”.
    - Zobaczysz propozycję mapowania kolumn, którą możesz zmienić, oraz raport zgodności („Spełnione / Niespełnione”): pola wymagane, adres w osobnych polach, formaty wartości i współrzędne.
    - Pobierz plik zgodny ze wzorcem (CSV albo JSON). Plik nie opuszcza przeglądarki.
+
+### Dlaczego domyślny promień „W pobliżu” to 500 m
+
+Nie ma jednego standardu promienia. Zalecenia mówią o czasie dotarcia do AED:
+- wytyczne AHA dla miejsc pracy: AED osiągalny w 3–5 minut w obie strony, czyli w ok. 1,5–2,5 minuty szybkiego marszu w jedną stronę (ok. 150–250 m);
+- badania rozmieszczenia AED przyjmują ok. 100 m jako zasięg, który świadek pokona z AED w obie strony w 3 minuty.
+
+500 m (ok. 6 minut marszu) to świadomy kompromis zespołu. Zbiór obejmuje dziś tylko kilka miast, więc przy 150–250 m lista byłaby często pusta. Użytkownik może wybrać 300 m. Gdy w promieniu nie ma AED, strona pokazuje najbliższy z odległością. Lokalizacja jest liczona tylko w przeglądarce i nigdzie nie jest wysyłana. Na stronie zawsze widnieje komunikat „W nagłym wypadku dzwoń 112”.
+
+Źródła: [AHA – AED Implementation Guide (2023)](https://ECCGuidelines.Heart.org/-/media/CPR-Files/Training-Programs/AED-Implementation/2023-updates/KJ1683-AED-Guide.pdf), [badanie rozmieszczenia AED – PMC4992180](https://pmc.ncbi.nlm.nih.gov/articles/PMC4992180).
 
 ## Ograniczenia prototypu
 
