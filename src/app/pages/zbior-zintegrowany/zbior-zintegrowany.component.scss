@@ -7,18 +7,38 @@
 // Zakładki jako przyciski (role="tab") – wygląd jak linki tab-list__link w portalu.
 .zz-zakladka {
   width: 100%;
-  background: transparent;
   font: inherit;
   font-weight: bold;
-  color: v.$color-blue-light;
+  color: v.$color-blue-light; // 5,3:1 na białym, 4,7:1 na #eee (telefon)
 
-  &.tab-list__link--active {
-    color: v.$color-heading;
+  // Od md: aktywna jak w portalu (biała karta, ciemny tekst, ramka). Nieaktywne bez tła.
+  @media (min-width: 768px) {
+    background: transparent;
+
+    &.tab-list__link--active {
+      color: v.$color-heading;
+    }
+  }
+
+  // < md portal maluje aktywną zakładkę na niebiesko ($color-blue-light) – tekst musi być biały (1.4.3).
+  @media (max-width: 767.98px) {
+    &.tab-list__link--active {
+      color: v.$color-white;
+    }
+  }
+
+  &:hover:not(.tab-list__link--active) {
+    text-decoration: underline;
   }
 }
 
 .tabs-content > [role='tabpanel'] {
   padding-top: 1.5rem;
+
+  // Globalny `:focus` portalu rysuje obrys także po kliknięciu myszą w panel. Obrys zostaje tylko dla klawiatury.
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
 
   &:focus-visible {
     outline-offset: 2px; // kolor i grubość: globalny $outline portalu
@@ -318,7 +338,6 @@
 :host-context(.black-yellow),
 :host-context(.yellow-black) {
   .zz-zakladka,
-  .zz-zakladka.tab-list__link--active,
   .zz-podpowiedz,
   .zz-brak,
   .zz-opis,
@@ -335,6 +354,17 @@
   .zg-blad,
   .mapa-aed__kontener {
     border-color: var(--contrast-primary);
+  }
+
+  // Zakładki w trybie kontrastu: nieaktywne – kolor trybu na tle trybu; aktywna – odwrócone (jak w portalu,
+  // a11y/high-contrast/views/_tabs.scss). Bez tego aktywna miała tekst w kolorze swojego tła.
+  .zz-zakladka {
+    background: var(--contrast-secondary);
+  }
+
+  .zz-zakladka.tab-list__link--active {
+    background: var(--contrast-primary);
+    color: var(--contrast-secondary);
   }
 
   ::ng-deep .znacznik-aed {

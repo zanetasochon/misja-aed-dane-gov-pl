@@ -152,8 +152,8 @@
                 {{ ustalaLokalizacje() ? 'Ustalam Twoją lokalizację…' : 'Pokaż najbliższe dostępne defibrylatory' }}
               </button>
               <p id="zz-awaryjne-opis" class="zz-podpowiedz">
-                AED dostępne teraz w promieniu {{ opisPromienia(promien()) }} od Ciebie. Twoja lokalizacja nie jest
-                nigdzie wysyłana.
+                Pokazuje AED dostępne o aktualnej porze w promieniu {{ opisPromienia(promien()) }} od Ciebie. Twoja
+                lokalizacja nie jest nigdzie wysyłana.
               </p>
 
               @if (bladLokalizacji() || brakDostepnychWPoblizu()) {
@@ -165,7 +165,8 @@
                       @if (bladLokalizacji()) {
                         {{ bladLokalizacji() }} Nie możemy wskazać AED w pobliżu.
                       } @else {
-                        W promieniu {{ opisPromienia(promien()) }} nie ma AED, o którym wiemy, że jest teraz dostępny.
+                        W promieniu {{ opisPromienia(promien()) }} nie ma AED, o którym wiemy, że jest dostępny o
+                        aktualnej porze.
                       }
                       Dyspozytor wskaże najbliższy AED i powie, co robić.
                     </p>
