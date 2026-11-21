@@ -1,6 +1,13 @@
 <!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21. -->
 <section class="container">
-  <h1 class="form-header">Sprawdź zgodność ze wzorcem AED</h1>
+  <h1 id="zg-tytul" class="form-header" tabindex="-1">Sprawdź zgodność ze wzorcem AED</h1>
+  @if (trybDemo()) {
+    <div class="alert alert-warning zg-demo col-md-10 col-lg-8">
+      <p class="mb-1"><strong>Tryb demonstracyjny – bez prawdziwego logowania.</strong></p>
+      <p class="mb-2">Zalogowano jako: {{ nazwaDostawcyDemo }}</p>
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="wylogujDemo()">Wyloguj (demo)</button>
+    </div>
+  }
   <div class="form-description col-md-10 col-lg-8">
     <p>
       Wgraj plik CSV ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych AED (v1.2) masz, których

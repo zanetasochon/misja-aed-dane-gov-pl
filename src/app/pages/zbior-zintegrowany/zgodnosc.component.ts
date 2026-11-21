@@ -3,7 +3,7 @@
  * Strona „Sprawdź zgodność ze wzorcem” dla dostawców danych o AED.
  */
 
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
@@ -15,6 +15,7 @@ import { doDatyCzasuWzorca } from './lib/wiek-danych';
 import { ZRODLA } from './lib/zrodla';
 import type { PoleRekordu } from './lib/model';
 import { czyPoprawioneAutomatycznie, jakPoprawic } from './lib/porady';
+import { czyTrybDemo, NAZWA_DOSTAWCY_DEMO, wylaczTrybDemo } from './lib/tryb-demo';
 import { OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
 import type { Cel } from './lib/zgodnosc';
 
@@ -65,6 +66,28 @@ export class ZgodnoscComponent {
       opcje: (['ADRES', 'CECHA_ULICY', 'GEOMETRIA'] as const).map((c) => ({ wartosc: c, etykieta: OPIS_CELU[c] })),
     },
   ];
+
+  readonly trybDemo = signal(false);
+  readonly nazwaDostawcyDemo = NAZWA_DOSTAWCY_DEMO;
+
+  constructor() {
+    afterNextRender(() => {
+      this.trybDemo.set(czyTrybDemo());
+      // Po wejściu z ekranu logowania fokus trafia na nagłówek strony.
+      if ((history.state as { fokusNaTytul?: boolean } | null)?.fokusNaTytul) this.fokusNaTytul();
+    });
+  }
+
+  wylogujDemo(): void {
+    wylaczTrybDemo();
+    this.trybDemo.set(false);
+    this.komunikat.set('Wylogowano z trybu demonstracyjnego.');
+    this.fokusNaTytul();
+  }
+
+  private fokusNaTytul(): void {
+    document.getElementById('zg-tytul')?.focus();
+  }
 
   readonly plik = signal<Plik | null>(null);
   readonly mapowanie = signal<Cel[]>([]);
