@@ -334,8 +334,8 @@
                   }
                 </div>
               }
-              <ul class="zz-karty d-md-none" aria-label="Lista AED – tekstowy odpowiednik mapy">
-                @for (r of wyniki(); track r.id_aed) {
+              <ul class="zz-karty d-md-none" aria-label="Lista AED">
+                @for (r of wynikiStrony(); track r.id_aed) {
                   <li>
                     <article class="zz-karta">
                       <h4 class="zz-karta__tytul">
@@ -387,10 +387,12 @@
                 aria-labelledby="lista-aed-podpis"
                 tabindex="0">
                 <table class="datagrid">
-                  <caption id="lista-aed-podpis" class="zz-podpis">
-                    Lista AED ({{
-                      wyniki().length
-                    }}) – tekstowy odpowiednik mapy
+                  <caption
+                    class="zz-podpis"
+                    tooltipTitle="Lista AED"
+                    appInfoTooltip="Lista zawiera te same AED co mapa – to jej tekstowy odpowiednik. Możesz z niej korzystać zamiast mapy, np. z klawiatury albo z czytnikiem ekranu."
+                    withoutMargin>
+                    <span id="lista-aed-podpis">Lista AED ({{ wyniki().length }})</span>
                   </caption>
                   <thead>
                     <tr>
@@ -408,7 +410,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (r of wyniki(); track r.id_aed) {
+                    @for (r of wynikiStrony(); track r.id_aed) {
                       <tr class="datagrid__row">
                         <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
                           @if (r.fikcyjne) {
@@ -457,6 +459,25 @@
                   </tbody>
                 </table>
               </div>
+
+              <!-- RESULTS FOOTER -->
+              @if (wyniki().length) {
+                <footer class="results-footer pt-5">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <!-- results per page -->
+                    <app-items-per-page [selected]="naStronie()" (selectedChange)="zmienNaStronie($event)">
+                    </app-items-per-page>
+
+                    <!-- pagination -->
+                    <app-pagination
+                      [itemsPerPage]="naStronie()"
+                      [totalItems]="wyniki().length"
+                      [page]="strona()"
+                      (pageChange)="zmienStrone($event)">
+                    </app-pagination>
+                  </div>
+                </footer>
+              }
             </section>
           </div>
 

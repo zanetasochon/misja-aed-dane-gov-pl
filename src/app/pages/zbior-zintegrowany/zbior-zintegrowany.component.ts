@@ -12,8 +12,10 @@ import {
   PLATFORM_ID,
   afterNextRender,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -33,12 +35,14 @@ import {
 import { doCsv, doCsvZrodel, doGeoJson, doJson, opisyZrodel, pobierzPlik } from './lib/eksport';
 import { czyDostepnyTeraz } from './lib/godziny';
 import { integruj } from './lib/harmonizacja';
-import { ZRODLA, ZRODLA_NIEDOSTEPNE } from './lib/zrodla';
+import { ZRODLA, ZRODLA_NIEDOSTEPNE, ZRODLO_DEMO } from './lib/zrodla';
 import type { RaportZrodla, RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
 import { odlegloscM } from './lib/geometria';
 import { InfoTooltipDirective } from '@app/shared/info-tooltip/info-tooltip.directive';
+import { ItemsPerPageComponent } from '@app/shared/items-per-page/items-per-page.component';
+import { PaginationComponent } from '@app/shared/pagination/pagination.component';
 import { MapaAedComponent } from './mapa-aed.component';
 
 type TakNie = '' | 'tak' | 'nie' | 'brak';
@@ -70,6 +74,8 @@ export const PROMIEN_AWARYJNY_M = 250;
     CollapsibleTextComponent,
     FavoriteCounterComponent,
     InfoTooltipDirective,
+    ItemsPerPageComponent,
+    PaginationComponent,
     SubscribeButtonComponent,
     FavoriteButtonComponent,
     TranslatePipe,
@@ -79,10 +85,14 @@ export const PROMIEN_AWARYJNY_M = 250;
   styleUrl: './zbior-zintegrowany.component.scss',
 })
 export class ZbiorZintegrowanyComponent {
-  readonly wynik = integruj(ZRODLA);
+  // Prawdziwe źródła + źródło fikcyjne (oznaczone „DANE FIKCYJNE”, nigdy w eksporcie).
+  readonly wynik = integruj([...ZRODLA, ZRODLO_DEMO]);
   readonly niedostepne = ZRODLA_NIEDOSTEPNE;
-  readonly doEksportu = this.wynik.rekordy;
-  readonly opisyZrodelEksportu = opisyZrodel(this.wynik.raporty, ZRODLA_NIEDOSTEPNE);
+  readonly doEksportu = this.wynik.rekordy.filter((r) => !r.fikcyjne);
+  readonly opisyZrodelEksportu = opisyZrodel(
+    this.wynik.raporty.filter((r) => r.zrodlo.prawdziwe),
+    ZRODLA_NIEDOSTEPNE,
+  );
   /** Ten sam tytuł, opis i słowa kluczowe co na liście zbiorów. */
   readonly tytul = TYTUL_ZBIORU;
   readonly opis = OPIS_ZBIORU;
@@ -197,6 +207,42 @@ export class ZbiorZintegrowanyComponent {
       .filter((x) => !lok || (x.m ?? 0) <= p)
       .map((x) => x.r);
   });
+
+  // Paginacja listy jak w portalu (app-items-per-page + app-pagination, domyślnie 20). Mapa pokazuje wszystkie wyniki.
+  readonly strona = signal(1);
+  readonly naStronie = signal(20);
+  readonly wynikiStrony = computed(() => {
+    const od = (this.strona() - 1) * this.naStronie();
+    return this.wyniki().slice(od, od + this.naStronie());
+  });
+  /** Stan filtrów – bez zegara „teraz”, żeby lista nie wracała na stronę 1 co minutę. */
+  private readonly filtry = computed(() => [
+    this.szukaj(),
+    this.miejscowosc(),
+    this.dostep(),
+    this.wewnatrz(),
+    this.dostawca(),
+    this.tylkoTeraz(),
+    this.lokalizacja(),
+    this.promien(),
+  ]);
+  private readonly powrotNaPierwszaStrone = effect(
+    () => {
+      this.filtry();
+      untracked(() => this.strona.set(1));
+    },
+    { allowSignalWrites: true },
+  );
+
+  zmienStrone(strona: number): void {
+    this.strona.set(strona);
+    document.getElementById('lista-aed')?.focus();
+  }
+
+  zmienNaStronie(ile: number): void {
+    this.naStronie.set(+ile);
+    this.strona.set(1);
+  }
 
   /** Aktywne filtry jako usuwalne tagi. */
   readonly aktywneFiltry = computed(() => {
