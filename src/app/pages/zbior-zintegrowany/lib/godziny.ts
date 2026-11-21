@@ -1,8 +1,8 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * „Dostępny teraz” z zapisu opening_hours (OSM). Obsługujemy podzbiór składni,
- * który generuje nasz formularz i który występuje w danych: „24/7” oraz reguły
+ * „Dostępny teraz” z zapisu opening_hours (OSM). Obsługujemy podzbiór składni
+ * opisany we wzorcu i występujący w danych: „24/7” oraz reguły
  * „Mo-Fr 08:00-16:00; Sa 09:00-13:00”, listy dni („Tu,Th”) i kilka przedziałów („08:00-12:00,13:00-16:00”).
  * Zapis spoza podzbioru → null („nie wiadomo”), a nie zgadywanie.
  */

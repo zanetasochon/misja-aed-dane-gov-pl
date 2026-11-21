@@ -1,7 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Model rekordu zbioru zintegrowanego: 30 pól ze wzorcowego zakresu danych AED v1.1
+ * Model rekordu zbioru zintegrowanego: 30 pól ze wzorcowego zakresu danych AED v1.2
  * (arkusz „Zakres danych”, ta sama kolejność kolumn). W zbiorze zintegrowanym pola,
  * których źródło nie dostarcza, mają wartość null – integracja nie zmyśla danych.
  */
@@ -119,17 +119,38 @@ export const ETYKIETY: Record<PoleRekordu, string> = {
 };
 
 /**
- * 9 pól, które według wzorca wpisuje człowiek (CLAUDE.md, „Co już jest”).
- * Kompletność źródła liczymy względem tej listy, np. „5/9”.
+ * Pola oznaczone „wymagane” w arkuszu „Zakres danych” wzorca v1.2 (kolumna G) – 15 pól.
+ * Kompletność źródła liczymy względem tej listy, np. „9/15”.
  */
 export const POLA_WYMAGANE: readonly PoleRekordu[] = [
+  'id_aed',
   'nazwa_miejsca',
   'opis_lokalizacji',
   'ulica',
   'numer_budynku',
   'kod_pocztowy',
   'miejscowosc',
+  'szerokosc_geograficzna',
+  'dlugosc_geograficzna',
   'wewnatrz_budynku',
   'dostep',
   'godziny_dostepnosci',
+  'dysponent_nazwa',
+  'zrodlo_danych',
+  'data_aktualizacji',
 ];
+
+/** Pola nadawane przez narzędzie integrujące, nie przez dostawcę (xlsx, kolumna K: „nadaje system”). */
+export const POLA_SYSTEMOWE: readonly PoleRekordu[] = ['id_aed', 'zrodlo_danych', 'data_aktualizacji'];
+
+/** Słowniki z arkusza „Słowniki” wzorca. */
+export const STATUS_URZADZENIA = ['sprawne', 'w serwisie', 'wycofane'] as const;
+export const TYP_DYSPONENTA = [
+  'administracja publiczna',
+  'edukacja',
+  'ochrona zdrowia',
+  'służby',
+  'transport',
+  'podmiot prywatny',
+  'organizacja pozarządowa',
+] as const;

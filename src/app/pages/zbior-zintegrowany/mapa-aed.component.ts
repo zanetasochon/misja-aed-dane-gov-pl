@@ -93,11 +93,16 @@ export class MapaAedComponent implements OnDestroy {
       html: '<span aria-hidden="true">AED</span>',
       iconSize: [28, 28],
     });
+    const ikonaFikcyjna = L.divIcon({
+      className: 'znacznik-aed znacznik-aed--fikcyjny',
+      html: '<span aria-hidden="true">DEMO</span>',
+      iconSize: [28, 28],
+    });
     for (const r of this.rekordy()) {
       const adres = [r.ulica, r.numer_budynku, r.miejscowosc].filter(Boolean).join(' ');
-      const etykieta = `AED: ${r.nazwa_miejsca}${adres ? ', ' + adres : ''}`;
+      const etykieta = `${r.fikcyjne ? 'DANE FIKCYJNE – ' : ''}AED: ${r.nazwa_miejsca}${adres ? ', ' + adres : ''}`;
       const m = L.marker([r.szerokosc_geograficzna, r.dlugosc_geograficzna], {
-        icon: ikona,
+        icon: r.fikcyjne ? ikonaFikcyjna : ikona,
         keyboard: true,
         title: etykieta,
       })
@@ -120,12 +125,32 @@ export class MapaAedComponent implements OnDestroy {
       [r.kod_pocztowy, r.miejscowosc].filter(Boolean).join(' '),
       r.opis_lokalizacji ?? '',
       `Godziny: ${r.godziny_dostepnosci ?? 'brak danych w źródle'}`,
-      `Źródło: ${r.dostawcaZrodla}`,
     ].filter(Boolean);
     for (const l of linie) {
       const p = document.createElement('div');
       p.textContent = l;
       div.append(p);
+    }
+    // Źródło z linkiem do zbioru na dane.gov.pl – kto odpowiada za ten rekord.
+    const zrodlo = document.createElement('div');
+    zrodlo.append('Źródło: ');
+    if (r.adresZbioruZrodla) {
+      const a = document.createElement('a');
+      a.href = r.adresZbioruZrodla;
+      a.textContent = r.dostawcaZrodla;
+      zrodlo.append(a);
+    } else zrodlo.append(r.dostawcaZrodla);
+    zrodlo.append(`, dane z ${r.dataDanychZrodla}`);
+    div.append(zrodlo);
+    if (r.atrybucjaZrodla) {
+      const at = document.createElement('div');
+      at.textContent = r.atrybucjaZrodla;
+      div.append(at);
+    }
+    if (r.fikcyjne) {
+      const f = document.createElement('strong');
+      f.textContent = 'DANE FIKCYJNE – nie wskazują prawdziwego AED.';
+      div.prepend(f);
     }
     return div;
   }

@@ -1,7 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Harmonizacja zbiorów źródłowych do wzorca v1.1:
+ * Harmonizacja zbiorów źródłowych do wzorca v1.2:
  * - mapowanie kolumn (zrodla.ts) i normalizacja formatów (ST s. 15–16);
  * - odrzucenie tylko wtedy, gdy rekordu nie da się użyć (brak nazwy, brak/niepoprawne współrzędne);
  *   brakujące pola wzorca zostają puste (null) – integracja nie zmyśla danych;
@@ -11,7 +11,11 @@
  */
 
 import { wierszeJakoObiekty } from './csv';
+import { odlegloscM } from './geometria';
 import { POLA_WYMAGANE } from './model';
+import { uuidV5 } from './uuid';
+import { walidujRekord } from './walidacja-rekordu';
+import { doDatyCzasuWzorca } from './wiek-danych';
 import type { PoleRekordu, RekordAed } from './model';
 import { ZRODLA } from './zrodla';
 import type { ZrodloDef } from './zrodla';
@@ -20,8 +24,16 @@ export interface RekordZintegrowany extends RekordAed {
   /** Id źródła (krosno, legionowo, …) – do filtrów i raportu. */
   zrodloId: string;
   dostawcaZrodla: string;
+  /** Link do zbioru źródłowego na dane.gov.pl (null dla danych fikcyjnych). */
+  adresZbioruZrodla: string | null;
+  /** Data danych zasobu źródłowego (yyyy-mm-dd). */
+  dataDanychZrodla: string;
   /** Numer wiersza w pliku źródłowym (1 = pierwszy wiersz danych). */
   wierszZrodla: number;
+  /** Rekord z danych fikcyjnych (demonstracja) – oznaczany na liście i mapie, nigdy w eksporcie. */
+  fikcyjne: boolean;
+  /** Uznanie autorstwa wymagane licencją źródła (np. CC BY 4.0) albo null. */
+  atrybucjaZrodla: string | null;
 }
 
 export interface OdrzuconyWiersz {
@@ -48,7 +60,7 @@ export interface RaportZrodla {
   odrzucone: OdrzuconyWiersz[];
   ostrzezenia: OstrzezenieWiersza[];
   kompletnosc: KompletnoscPola[];
-  /** Liczba pól wymaganych, które źródło dostarcza choć w jednym rekordzie (np. 5 z 9). */
+  /** Liczba pól wymaganych wzorca (15), które źródło dostarcza choć w jednym rekordzie (np. 9 z 15). */
   polaWymaganeObecne: number;
 }
 
@@ -65,26 +77,7 @@ export interface WynikIntegracji {
   duplikaty: Duplikat[];
 }
 
-const ZAKRES_SZER = [49, 55];
-const ZAKRES_DLUG = [14, 25];
-
-const wZakresie = (v: number, [a, b]: number[]) => v >= a && v <= b;
-
-function liczba(v: string | undefined): number | null {
-  if (!v) return null;
-  const s = v.trim().replace(',', '.');
-  return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : null;
-}
-
-/** Odległość w metrach (wzór haversine, promień Ziemi 6 371 km). */
-export function odlegloscM(a: { szer: number; dlug: number }, b: { szer: number; dlug: number }): number {
-  const R = 6371000;
-  const rad = (x: number) => (x * Math.PI) / 180;
-  const dLat = rad(b.szer - a.szer);
-  const dLon = rad(b.dlug - a.dlug);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.szer)) * Math.cos(rad(b.szer)) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+export { odlegloscM };
 
 const norm = (s: string | null) =>
   (s ?? '')
@@ -127,7 +120,8 @@ function pustyRekord(): Omit<
 }
 
 export function harmonizujZrodlo(z: ZrodloDef): { rekordy: RekordZintegrowany[]; raport: RaportZrodla } {
-  const { wiersze } = wierszeJakoObiekty(z.tresc, z.separator);
+  const tresc = z.przygotuj ? z.przygotuj(z.tresc) : z.tresc;
+  const { wiersze } = wierszeJakoObiekty(tresc, z.separator);
   const rekordy: RekordZintegrowany[] = [];
   const odrzucone: OdrzuconyWiersz[] = [];
   const ostrzezenia: OstrzezenieWiersza[] = [];
@@ -135,64 +129,65 @@ export function harmonizujZrodlo(z: ZrodloDef): { rekordy: RekordZintegrowany[];
   wiersze.forEach((w, i) => {
     const nr = i + 1;
     const m = z.mapujWiersz(w);
-    const nazwa = (m.dane.nazwa_miejsca ?? '').trim();
-    let szer = liczba(m.szerokosc);
-    let dlug = liczba(m.dlugosc);
-    const ostrzez = (tresc: string) => ostrzezenia.push({ wiersz: nr, nazwa, tresc });
-
-    if (!nazwa) {
-      odrzucone.push({
-        wiersz: nr,
-        nazwa: '(brak)',
-        powod: 'Brak nazwy miejsca – rekordu nie da się opisać na liście ani mapie.',
-      });
+    // Ta sama funkcja walidacji co w narzędziu zgodności (walidacja-rekordu.ts).
+    const {
+      rekord,
+      bledy,
+      ostrzezenia: uwagi,
+    } = walidujRekord({
+      ...m.dane,
+      szerokosc_geograficzna: m.szerokosc,
+      dlugosc_geograficzna: m.dlugosc,
+    });
+    const nazwa = rekord.nazwa_miejsca ?? '(brak)';
+    if (bledy.length) {
+      odrzucone.push({ wiersz: nr, nazwa, powod: bledy.join(' ') });
       return;
     }
-    if (szer === null || dlug === null) {
-      odrzucone.push({
-        wiersz: nr,
-        nazwa,
-        powod: 'Brak współrzędnych albo nie są liczbami – AED nie da się pokazać na mapie.',
-      });
-      return;
-    }
-    if (!wZakresie(szer, ZAKRES_SZER) && wZakresie(szer, ZAKRES_DLUG) && wZakresie(dlug, ZAKRES_SZER)) {
-      [szer, dlug] = [dlug, szer];
-      ostrzez('Szerokość i długość geograficzna były zamienione – poprawiono.');
-    }
-    if (!wZakresie(szer, ZAKRES_SZER) || !wZakresie(dlug, ZAKRES_DLUG)) {
-      odrzucone.push({ wiersz: nr, nazwa, powod: `Współrzędne poza Polską (${szer}, ${dlug}).` });
-      return;
-    }
+    for (const u of uwagi)
+      ostrzezenia.push({ wiersz: nr, nazwa, tresc: u.wartosc ? `${u.opis} (wartość: „${u.wartosc}”)` : u.opis });
 
-    const d = { ...m.dane };
-    if (d.kod_pocztowy && /^\d{5}$/.test(d.kod_pocztowy))
-      d.kod_pocztowy = `${d.kod_pocztowy.slice(0, 2)}-${d.kod_pocztowy.slice(2)}`;
-    if (d.kod_pocztowy && !/^\d{2}-\d{3}$/.test(d.kod_pocztowy)) {
-      ostrzez(`Kod pocztowy „${d.kod_pocztowy}” nie ma formatu 00-000 – pominięto.`);
-      d.kod_pocztowy = null;
-    }
-    if (d.teryt_terc && !/^\d{6,7}$/.test(d.teryt_terc)) {
-      ostrzez(`Kod TERC „${d.teryt_terc}” nie ma 6 ani 7 cyfr – pominięto.`);
-      d.teryt_terc = null;
-    }
-    if (d.ulica && !d.numer_budynku) ostrzez('Brak numeru budynku w adresie.');
-
+    // Stały identyfikator: UUID v5 z adresu zbioru i ID rekordu w źródle (bez ID – z nazwy i adresu).
+    const kluczRekordu =
+      m.idZrodlowe || norm([rekord.nazwa_miejsca, rekord.ulica, rekord.numer_budynku, rekord.miejscowosc].join(' '));
     rekordy.push({
       ...pustyRekord(),
-      ...d,
-      id_aed: `${z.id}-${m.idZrodlowe || nr}`,
-      nazwa_miejsca: nazwa,
-      // 6 miejsc po przecinku – jak w przykładzie ze wzorca (≈ 0,1 m).
-      szerokosc_geograficzna: Math.round(szer * 1e6) / 1e6,
-      dlugosc_geograficzna: Math.round(dlug * 1e6) / 1e6,
+      ...rekord,
+      id_aed: uuidV5(`${z.identyfikator}#${kluczRekordu}`),
+      nazwa_miejsca: rekord.nazwa_miejsca!,
+      szerokosc_geograficzna: rekord.szerokosc_geograficzna!,
+      dlugosc_geograficzna: rekord.dlugosc_geograficzna!,
       zrodlo_danych: z.identyfikator,
-      data_aktualizacji: z.dataDanych,
+      // Data i godzina ostatniej zmiany zbioru źródłowego (xlsx: „data i czas ostatniej zmiany rekordu”).
+      data_aktualizacji: doDatyCzasuWzorca(z.zmodyfikowano),
       zrodloId: z.id,
       dostawcaZrodla: z.dostawca,
+      adresZbioruZrodla: z.adresZbioru,
+      dataDanychZrodla: z.dataDanych,
       wierszZrodla: nr,
+      fikcyjne: !z.prawdziwe,
+      atrybucjaZrodla: z.atrybucja ?? null,
     });
   });
+
+  // Punkt odległy o ponad 30 km od mediany punktów źródła – prawdopodobny błąd (np. współrzędne skopiowane
+  // z innego zbioru). Tylko ostrzeżenie: rekord zostaje, decyzja należy do dostawcy.
+  if (rekordy.length >= 3) {
+    const mediana = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+    const srodek = {
+      szer: mediana(rekordy.map((x) => x.szerokosc_geograficzna)),
+      dlug: mediana(rekordy.map((x) => x.dlugosc_geograficzna)),
+    };
+    for (const x of rekordy) {
+      const km = odlegloscM(srodek, { szer: x.szerokosc_geograficzna, dlug: x.dlugosc_geograficzna }) / 1000;
+      if (km > 30)
+        ostrzezenia.push({
+          wiersz: x.wierszZrodla,
+          nazwa: x.nazwa_miejsca,
+          tresc: `Punkt leży ok. ${Math.round(km)} km od pozostałych punktów tego źródła – sprawdź współrzędne (mogą pochodzić z innego zbioru).`,
+        });
+    }
+  }
 
   const kompletnosc = POLA_WYMAGANE.map((pole) => ({
     pole,

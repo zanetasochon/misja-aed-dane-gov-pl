@@ -10,7 +10,9 @@ import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
 import { CSV_KROSNO } from './dane/krosno';
 import { BladCsv, wierszeJakoObiekty, wykryjSeparator } from './lib/csv';
 import { doCsv, doJson, kolumnyEksportu, pobierzPlik } from './lib/eksport';
-import { ETYKIETY, KOLUMNY } from './lib/model';
+import { ETYKIETY, KOLUMNY, POLA_WYMAGANE } from './lib/model';
+import { doDatyCzasuWzorca } from './lib/wiek-danych';
+import { ZRODLA } from './lib/zrodla';
 import type { PoleRekordu } from './lib/model';
 import { OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
 import type { Cel } from './lib/zgodnosc';
@@ -47,19 +49,21 @@ export class ZgodnoscComponent {
   readonly plik = signal<Plik | null>(null);
   readonly mapowanie = signal<Cel[]>([]);
   readonly identyfikator = signal('moj-zbior-aed');
+  readonly polaWymagane = POLA_WYMAGANE;
+  /** Data i godzina ostatniej zmiany pliku – trafia do data_aktualizacji (nie dzisiejsza data). */
+  readonly dataPliku = signal('');
   readonly blad = signal('');
   readonly komunikat = signal('');
 
   readonly raport = computed(() => {
     const p = this.plik();
     if (!p) return null;
-    const dzis = new Date().toISOString().slice(0, 10);
     return sprawdzZgodnosc(
       p.naglowki,
       p.wiersze,
       this.mapowanie(),
       this.identyfikator().trim() || 'moj-zbior-aed',
-      dzis,
+      this.dataPliku(),
     );
   });
 
@@ -68,8 +72,12 @@ export class ZgodnoscComponent {
     return r ? kolumnyEksportu(r.rekordy).pominiete : [];
   });
 
-  private wczytaj(nazwa: string, tekst: string): void {
+  private wczytaj(nazwa: string, tekst: string, zmodyfikowano: string): void {
     try {
+      // Plik zapisany np. w Windows-1250 daje po odczycie jako UTF-8 znaki zastępcze „�”.
+      if (tekst.includes('\uFFFD'))
+        throw new BladCsv('Plik nie jest zapisany w kodowaniu UTF-8. Zapisz go jako „CSV UTF-8” i wgraj ponownie.');
+      this.dataPliku.set(doDatyCzasuWzorca(zmodyfikowano));
       const separator = wykryjSeparator(tekst);
       const { naglowki, wiersze } = wierszeJakoObiekty(tekst, separator);
       if (naglowki.length < 2)
@@ -101,11 +109,16 @@ export class ZgodnoscComponent {
       this.komunikat.set('Nie wczytano pliku. Plik jest większy niż 2 MB.');
       return;
     }
-    this.wczytaj(f.name, await f.text());
+    this.wczytaj(f.name, await f.text(), new Date(f.lastModified).toISOString());
   }
 
   uzyjPrzykladu(): void {
-    this.wczytaj('Defibrylator_jAmxQcp.csv (Urząd Miasta Krosna, CC0 1.0)', CSV_KROSNO);
+    const krosno = ZRODLA.find((z) => z.id === 'krosno');
+    this.wczytaj(
+      'Defibrylator_jAmxQcp.csv (Urząd Miasta Krosna, CC0 1.0)',
+      CSV_KROSNO,
+      krosno?.zmodyfikowano ?? new Date().toISOString(),
+    );
   }
 
   zmienMapowanie(i: number, cel: Cel): void {

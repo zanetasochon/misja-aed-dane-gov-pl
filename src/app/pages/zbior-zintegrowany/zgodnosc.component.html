@@ -4,7 +4,7 @@
   <h1 class="form-header">Sprawdź zgodność ze wzorcem AED</h1>
   <div class="form-description col-md-10 col-lg-8">
     <p>
-      Wgraj plik CSV ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych AED (v1.1) masz, których
+      Wgraj plik CSV ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych AED (v1.2) masz, których
       brakuje i które wartości mają zły format. Na końcu pobierzesz plik przekształcony do wzorca – gotowy do publikacji
       jako zasób Twojego zbioru na dane.gov.pl.
     </p>
@@ -111,7 +111,8 @@
               <span class="vertical-list__item-label">
                 {{ r.brakujaceWymagane.length === 0 ? 'Spełnione' : 'Niespełnione' }} – pola wymagane:
               </span>
-              masz {{ 9 - r.brakujaceWymagane.length }}/9.
+              masz {{ polaWymagane.length - r.brakujaceWymagane.length }}/{{ polaWymagane.length }} (wzorzec v1.2; pola
+              id_aed, zrodlo_danych i data_aktualizacji nadaje narzędzie).
               @if (r.brakujaceWymagane.length) {
                 Brakuje:
                 @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
@@ -138,10 +139,10 @@
             </li>
             <li class="vertical-list__item">
               <span class="vertical-list__item-label">
-                {{ r.bezWspolrzednych === 0 ? 'Spełnione' : 'Niespełnione' }} – współrzędne we wszystkich wierszach:
+                {{ r.odrzucone.length === 0 ? 'Spełnione' : 'Niespełnione' }} – wszystkie wiersze można wykorzystać:
               </span>
-              @if (r.bezWspolrzednych) {
-                {{ r.bezWspolrzednych }} wierszy bez współrzędnych nie trafi do pliku wynikowego.
+              @if (r.odrzucone.length) {
+                {{ r.odrzucone.length }} wierszy nie trafi do pliku wynikowego (lista niżej).
               } @else {
                 tak.
               }
@@ -154,6 +155,18 @@
               </li>
             }
           </ul>
+
+          @if (r.odrzucone.length) {
+            <h3 class="zz-h4">Wiersze odrzucone</h3>
+            <ul>
+              @for (o of r.odrzucone.slice(0, 50); track o.wiersz) {
+                <li>Wiersz {{ o.wiersz }} („{{ o.nazwa }}”): {{ o.powod }}</li>
+              }
+            </ul>
+            @if (r.odrzucone.length > 50) {
+              <p>… i {{ r.odrzucone.length - 50 }} kolejnych.</p>
+            }
+          }
 
           @if (r.problemy.length) {
             <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-problemy-podpis" tabindex="0">
@@ -192,7 +205,8 @@
             <h2>4. Pobierz plik zgodny ze wzorcem</h2>
             <p>
               Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy: CSV w UTF-8 (RFC 4180) albo JSON,
-              kolumny w kolejności wzorca v1.1.
+              kolumny w kolejności wzorca v1.2. Pole data_aktualizacji: {{ dataPliku() }} (data i godzina ostatniej
+              zmiany wgranego pliku).
               @if (pominiete().length) {
                 Pominięte kolumny puste we wszystkich wierszach (Standard techniczny, s. 21):
                 <code>{{ pominiete().join(', ') }}</code

@@ -24,7 +24,7 @@
           </li>
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Prowadzący zbiór zintegrowany: </span>
-            do ustalenia
+            Ministerstwo Cyfryzacji (administrator portalu). Za treść rekordów odpowiadają dostawcy zbiorów źródłowych.
           </li>
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Kategoria: </span>
@@ -44,6 +44,7 @@
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Zbiory źródłowe: </span>
             <span class="text-data">{{ wynik.raporty.length }}</span>
+            <span class="zz-opis">oraz {{ niedostepne.length }} niedostępne maszynowo</span>
           </li>
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Liczba rekordów: </span>
@@ -116,15 +117,37 @@
                 <button type="button" class="btn btn-primary btn-sm" (click)="pobierz('csv')">CSV</button>
                 <button type="button" class="btn btn-primary btn-sm" (click)="pobierz('json')">JSON</button>
                 <button type="button" class="btn btn-primary btn-sm" (click)="pobierz('geojson')">GeoJSON</button>
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="pobierz('zrodla')">
+                  Źródła i licencje (CSV)
+                </button>
               </div>
               <p class="zz-podpowiedz">
-                CSV w UTF-8 (RFC 4180), JSON (RFC 8259) i GeoJSON (WGS84) mają te same pola wzorca AED v1.1.
+                CSV w UTF-8 (RFC 4180), JSON (RFC 8259) i GeoJSON (WGS84) mają te same pola wzorca AED v1.2. Pole
+                <code>zrodlo_danych</code> to adres zbioru źródłowego na dane.gov.pl. Eksport nie zawiera danych
+                fikcyjnych. Uznanie autorstwa wymagane licencjami źródeł (np. „Źródło: Urząd Miasta Marki, dane.gov.pl,
+                CC BY 4.0”) jest w pliku „Źródła i licencje” i w GeoJSON.
                 @if (pominieteKolumny.length) {
                   Pominięto kolumny puste we wszystkich rekordach (Standard techniczny, s. 21):
                   <code>{{ pominieteKolumny.join(', ') }}</code
                   >.
                 }
               </p>
+
+              <!-- dane fikcyjne: domyślnie wyłączone -->
+              <div class="form-check zz-demo">
+                <input
+                  id="zz-demo"
+                  class="form-check-input"
+                  type="checkbox"
+                  aria-describedby="zz-demo-opis"
+                  [ngModel]="pokazDemo()"
+                  (ngModelChange)="pokazDemo.set($event)" />
+                <label class="form-check-label" for="zz-demo">Pokaż przykładowe dane fikcyjne</label>
+                <p id="zz-demo-opis" class="zz-podpowiedz">
+                  Tylko do demonstracji filtrów dostępu, godzin i położenia, których prawdziwe źródła nie podają.
+                  Rekordy fikcyjne są oznaczone „DANE FIKCYJNE” na liście i na mapie i nie trafiają do eksportu.
+                </p>
+              </div>
 
               <!-- filtry -->
               <form
@@ -269,6 +292,9 @@
                     @for (r of wyniki(); track r.id_aed) {
                       <tr class="datagrid__row">
                         <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
+                          @if (r.fikcyjne) {
+                            <span class="zz-fikcyjne">DANE FIKCYJNE</span>
+                          }
                           {{ r.nazwa_miejsca }}
                           @if (r.opis_lokalizacji) {
                             <span class="zz-opis">{{ r.opis_lokalizacji }}</span>
@@ -288,9 +314,21 @@
                         </td>
                         <td class="datagrid__cell">{{ stanTeraz(r) }}</td>
                         <td class="datagrid__cell">{{ takNie(r.wewnatrz_budynku) }}</td>
-                        <td class="datagrid__cell">{{ r.dostawcaZrodla }}</td>
                         <td class="datagrid__cell">
-                          <time [attr.datetime]="r.data_aktualizacji">{{ data(r.data_aktualizacji) }}</time>
+                          @if (r.adresZbioruZrodla) {
+                            <a [href]="r.adresZbioruZrodla">{{ r.dostawcaZrodla }}</a>
+                          } @else {
+                            {{ r.dostawcaZrodla }}
+                          }
+                          @if (r.atrybucjaZrodla) {
+                            <span class="zz-opis">{{ r.atrybucjaZrodla }}</span>
+                          }
+                        </td>
+                        <td class="datagrid__cell">
+                          <time [attr.datetime]="r.dataDanychZrodla">{{ data(r.dataDanychZrodla) }}</time>
+                          @if (nieaktualne(r.dataDanychZrodla)) {
+                            <span class="zz-ostrzezenie">Uwaga: dane sprzed {{ opisWieku(r.dataDanychZrodla) }}</span>
+                          }
                         </td>
                       </tr>
                     } @empty {
@@ -335,6 +373,12 @@
                         <strong class="pr-1">Licencja:</strong>
                         {{ r.zrodlo.licencja }}
                       </div>
+                      @if (r.zrodlo.atrybucja) {
+                        <div>
+                          <strong class="pr-1">Uznanie autorstwa:</strong>
+                          {{ r.zrodlo.atrybucja }}
+                        </div>
+                      }
                     </div>
                     <div class="result-item__right col-lg-4 col-xl-3 col-xxl-2 px-3">
                       <div class="result-item-attributes">
@@ -348,11 +392,53 @@
                             <strong>Data danych: </strong>
                             <span class="d-lg-block">
                               <time [attr.datetime]="r.zrodlo.dataDanych">{{ data(r.zrodlo.dataDanych) }}</time>
+                              @if (nieaktualne(r.zrodlo.dataDanych)) {
+                                <span class="zz-ostrzezenie"
+                                  >Uwaga: dane starsze niż 12 miesięcy ({{ opisWieku(r.zrodlo.dataDanych) }})</span
+                                >
+                              }
                             </span>
                           </div>
                           <div class="result-item-attributes__list-item pt-lg-3">
                             <strong>W zbiorze zintegrowanym: </strong>
                             <span class="d-lg-block">{{ r.przyjete }} z {{ r.wierszy }} rekordów</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+                @for (n of niedostepne; track n.adresZbioru) {
+                  <div class="result-item">
+                    <div class="result-item__left col-lg-8 col-xl-9 col-xxl-10 px-3">
+                      <h3 class="heading heading--primary-link heading--sm result-item-heading">
+                        <a [href]="n.adresZbioru">{{ n.tytul }}</a>
+                      </h3>
+                      <div>
+                        <strong class="pr-1">Dostawca danych:</strong>
+                        {{ n.dostawca }}
+                      </div>
+                      <div>
+                        <strong class="pr-1">Licencja:</strong>
+                        {{ n.licencja }}
+                      </div>
+                      <div class="zz-ostrzezenie">Nie wykorzystano: {{ n.powod }}.</div>
+                    </div>
+                    <div class="result-item__right col-lg-4 col-xl-3 col-xxl-2 px-3">
+                      <div class="result-item-attributes">
+                        <div class="result-item-attributes__heading">
+                          <p class="result-item-attributes__text">Zbiór danych</p>
+                        </div>
+                        <div class="result-item-attributes__list">
+                          <div class="result-item-attributes__list-item">
+                            <strong>Data danych: </strong>
+                            <span class="d-lg-block">
+                              <time [attr.datetime]="n.dataDanych">{{ data(n.dataDanych) }}</time>
+                            </span>
+                          </div>
+                          <div class="result-item-attributes__list-item pt-lg-3">
+                            <strong>W zbiorze zintegrowanym: </strong>
+                            <span class="d-lg-block">0 rekordów</span>
                           </div>
                         </div>
                       </div>
@@ -394,6 +480,14 @@
                       <span class="text-data">{{ r.ostrzezenia.length }}</span>
                     </li>
                   </ul>
+                  @if (r.zrodlo.uwagiDoPliku?.length) {
+                    <h4 class="zz-h4">Problemy pliku źródłowego</h4>
+                    <ul>
+                      @for (u of r.zrodlo.uwagiDoPliku; track u) {
+                        <li>{{ u }}</li>
+                      }
+                    </ul>
+                  }
 
                   <details class="zz-szczegoly">
                     <summary>Mapowanie kolumn ({{ r.zrodlo.mapowanie.length }})</summary>
@@ -492,6 +586,20 @@
                 </section>
               }
 
+              <section class="zz-raport" aria-labelledby="zz-niedostepne">
+                <h3 id="zz-niedostepne" class="heading heading--sm">
+                  Źródła odrzucone w całości ({{ niedostepne.length }})
+                </h3>
+                <ul>
+                  @for (n of niedostepne; track n.adresZbioru) {
+                    <li>
+                      <a [href]="n.adresZbioru">{{ n.dostawca }} – {{ n.tytul }}</a
+                      >: odrzucone – zasób nie jest plikiem danych ({{ n.powod }}). Nie pobieramy danych ze strony HTML.
+                    </li>
+                  }
+                </ul>
+              </section>
+
               <section class="zz-raport" aria-labelledby="zz-duplikaty">
                 <h3 id="zz-duplikaty" class="heading heading--sm">Możliwe duplikaty ({{ wynik.duplikaty.length }})</h3>
                 <p>
@@ -521,11 +629,25 @@
                           <tr class="datagrid__row">
                             <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
                               {{ d.a.nazwa_miejsca }}
-                              <span class="zz-opis">{{ d.a.dostawcaZrodla }}, wiersz {{ d.a.wierszZrodla }}</span>
+                              <span class="zz-opis">
+                                @if (d.a.adresZbioruZrodla) {
+                                  <a [href]="d.a.adresZbioruZrodla">{{ d.a.dostawcaZrodla }}</a>
+                                } @else {
+                                  {{ d.a.dostawcaZrodla }}
+                                }
+                                , wiersz {{ d.a.wierszZrodla }}</span
+                              >
                             </th>
                             <td class="datagrid__cell">
                               {{ d.b.nazwa_miejsca }}
-                              <span class="zz-opis">{{ d.b.dostawcaZrodla }}, wiersz {{ d.b.wierszZrodla }}</span>
+                              <span class="zz-opis">
+                                @if (d.b.adresZbioruZrodla) {
+                                  <a [href]="d.b.adresZbioruZrodla">{{ d.b.dostawcaZrodla }}</a>
+                                } @else {
+                                  {{ d.b.dostawcaZrodla }}
+                                }
+                                , wiersz {{ d.b.wierszZrodla }}</span
+                              >
                             </td>
                             <td class="datagrid__cell">{{ d.odlegloscM }} m</td>
                             <td class="datagrid__cell">{{ d.powod }}</td>

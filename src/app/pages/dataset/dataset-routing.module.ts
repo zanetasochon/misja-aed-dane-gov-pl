@@ -25,7 +25,9 @@ const routes: Routes = [
     path: '!zbior-zintegrowany-aed',
     loadComponent: () =>
       import('../zbior-zintegrowany/zbior-zintegrowany.component').then((c) => c.ZbiorZintegrowanyComponent),
-    data: { breadcrumbs: { translationKey: 'Defibrylatory AED – zbiór zintegrowany', showFullBreadcrumb: true } },
+    data: {
+      breadcrumbs: { translationKey: 'Defibrylatory AED w Polsce – zbiór zintegrowany', showFullBreadcrumb: true },
+    },
   },
   {
     path: '!zgodnosc-ze-wzorcem',

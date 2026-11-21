@@ -2,12 +2,15 @@
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
  * Narzędzie dla dostawcy „Sprawdź zgodność ze wzorcem”:
- * propozycja mapowania kolumn (po nazwach nagłówków), raport zgodności i przekształcenie pliku do wzorca v1.1.
+ * propozycja mapowania kolumn (po nazwach nagłówków), raport zgodności i przekształcenie pliku do wzorca v1.2.
  */
 
-import { czyDostepnyTeraz } from './godziny';
-import { DOSTEP, KOLUMNY, POLA_WYMAGANE } from './model';
-import type { Dostep, PoleRekordu, RekordAed } from './model';
+import { KOLUMNY, POLA_SYSTEMOWE, POLA_WYMAGANE } from './model';
+import type { PoleRekordu, RekordAed } from './model';
+import { uuidV5 } from './uuid';
+import { walidujRekord } from './walidacja-rekordu';
+import type { RekordWejsciowy } from './walidacja-rekordu';
+import { punktZGeoJson } from './geometria';
 import { rozbijAdres } from './zrodla';
 
 /** Cel mapowania: pole wzorca, adres w jednym polu (do rozbicia), cecha ulicy albo pominięcie. */
@@ -124,55 +127,43 @@ export interface ProblemZgodnosci {
   przyklad: string;
 }
 
+export interface OdrzuconyWierszPliku {
+  wiersz: number;
+  nazwa: string;
+  powod: string;
+}
+
 export interface RaportZgodnosci {
   wierszy: number;
+  /** Pola wymagane wzorca (15), których plik nie dostarcza. Pola nadawane przez narzędzie się nie liczą. */
   brakujaceWymagane: PoleRekordu[];
   adresWJednymPolu: boolean;
   staleKolumny: string[];
   problemy: ProblemZgodnosci[];
+  odrzucone: OdrzuconyWierszPliku[];
   rekordy: RekordAed[];
-  bezWspolrzednych: number;
 }
 
-const DOSTEP_SYNONIMY: Record<string, Dostep> = {
-  yes: 'publiczny',
-  ogolnodostepny: 'publiczny',
-  publiczny: 'publiczny',
-  customers: 'klienci',
-  klienci: 'klienci',
-  private: 'ograniczony',
-  ograniczony: 'ograniczony',
-  tylko_personel: 'ograniczony',
-};
-
-const PRAWDA = new Set(['true', 'tak', '1', 'yes', 't']);
-const FALSZ = new Set(['false', 'nie', '0', 'no', 'n']);
 const CECHA: Record<string, string> = { ulica: 'ul.', aleja: 'al.', plac: 'pl.', osiedle: 'os.' };
 
-/** Punkt z GeoJSON w komórce, np. {"type":"Point","coordinates":[22.77,49.78]} → [lon, lat]. */
-function punktZGeoJson(v: string): [number, number] | null {
-  try {
-    const g = JSON.parse(v) as { type?: string; coordinates?: unknown };
-    const c = g.coordinates;
-    if (g.type === 'Point' && Array.isArray(c) && typeof c[0] === 'number' && typeof c[1] === 'number')
-      return [c[0], c[1]];
-  } catch {
-    return null;
-  }
-  return null;
-}
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 
-function liczba(v: string): number | null {
-  const s = v.trim().replace(',', '.');
-  return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : null;
-}
-
+/**
+ * Sprawdza plik dostawcy tą samą funkcją walidacji co harmonizacja (walidujRekord).
+ * @param dataAktualizacji data i godzina ostatniej zmiany pliku (yyyy-mm-ddThh:mm) – trafia do data_aktualizacji
+ */
 export function sprawdzZgodnosc(
   naglowki: readonly string[],
   wiersze: readonly Record<string, string>[],
   mapowanie: readonly Cel[],
   identyfikatorZbioru: string,
-  dzis: string,
+  dataAktualizacji: string,
 ): RaportZgodnosci {
   const problemy = new Map<string, ProblemZgodnosci>();
   const zglos = (kolumna: string, opis: string, przyklad: string) => {
@@ -182,13 +173,15 @@ export function sprawdzZgodnosc(
     problemy.set(k, p);
   };
 
-  const zmapowane = new Set<PoleRekordu>();
-  mapowanie.forEach((c) => {
+  // Które pola wzorca dostarcza plik i z której kolumny (do komunikatów).
+  const kolumnaPola = new Map<PoleRekordu, string>();
+  naglowki.forEach((h, i) => {
+    const c = mapowanie[i];
     if (c === 'GEOMETRIA')
-      ['szerokosc_geograficzna', 'dlugosc_geograficzna'].forEach((p) => zmapowane.add(p as PoleRekordu));
+      (['szerokosc_geograficzna', 'dlugosc_geograficzna'] as const).forEach((p) => kolumnaPola.set(p, h));
     else if (c === 'ADRES')
-      ['ulica', 'numer_budynku', 'kod_pocztowy', 'miejscowosc'].forEach((p) => zmapowane.add(p as PoleRekordu));
-    else if (c && c !== 'CECHA_ULICY') zmapowane.add(c);
+      (['ulica', 'numer_budynku', 'kod_pocztowy', 'miejscowosc'] as const).forEach((p) => kolumnaPola.set(p, h));
+    else if (c && c !== 'CECHA_ULICY') kolumnaPola.set(c, h);
   });
 
   // Ostrzegamy tylko o kolumnach, które mają opisywać konkretny AED (stała miejscowość w pliku gminy to norma).
@@ -198,115 +191,53 @@ export function sprawdzZgodnosc(
       czyStala(wiersze, h),
   );
 
-  let bezWspolrzednych = 0;
+  const odrzucone: OdrzuconyWierszPliku[] = [];
   const rekordy: RekordAed[] = [];
 
   wiersze.forEach((w, i) => {
-    const r: Record<string, unknown> = Object.fromEntries(KOLUMNY.map((k) => [k, null]));
+    const wej: RekordWejsciowy = {};
     let cecha = '';
     naglowki.forEach((h, j) => {
       const cel = mapowanie[j];
       const v = (w[h] ?? '').trim();
       if (!cel || v === '') return;
-      if (cel === 'ADRES') Object.assign(r, rozbijAdres(v));
+      if (cel === 'ADRES') Object.assign(wej, rozbijAdres(v));
       else if (cel === 'GEOMETRIA') {
         const punkt = punktZGeoJson(v);
         if (punkt) {
-          r['dlugosc_geograficzna'] = String(punkt[0]);
-          r['szerokosc_geograficzna'] = String(punkt[1]);
+          wej.dlugosc_geograficzna = punkt[0];
+          wej.szerokosc_geograficzna = punkt[1];
         } else zglos(h, 'Geometria nie jest punktem GeoJSON.', v.slice(0, 60));
       } else if (cel === 'CECHA_ULICY') cecha = CECHA[v.toLowerCase()] ?? v;
-      else r[cel] = v;
+      else wej[cel] = v;
     });
-    if (cecha && r['ulica']) r['ulica'] = `${cecha} ${r['ulica']}`;
-    const kol = (pole: PoleRekordu) => naglowki[mapowanie.indexOf(pole)] ?? (pole as string);
+    if (cecha && wej.ulica) wej.ulica = `${cecha} ${wej.ulica}`;
 
-    // Współrzędne
-    let szer = typeof r['szerokosc_geograficzna'] === 'string' ? liczba(r['szerokosc_geograficzna'] as string) : null;
-    let dlug = typeof r['dlugosc_geograficzna'] === 'string' ? liczba(r['dlugosc_geograficzna'] as string) : null;
-    if (szer !== null && dlug !== null && szer < 30 && dlug > 45) {
-      [szer, dlug] = [dlug, szer];
-      zglos(kol('szerokosc_geograficzna'), 'Szerokość i długość są zamienione – poprawiono.', `${dlug}, ${szer}`);
+    const { rekord, bledy, ostrzezenia } = walidujRekord(wej);
+    for (const o of ostrzezenia) zglos(kolumnaPola.get(o.pole) ?? o.pole, o.opis, o.wartosc);
+    if (bledy.length) {
+      odrzucone.push({ wiersz: i + 1, nazwa: rekord.nazwa_miejsca ?? '(brak)', powod: bledy.join(' ') });
+      return;
     }
-    if (szer === null || dlug === null) {
-      bezWspolrzednych++;
-      if (zmapowane.has('szerokosc_geograficzna'))
-        zglos(
-          kol('szerokosc_geograficzna'),
-          'Brak współrzędnych albo nie są liczbami z kropką.',
-          String(r['szerokosc_geograficzna'] ?? ''),
-        );
-    }
-    r['szerokosc_geograficzna'] = szer;
-    r['dlugosc_geograficzna'] = dlug;
-
-    // Kod pocztowy
-    const kod = r['kod_pocztowy'] as string | null;
-    if (kod) {
-      const k5 = /^\d{5}$/.test(kod) ? `${kod.slice(0, 2)}-${kod.slice(2)}` : kod;
-      if (!/^\d{2}-\d{3}$/.test(k5)) {
-        zglos(kol('kod_pocztowy'), 'Kod pocztowy nie ma formatu 00-000.', kod);
-        r['kod_pocztowy'] = null;
-      } else r['kod_pocztowy'] = k5;
-    }
-    // TERC 6 lub 7 cyfr
-    const terc = r['teryt_terc'] as string | null;
-    if (terc && !/^\d{6,7}$/.test(terc)) {
-      zglos(kol('teryt_terc'), 'Kod TERC powinien mieć 6 lub 7 cyfr.', terc);
-      r['teryt_terc'] = null;
-    }
-    // Wartość logiczna
-    const wb = r['wewnatrz_budynku'] as string | null;
-    if (wb !== null) {
-      const n = wb.toLowerCase();
-      if (PRAWDA.has(n)) r['wewnatrz_budynku'] = true;
-      else if (FALSZ.has(n)) r['wewnatrz_budynku'] = false;
-      else {
-        zglos(kol('wewnatrz_budynku'), 'Wartość logiczna powinna być true albo false.', wb);
-        r['wewnatrz_budynku'] = null;
-      }
-    }
-    // Słownik dostępu
-    const d = r['dostep'] as string | null;
-    if (d !== null) {
-      const n = normalizujNaglowek(d);
-      const v = DOSTEP_SYNONIMY[n];
-      if (v) r['dostep'] = v;
-      else {
-        zglos(kol('dostep'), `Wartość spoza słownika (${DOSTEP.join(', ')}).`, d);
-        r['dostep'] = null;
-      }
-    }
-    // Godziny – składnia opening_hours
-    const g = r['godziny_dostepnosci'] as string | null;
-    if (g !== null && czyDostepnyTeraz(g) === null) {
-      zglos(kol('godziny_dostepnosci'), 'Godziny nie są w składni opening_hours (np. Mo-Fr 08:00-16:00 albo 24/7).', g);
-      r['godziny_dostepnosci'] = null;
-    }
-    // Piętro
-    const p = r['pietro'] as string | null;
-    if (p !== null) {
-      if (/^-?\d+$/.test(p)) r['pietro'] = Number(p);
-      else {
-        zglos(kol('pietro'), 'Piętro powinno być liczbą całkowitą (0 = parter).', p);
-        r['pietro'] = null;
-      }
-    }
-    if (r['ulica'] && !r['numer_budynku']) zglos(kol('numer_budynku'), 'Brak numeru budynku.', String(r['ulica']));
-
-    r['id_aed'] = r['id_aed'] ? `${identyfikatorZbioru}-${r['id_aed']}` : `${identyfikatorZbioru}-${i + 1}`;
-    r['zrodlo_danych'] = identyfikatorZbioru;
-    r['data_aktualizacji'] = dzis;
-    if (szer !== null && dlug !== null && r['nazwa_miejsca']) rekordy.push(r as unknown as RekordAed);
+    const idZrodlowe = typeof wej.id_aed === 'string' ? wej.id_aed : '';
+    const klucz =
+      idZrodlowe || norm([rekord.nazwa_miejsca, rekord.ulica, rekord.numer_budynku, rekord.miejscowosc].join(' '));
+    rekordy.push({
+      ...(Object.fromEntries(KOLUMNY.map((k) => [k, null])) as unknown as RekordAed),
+      ...rekord,
+      id_aed: uuidV5(`${identyfikatorZbioru}#${klucz}`),
+      zrodlo_danych: identyfikatorZbioru,
+      data_aktualizacji: dataAktualizacji,
+    } as RekordAed);
   });
 
   return {
     wierszy: wiersze.length,
-    brakujaceWymagane: POLA_WYMAGANE.filter((p) => !zmapowane.has(p)),
+    brakujaceWymagane: POLA_WYMAGANE.filter((p) => !POLA_SYSTEMOWE.includes(p) && !kolumnaPola.has(p)),
     adresWJednymPolu: mapowanie.includes('ADRES'),
     staleKolumny,
     problemy: [...problemy.values()],
+    odrzucone,
     rekordy,
-    bezWspolrzednych,
   };
 }

@@ -8,7 +8,7 @@ Prototyp na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek”. To zm
 
 Dane o defibrylatorach AED są rozproszone: na dane.gov.pl jest kilka zbiorów AED od różnych urzędów, każdy w innym układzie kolumn. Prototyp pokazuje w zakładce „Dane” dodatkowy **zbiór zintegrowany**:
 
-- łączy zbiory AED od różnych dostawców w jeden zbiór według **wzorcowego zakresu danych AED v1.1**;
+- łączy zbiory AED od różnych dostawców w jeden zbiór według **wzorcowego zakresu danych AED v1.2** (`wzorcowy-zakres-danych-AED-v1.2.xlsx`);
 - **każdy dostawca nadal odpowiada za swój zbiór źródłowy**, a każdy rekord zachowuje `zrodlo_danych` (identyfikator zbioru źródłowego) i `data_aktualizacji` ze źródła;
 - dane można przeglądać na liście i na mapie, z filtrami i wyszukiwaniem, oraz pobrać w CSV, JSON i GeoJSON;
 - dostawca może sprawdzić swój plik narzędziem „Sprawdź zgodność ze wzorcem” i pobrać wersję gotową do publikacji jako zasób swojego zbioru.
@@ -19,7 +19,10 @@ Dane o defibrylatorach AED są rozproszone: na dane.gov.pl jest kilka zbiorów A
 | --- | --- | --- | --- |
 | [Defibrylatory zlokalizowane w Mieście Krosno](https://dane.gov.pl/pl/dataset/3624,defibrylatory-zlokalizowane-w-miescie-krosno) (zasób 54632, dane z 2024-02-19) | Urząd Miasta Krosna | CC0 1.0 | **prawdziwe**, plik bez zmian |
 | [Zdrowie – wykaz defibrylatorów AED w Legionowie](https://dane.gov.pl/pl/dataset/40593,zdowie) (zasób 2625221, dane z 2026-09-14) | Urząd Miasta Legionowo | CC0 1.0 | **prawdziwe**, plik bez zmian |
-| Defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. | – | **fikcyjne** (nazwa i dane wymyślone) |
+| [Lokalizacje AED w Przemyślu](https://dane.gov.pl/pl/dataset/4581,lokalizacje-aed-automatycznych-defibrylatorow-zewn) (zasób 62095, dane z 2024-11-06) | Urząd Miejski w Przemyślu | CC0 1.0 | **prawdziwe**, plik bez zmian (współrzędne w kolumnie `geometry` jako GeoJSON) |
+| [Defibrylatory na terenie Miasta Marki](https://dane.gov.pl/pl/dataset/4955,defibrylatory-zlokalizowane-na-terenie-miasta-markI) (zasób 68353, dane z 2025-07-10) | Urząd Miasta Marki | CC BY 4.0 – „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0” | **prawdziwe**, plik bez zmian (uszkodzony u źródła, naprawiany przy odczycie) |
+| [Lokalizacja defibrylatorów (AED)](https://dane.gov.pl/pl/dataset/39512,lokalizacja-defibryzatorow-aed) | Urząd m.st. Warszawy | CC BY 4.0 | **niewykorzystane**: źródło niedostępne maszynowo (link prowadzi do strony HTML); nie pobieramy danych ze strony |
+| DANE FIKCYJNE – defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. | – | **fikcyjne**, domyślnie wyłączone; po włączeniu oznaczone na liście i mapie, nigdy w eksporcie |
 
 Pliki leżą w `src/app/pages/zbior-zintegrowany/dane/`, a w nagłówku każdego pliku jest źródło, licencja i data pobrania (2026-11-21).
 
@@ -43,9 +46,9 @@ npx eslint src/app/pages/zbior-zintegrowany
 
 ## Jak przetestować
 
-1. **Lista zbiorów:** otwórz http://localhost:4300/pl/dataset. Nad wynikami jest karta **„Zbiór zintegrowany – Defibrylatory AED”** z listą zbiorów źródłowych. Wpisz w wyszukiwarkę portalu „defibrylator”: zobaczysz prawdziwe, osobne zbiory AED różnych urzędów.
+1. **Lista zbiorów:** otwórz http://localhost:4300/pl/dataset. Nad wynikami jest karta **„Defibrylatory AED w Polsce – zbiór zintegrowany”** z listą zbiorów źródłowych. Wpisz w wyszukiwarkę portalu „defibrylator”: zobaczysz prawdziwe, osobne zbiory AED różnych urzędów.
 2. **Zbiór zintegrowany:** kliknij tytuł karty (adres `/pl/dataset/zbior-zintegrowany-aed`).
-   - **Informacje o zbiorze:** opis, kategoria, częstotliwość aktualizacji, licencja, data aktualizacji oraz „Prowadzący zbiór zintegrowany: do ustalenia”.
+   - **Informacje o zbiorze:** opis, kategoria, częstotliwość aktualizacji, licencja, data aktualizacji oraz „Prowadzący zbiór zintegrowany: Ministerstwo Cyfryzacji (administrator portalu). Za treść rekordów odpowiadają dostawcy zbiorów źródłowych.”
    - **Zbiory źródłowe:** dostawca, format, licencja i data danych.
    - **Raport harmonizacji** dla każdego źródła: mapowanie kolumn na pola wzorca, kompletność pól wymaganych (Krosno i Legionowo 5/9, port lotniczy 9/9), odrzucone wiersze z powodem i ostrzeżenia, np. adres w jednym polu albo brak numeru budynku.
    - **Możliwe duplikaty:** 2 pary w prawdziwych danych. Nie usuwamy ich automatycznie, bo w jednym budynku mogą być dwa AED.
@@ -59,7 +62,7 @@ npx eslint src/app/pages/zbior-zintegrowany
 
 ## Ograniczenia prototypu
 
-- Zbiór zintegrowany jest liczony w przeglądarce z dołączonych plików. Docelowo powstaje jako zwykły zbiór na dane.gov.pl, z zasobem generowanym przez narzędzie integrujące. Kto go prowadzi, trzeba ustalić.
+- Zbiór zintegrowany jest liczony w przeglądarce z dołączonych plików. Docelowo powstaje jako zwykły zbiór na dane.gov.pl, z zasobem generowanym przez narzędzie integrujące. Prowadzi go Ministerstwo Cyfryzacji jako administrator portalu, a za treść rekordów odpowiadają dostawcy zbiorów źródłowych.
 - Prawdziwe źródła nie mają godzin, dostępu ani informacji o wnętrzu budynku. Filtr „Dostępny teraz” obejmuje więc tylko AED z godzinami. To brak w danych źródłowych, który wzorzec ma uzupełnić.
 - Współrzędne nie są geokodowane z adresu. Rekordy bez współrzędnych są odrzucane.
 - Nowe ekrany są tylko po polsku. Teksty nie są w plikach tłumaczeń portalu.
@@ -68,7 +71,7 @@ npx eslint src/app/pages/zbior-zintegrowany
 
 ## Licencje
 
-- **Kod:** GNU GPL v3, jak kod portalu dane.gov.pl. Nasze pliki są w `src/app/pages/zbior-zintegrowany/` i mają nagłówek z datą. Zmiany w plikach portalu opisuje `ZMIANY-HACKNATION.md`.
+- **Kod:** GNU GPL v3, jak kod portalu dane.gov.pl. Pełny tekst licencji jest w pliku [COPYING](COPYING). Każda strona prototypu ma u góry pasek „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.”, a w stopce informację o licencji, braku gwarancji i link do kodu. Nasze pliki są w `src/app/pages/zbior-zintegrowany/` i mają nagłówek z datą. Zmiany w plikach portalu opisuje `ZMIANY-HACKNATION.md`.
 - **Dane źródłowe:** Krosno i Legionowo na CC0 1.0. Źródło „Port Lotniczy Przykładowo” jest fikcyjne.
 - **Podkład mapy:** © OpenStreetMap contributors (ODbL). Atrybucja jest widoczna na mapie.
 - **Biblioteka mapy:** Leaflet 1.9 (BSD-2-Clause), już będąca zależnością portalu.

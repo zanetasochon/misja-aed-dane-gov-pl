@@ -13,10 +13,11 @@ import { ZRODLA } from './zrodla';
 
 export const ID_ZBIORU_ZINTEGROWANEGO = 'zbior-zintegrowany-aed';
 
-export const TYTUL_ZBIORU = 'Defibrylatory AED – zbiór zintegrowany';
+export const TYTUL_ZBIORU = 'Defibrylatory AED w Polsce – zbiór zintegrowany';
 export const OPIS_ZBIORU =
   '<p>Ogólnopolski zbiór lokalizacji i dostępności defibrylatorów AED. Powstaje z połączenia zbiorów o AED publikowanych na dane.gov.pl przez różnych dostawców i jest ujednolicony według wzorcowego zakresu danych AED. Każdy rekord wskazuje zbiór źródłowy i datę danych, a za dane odpowiada dostawca zbioru źródłowego.</p>';
-export const SLOWA_KLUCZOWE = ['AED', 'defibrylator', 'pierwsza pomoc', 'zbiór zintegrowany'];
+/** Słowa kluczowe jak w arkuszu „Metadane zbioru” wzorca. */
+export const SLOWA_KLUCZOWE = ['AED', 'defibrylator', 'pierwsza pomoc', 'ratownictwo', 'zdrowie'];
 
 /**
  * Data aktualizacji zbioru zintegrowanego: najnowsza data i godzina zmiany wśród zbiorów źródłowych
@@ -49,8 +50,8 @@ export function elementZbioruZintegrowanego(): ElementZbioruZintegrowanego {
       created: DATA_AKTUALIZACJI,
       data_date: DATA_AKTUALIZACJI,
       tags: [],
-      author: '',
-      category: { description: '', title: 'Zdrowie', id: '' },
+      author: 'Ministerstwo Cyfryzacji (administrator portalu)',
+      category: { description: '', title: 'Zdrowie; Bezpieczeństwo', id: '' },
       // Placeholder licznika ulubionych: zbiór nie istnieje w API, więc nie ma prawdziwych polubień.
       likes_count: 0,
       is_liked_by_current_user: false,

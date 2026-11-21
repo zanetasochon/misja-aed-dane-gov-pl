@@ -1,7 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Strona zbioru zintegrowanego „Defibrylatory AED – zbiór zintegrowany”:
+ * Strona zbioru zintegrowanego „Defibrylatory AED w Polsce – zbiór zintegrowany”:
  * metadane, zbiory źródłowe, raport harmonizacji, eksport oraz widok danych (lista + mapa + filtry).
  */
 
@@ -21,11 +21,13 @@ import { CollapsibleTextComponent } from '@app/shared/collapsible-text/collapsib
 import { FavoriteCounterComponent } from '@app/shared/favorite-counter/favorite-counter.component';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
 import { DATA_AKTUALIZACJI, OPIS_ZBIORU, SLOWA_KLUCZOWE, TYTUL_ZBIORU } from './lib/element-listy';
-import { doCsv, doGeoJson, doJson, kolumnyEksportu, pobierzPlik } from './lib/eksport';
+import { doCsv, doCsvZrodel, doGeoJson, doJson, kolumnyEksportu, opisyZrodel, pobierzPlik } from './lib/eksport';
 import { czyDostepnyTeraz } from './lib/godziny';
 import { integruj } from './lib/harmonizacja';
+import { ZRODLA, ZRODLA_NIEDOSTEPNE, ZRODLO_DEMO } from './lib/zrodla';
 import type { RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
+import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
 import { MapaAedComponent } from './mapa-aed.component';
 
 type TakNie = '' | 'tak' | 'nie' | 'brak';
@@ -47,7 +49,17 @@ type Zakladka = 'dane' | 'zrodla' | 'raport';
   styleUrl: './zbior-zintegrowany.component.scss',
 })
 export class ZbiorZintegrowanyComponent {
-  readonly wynik = integruj();
+  // Prawdziwe źródła; dane fikcyjne tylko po włączeniu przełącznika i nigdy w eksporcie.
+  private readonly wynikBezDemo = integruj(ZRODLA);
+  private readonly wynikZDemo = integruj([...ZRODLA, ZRODLO_DEMO]);
+  readonly pokazDemo = signal(false);
+  readonly niedostepne = ZRODLA_NIEDOSTEPNE;
+  get wynik() {
+    return this.pokazDemo() ? this.wynikZDemo : this.wynikBezDemo;
+  }
+  /** Eksport zawsze bez danych fikcyjnych. */
+  readonly doEksportu = this.wynikBezDemo.rekordy;
+  readonly opisyZrodelEksportu = opisyZrodel(this.wynikBezDemo.raporty, ZRODLA_NIEDOSTEPNE);
   /** Ten sam tytuł, opis i słowa kluczowe co na liście zbiorów. */
   readonly tytul = TYTUL_ZBIORU;
   readonly opis = OPIS_ZBIORU;
@@ -64,12 +76,16 @@ export class ZbiorZintegrowanyComponent {
   readonly etykiety = ETYKIETY;
   readonly polaWymagane = POLA_WYMAGANE;
   readonly dostepy = DOSTEP;
-  readonly pominieteKolumny = kolumnyEksportu(this.wynik.rekordy).pominiete;
+  readonly pominieteKolumny = kolumnyEksportu(this.doEksportu).pominiete;
   readonly dataAktualizacji = DATA_AKTUALIZACJI;
-  readonly miejscowosci = [
-    ...new Set(this.wynik.rekordy.map((r) => r.miejscowosc).filter((m): m is string => !!m)),
-  ].sort((a, b) => a.localeCompare(b, 'pl'));
-  readonly dostawcy = this.wynik.raporty.map((r) => ({ id: r.zrodlo.id, nazwa: r.zrodlo.dostawca }));
+  get miejscowosci(): string[] {
+    return [...new Set(this.wynik.rekordy.map((r) => r.miejscowosc).filter((m): m is string => !!m))].sort((a, b) =>
+      a.localeCompare(b, 'pl'),
+    );
+  }
+  get dostawcy(): { id: string; nazwa: string }[] {
+    return this.wynik.raporty.map((r) => ({ id: r.zrodlo.id, nazwa: r.zrodlo.dostawca }));
+  }
 
   // Filtry i wyszukiwanie
   readonly szukaj = signal('');
@@ -102,7 +118,9 @@ export class ZbiorZintegrowanyComponent {
     });
   });
 
-  readonly bezGodzin = this.wynik.rekordy.filter((r) => !r.godziny_dostepnosci).length;
+  get bezGodzin(): number {
+    return this.wynik.rekordy.filter((r) => !r.godziny_dostepnosci).length;
+  }
 
   constructor() {
     afterNextRender(() => {
@@ -155,6 +173,17 @@ export class ZbiorZintegrowanyComponent {
     return `${dzien}, ${godzina}`;
   }
 
+  /** Dane starsze niż 12 miesięcy dostają ostrzeżenie tekstowe (nie tylko kolor – WCAG 1.4.1). */
+  nieaktualne(dataDanych: string): boolean {
+    return czyNieaktualne(dataDanych);
+  }
+
+  opisWieku(dataDanych: string): string {
+    const m = wiekWMiesiacach(dataDanych);
+    const lata = Math.floor(m / 12);
+    return lata >= 2 ? `ponad ${lata} lata` : lata === 1 ? 'ponad rok' : `${m} mies.`;
+  }
+
   takNie(v: boolean | null): string {
     return v === null ? 'brak danych' : v ? 'wewnątrz' : 'na zewnątrz';
   }
@@ -173,12 +202,18 @@ export class ZbiorZintegrowanyComponent {
     this.komunikat.set('Wyczyszczono filtry.');
   }
 
-  pobierz(format: 'csv' | 'json' | 'geojson'): void {
-    const r = this.wynik.rekordy;
+  pobierz(format: 'csv' | 'json' | 'geojson' | 'zrodla'): void {
+    if (format === 'zrodla') {
+      const nazwaZ = 'defibrylatory-aed-zbior-zintegrowany-zrodla-i-licencje.csv';
+      pobierzPlik(doCsvZrodel(this.opisyZrodelEksportu), nazwaZ, 'text/csv;charset=utf-8');
+      this.komunikat.set(`Pobrano plik ${nazwaZ} (źródła, licencje i wymagane uznanie autorstwa).`);
+      return;
+    }
+    const r = this.doEksportu;
     const nazwa = `defibrylatory-aed-zbior-zintegrowany.${format}`;
     if (format === 'csv') pobierzPlik(doCsv(r), nazwa, 'text/csv;charset=utf-8');
     else if (format === 'json') pobierzPlik(doJson(r), nazwa, 'application/json');
-    else pobierzPlik(doGeoJson(r), nazwa, 'application/geo+json');
+    else pobierzPlik(doGeoJson(r, this.opisyZrodelEksportu), nazwa, 'application/geo+json');
     this.komunikat.set(`Pobrano plik ${nazwa} (${r.length} rekordów).`);
   }
 }
