@@ -21,7 +21,7 @@ import { CollapsibleTextComponent } from '@app/shared/collapsible-text/collapsib
 import { FavoriteCounterComponent } from '@app/shared/favorite-counter/favorite-counter.component';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
 import { DATA_AKTUALIZACJI, OPIS_ZBIORU, SLOWA_KLUCZOWE, TYTUL_ZBIORU } from './lib/element-listy';
-import { doCsv, doCsvZrodel, doGeoJson, doJson, kolumnyEksportu, opisyZrodel, pobierzPlik } from './lib/eksport';
+import { doCsv, doCsvZrodel, doGeoJson, doJson, opisyZrodel, pobierzPlik } from './lib/eksport';
 import { czyDostepnyTeraz } from './lib/godziny';
 import { integruj } from './lib/harmonizacja';
 import { ZRODLA, ZRODLA_NIEDOSTEPNE } from './lib/zrodla';
@@ -89,7 +89,6 @@ export class ZbiorZintegrowanyComponent {
   readonly etykiety = ETYKIETY;
   readonly polaWymagane = POLA_WYMAGANE;
   readonly dostepy = DOSTEP;
-  readonly pominieteKolumny = kolumnyEksportu(this.doEksportu).pominiete;
   /** Rozmiary plików do pobrania (DS Gov.pl: przy pliku podaj format i rozmiar). Dane są stałe, więc liczymy raz. */
   readonly rozmiary = {
     csv: rozmiarPliku(doCsv(this.doEksportu)),

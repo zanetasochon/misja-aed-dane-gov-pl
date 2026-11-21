@@ -72,6 +72,16 @@ Nie ma jednego standardu promienia. Zalecenia mówią o czasie dotarcia do AED:
 
 Źródła: [AHA – AED Implementation Guide (2023)](https://ECCGuidelines.Heart.org/-/media/CPR-Files/Training-Programs/AED-Implementation/2023-updates/KJ1683-AED-Guide.pdf), [badanie rozmieszczenia AED – PMC4992180](https://pmc.ncbi.nlm.nih.gov/articles/PMC4992180).
 
+## Format plików eksportu
+
+Szczegóły techniczne przeniesione ze strony zbioru (21.11), bo użytkownikowi nic nie mówią, a dokumentują zgodność ze Standardem technicznym dane.gov.pl (ST).
+
+- **CSV:** UTF-8, przecinek, CRLF, zgodnie z RFC 4180, dokładnie jeden wiersz nagłówka, bez pustych wierszy (ST s. 20–21).
+- **JSON:** zgodny z RFC 8259 (ST s. 23). **GeoJSON:** współrzędne WGS84; w polu `zrodla` lista zbiorów źródłowych z licencją i uznaniem autorstwa.
+- **Pola:** wszystkie trzy formaty mają te same pola wzorcowego zakresu danych AED v1.2, w kolejności wzorca. Pole `zrodlo_danych` to adres zbioru źródłowego na dane.gov.pl.
+- **Kolumny całkowicie puste są pomijane** (ST s. 21). Przy obecnych źródłach to 17 pól: `opis_lokalizacji`, `opis_lokalizacji_en`, `numer_lokalu`, `teryt_ulic`, `wewnatrz_budynku`, `pietro`, `dostep`, `godziny_dostepnosci`, `typ_dysponenta`, `dysponent_nazwa`, `dysponent_regon`, `producent`, `model`, `status_urzadzenia`, `data_ostatniego_przegladu`, `opis_dodatkowy`, `osm_id`. Lista zmienia się, gdy źródło zacznie dostarczać pole.
+- **Uznanie autorstwa:** wymagane licencjami źródeł (np. „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0”) jest w pliku „Źródła i licencje (CSV)” i w GeoJSON. Na stronie zbioru zostało jedno zdanie, które o tym przypomina.
+
 ## Ograniczenia prototypu
 
 - Zbiór zintegrowany jest liczony w przeglądarce z dołączonych plików. Docelowo powstaje jako zwykły zbiór na dane.gov.pl, z zasobem generowanym przez narzędzie integrujące. Prowadzi go Ministerstwo Cyfryzacji jako administrator portalu, a za treść rekordów odpowiadają dostawcy zbiorów źródłowych.
