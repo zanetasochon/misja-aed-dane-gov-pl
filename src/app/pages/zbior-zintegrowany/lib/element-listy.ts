@@ -13,8 +13,13 @@ import { ZRODLA } from './zrodla';
 
 export const ID_ZBIORU_ZINTEGROWANEGO = 'zbior-zintegrowany-aed';
 
+export const TYTUL_ZBIORU = 'Defibrylatory AED – zbiór zintegrowany';
+export const OPIS_ZBIORU =
+  '<p>Ogólnopolski zbiór lokalizacji i dostępności defibrylatorów AED. Powstaje z połączenia zbiorów o AED publikowanych na dane.gov.pl przez różnych dostawców i jest ujednolicony według wzorcowego zakresu danych AED. Każdy rekord wskazuje zbiór źródłowy i datę danych, a za dane odpowiada dostawca zbioru źródłowego.</p>';
+export const SLOWA_KLUCZOWE = ['AED', 'defibrylator', 'pierwsza pomoc', 'zbiór zintegrowany'];
+
 /** Najnowsza data danych wśród zbiorów źródłowych – data aktualizacji zbioru zintegrowanego. */
-const DATA_AKTUALIZACJI =
+export const DATA_AKTUALIZACJI =
   ZRODLA.map((z) => z.dataDanych)
     .sort()
     .at(-1) ?? '';
@@ -35,11 +40,10 @@ export function elementZbioruZintegrowanego(): ElementZbioruZintegrowanego {
     relationships: {} as ISearchResult['relationships'],
     attributes: {
       model: ApiModel.DATASET,
-      title: 'Defibrylatory AED – zbiór zintegrowany',
+      title: TYTUL_ZBIORU,
       slug: ID_ZBIORU_ZINTEGROWANEGO,
-      notes:
-        '<p>Ogólnopolski zbiór lokalizacji i dostępności defibrylatorów AED. Powstaje z połączenia zbiorów o AED publikowanych na dane.gov.pl przez różnych dostawców i jest ujednolicony według wzorcowego zakresu danych AED. Każdy rekord wskazuje zbiór źródłowy i datę danych, a za dane odpowiada dostawca zbioru źródłowego.</p>',
-      keywords: ['AED', 'defibrylator', 'pierwsza pomoc', 'zbiór zintegrowany'],
+      notes: OPIS_ZBIORU,
+      keywords: SLOWA_KLUCZOWE,
       verified: DATA_AKTUALIZACJI,
       modified: DATA_AKTUALIZACJI,
       created: DATA_AKTUALIZACJI,

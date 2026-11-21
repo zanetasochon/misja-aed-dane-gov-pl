@@ -24,7 +24,7 @@ export const normalizujNaglowek = (h: string) =>
   h
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/ł/g, 'l')
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');

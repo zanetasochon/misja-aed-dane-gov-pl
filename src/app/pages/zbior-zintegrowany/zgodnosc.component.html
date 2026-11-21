@@ -49,9 +49,9 @@
           Zaproponowaliśmy pole wzorca dla każdej kolumny na podstawie jej nazwy. Sprawdź propozycję i popraw ją, jeśli
           trzeba. Raport niżej aktualizuje się od razu.
         </p>
-        <div class="zz-przewijana" role="region" aria-labelledby="zg-mapowanie-podpis" tabindex="0">
-          <table class="table table-sm zz-tabela">
-            <caption id="zg-mapowanie-podpis">
+        <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-mapowanie-podpis" tabindex="0">
+          <table class="datagrid">
+            <caption id="zg-mapowanie-podpis" class="zz-podpis">
               Kolumny pliku
               {{
                 p.nazwa
@@ -60,22 +60,22 @@
             </caption>
             <thead>
               <tr>
-                <th scope="col">Kolumna w pliku</th>
-                <th scope="col">Przykładowa wartość</th>
-                <th scope="col">Pole wzorca</th>
+                <th class="datagrid__heading" scope="col">Kolumna w pliku</th>
+                <th class="datagrid__heading" scope="col">Przykładowa wartość</th>
+                <th class="datagrid__heading" scope="col">Pole wzorca</th>
               </tr>
             </thead>
             <tbody>
               @for (h of p.naglowki; track $index; let i = $index) {
-                <tr>
-                  <th scope="row">
+                <tr class="datagrid__row">
+                  <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
                     <code>{{ h }}</code>
                   </th>
-                  <td>{{ p.wiersze[0][h] }}</td>
-                  <td>
+                  <td class="datagrid__cell">{{ p.wiersze[0][h] }}</td>
+                  <td class="datagrid__cell">
                     <label class="visually-hidden" [for]="'zg-map-' + i">Pole wzorca dla kolumny {{ h }}</label>
                     <select
-                      class="form-control"
+                      class="form-select"
                       [id]="'zg-map-' + i"
                       [ngModel]="mapowanie()[i]"
                       (ngModelChange)="zmienMapowanie(i, $event)">
@@ -132,28 +132,28 @@
         </ul>
 
         @if (r.problemy.length) {
-          <div class="zz-przewijana" role="region" aria-labelledby="zg-problemy-podpis" tabindex="0">
-            <table class="table table-sm zz-tabela">
-              <caption id="zg-problemy-podpis">
+          <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-problemy-podpis" tabindex="0">
+            <table class="datagrid">
+              <caption id="zg-problemy-podpis" class="zz-podpis">
                 Problemy z formatem wartości
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">Kolumna</th>
-                  <th scope="col">Problem</th>
-                  <th scope="col">Liczba wierszy</th>
-                  <th scope="col">Przykład</th>
+                  <th class="datagrid__heading" scope="col">Kolumna</th>
+                  <th class="datagrid__heading" scope="col">Problem</th>
+                  <th class="datagrid__heading" scope="col">Liczba wierszy</th>
+                  <th class="datagrid__heading" scope="col">Przykład</th>
                 </tr>
               </thead>
               <tbody>
                 @for (pr of r.problemy; track pr.kolumna + pr.opis) {
-                  <tr>
-                    <th scope="row">
+                  <tr class="datagrid__row">
+                    <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
                       <code>{{ pr.kolumna }}</code>
                     </th>
-                    <td>{{ pr.opis }}</td>
-                    <td>{{ pr.liczba }}</td>
-                    <td>{{ pr.przyklad }}</td>
+                    <td class="datagrid__cell">{{ pr.opis }}</td>
+                    <td class="datagrid__cell">{{ pr.liczba }}</td>
+                    <td class="datagrid__cell">{{ pr.przyklad }}</td>
                   </tr>
                 }
               </tbody>
