@@ -1,0 +1,471 @@
+<!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21. -->
+<header class="vertical-spacing">
+  <div class="container">
+    <p class="mb-2"><span class="badge badge-zintegrowany">Zbiór zintegrowany</span></p>
+    <h1 class="heading">Defibrylatory AED – zbiór zintegrowany</h1>
+    <p class="pb-0">
+      Jeden zbiór łączy zbiory o AED od różnych dostawców. Każdy dostawca nadal odpowiada za swój zbiór źródłowy, a
+      każdy rekord zachowuje informację, z którego zbioru pochodzi i z jakiej daty są dane. Pola ujednolicono według
+      wzorcowego zakresu danych AED (v1.1).
+    </p>
+  </div>
+</header>
+
+<div class="container zbior-zintegrowany">
+  <!-- METADANE -->
+  <section aria-labelledby="zz-metadane">
+    <h2 id="zz-metadane" class="heading heading--sm">Informacje o zbiorze</h2>
+    <dl class="zz-metadane">
+      <div>
+        <dt>Tytuł</dt>
+        <dd>Defibrylatory AED – zbiór zintegrowany</dd>
+      </div>
+      <div>
+        <dt>Opis</dt>
+        <dd>
+          Lokalizacje i dostępność defibrylatorów AED ze zbiorów kilku dostawców, ujednolicone według wzorcowego zakresu
+          danych AED.
+        </dd>
+      </div>
+      <div>
+        <dt>Prowadzący zbiór zintegrowany</dt>
+        <dd>do ustalenia</dd>
+      </div>
+      <div>
+        <dt>Kategoria</dt>
+        <dd>Zdrowie; Bezpieczeństwo (propozycja)</dd>
+      </div>
+      <div>
+        <dt>Częstotliwość aktualizacji</dt>
+        <dd>Co tydzień (weekly) – po aktualizacji któregoś ze zbiorów źródłowych</dd>
+      </div>
+      <div>
+        <dt>Licencja</dt>
+        <dd>
+          CC BY 4.0 z uznaniem autorstwa zbiorów źródłowych (propozycja; źródła mają CC0 1.0 lub CC BY 4.0 – do
+          potwierdzenia)
+        </dd>
+      </div>
+      <div>
+        <dt>Data aktualizacji</dt>
+        <dd>
+          <time [attr.datetime]="dataAktualizacji">{{ dataAktualizacji }}</time> (najnowsza data danych wśród źródeł)
+        </dd>
+      </div>
+      <div>
+        <dt>Liczba rekordów</dt>
+        <dd>{{ wynik.rekordy.length }} AED z {{ wynik.raporty.length }} zbiorów źródłowych</dd>
+      </div>
+    </dl>
+  </section>
+
+  <!-- ZBIORY ŹRÓDŁOWE -->
+  <section aria-labelledby="zz-zrodla">
+    <h2 id="zz-zrodla" class="heading heading--sm">Zbiory źródłowe</h2>
+    <div class="zz-przewijana" role="region" aria-labelledby="zz-zrodla-podpis" tabindex="0">
+      <table class="table zz-tabela">
+        <caption id="zz-zrodla-podpis">
+          Zbiory, z których powstał zbiór zintegrowany
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Zbiór źródłowy</th>
+            <th scope="col">Dostawca</th>
+            <th scope="col">Format</th>
+            <th scope="col">Licencja</th>
+            <th scope="col">Data danych</th>
+            <th scope="col">Rekordy w zbiorze zintegrowanym</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of wynik.raporty; track r.zrodlo.id) {
+            <tr>
+              <th scope="row">
+                @if (r.zrodlo.adresZbioru) {
+                  <a [href]="r.zrodlo.adresZbioru">{{ r.zrodlo.tytul }}</a>
+                } @else {
+                  {{ r.zrodlo.tytul }}
+                }
+                @if (!r.zrodlo.prawdziwe) {
+                  <span class="badge badge-light">dane fikcyjne</span>
+                }
+              </th>
+              <td>{{ r.zrodlo.dostawca }}</td>
+              <td>{{ r.zrodlo.formatPliku }}</td>
+              <td>{{ r.zrodlo.licencja }}</td>
+              <td>
+                <time [attr.datetime]="r.zrodlo.dataDanych">{{ r.zrodlo.dataDanych }}</time>
+              </td>
+              <td>{{ r.przyjete }} z {{ r.wierszy }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- RAPORT HARMONIZACJI -->
+  <section aria-labelledby="zz-raport">
+    <h2 id="zz-raport" class="heading heading--sm">Raport harmonizacji</h2>
+    <p>
+      Dla każdego źródła: jak zmapowano kolumny na pola wzorca, ile z 9 pól wymaganych źródło dostarcza, które wiersze
+      odrzucono i dlaczego. Brakujących pól integracja nie uzupełnia – zostają puste, żeby nie udawać danych, których
+      nie ma.
+    </p>
+
+    @for (r of wynik.raporty; track r.zrodlo.id) {
+      <section class="zz-raport-zrodla" [attr.aria-labelledby]="'zz-raport-' + r.zrodlo.id">
+        <h3 [id]="'zz-raport-' + r.zrodlo.id" class="heading heading--xs">{{ r.zrodlo.dostawca }}</h3>
+        <ul class="zz-podsumowanie">
+          <li>
+            Pola wymagane: <strong>{{ r.polaWymaganeObecne }}/{{ polaWymagane.length }}</strong>
+          </li>
+          <li>
+            Przyjęto: <strong>{{ r.przyjete }}</strong> z {{ r.wierszy }} wierszy
+          </li>
+          <li>
+            Odrzucono: <strong>{{ r.odrzucone.length }}</strong>
+          </li>
+          <li>
+            Ostrzeżenia: <strong>{{ r.ostrzezenia.length }}</strong>
+          </li>
+        </ul>
+
+        <details>
+          <summary>Mapowanie kolumn ({{ r.zrodlo.mapowanie.length }})</summary>
+          <div class="zz-przewijana" role="region" [attr.aria-labelledby]="'zz-map-' + r.zrodlo.id" tabindex="0">
+            <table class="table table-sm zz-tabela">
+              <caption [id]="'zz-map-' + r.zrodlo.id">
+                Mapowanie kolumn:
+                {{
+                  r.zrodlo.dostawca
+                }}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Kolumna w źródle</th>
+                  <th scope="col">Pole wzorca</th>
+                  <th scope="col">Uwagi</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of r.zrodlo.mapowanie; track m.kolumna) {
+                  <tr>
+                    <th scope="row">
+                      <code>{{ m.kolumna }}</code>
+                    </th>
+                    <td>
+                      @if (m.pola.length) {
+                        @for (p of m.pola; track p; let ostatni = $last) {
+                          <code>{{ p }}</code>
+                          @if (!ostatni) {
+                            ,
+                          }
+                        }
+                      } @else {
+                        <span class="zz-brak">pominięta</span>
+                      }
+                    </td>
+                    <td>{{ m.uwaga ?? '' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+
+        <details>
+          <summary>Kompletność pól wymaganych</summary>
+          <div class="zz-przewijana" role="region" [attr.aria-labelledby]="'zz-komp-' + r.zrodlo.id" tabindex="0">
+            <table class="table table-sm zz-tabela">
+              <caption [id]="'zz-komp-' + r.zrodlo.id">
+                Kompletność pól wymaganych:
+                {{
+                  r.zrodlo.dostawca
+                }}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Pole wzorca</th>
+                  <th scope="col">Wypełnione</th>
+                  <th scope="col">Udział</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (k of r.kompletnosc; track k.pole) {
+                  <tr>
+                    <th scope="row">{{ etykiety[k.pole] }}</th>
+                    <td>{{ k.wypelnione }} z {{ r.przyjete }}</td>
+                    <td>{{ procent(k.wypelnione, r.przyjete) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+
+        @if (r.odrzucone.length) {
+          <h4 class="zz-h4">Odrzucone wiersze</h4>
+          <ul>
+            @for (o of r.odrzucone; track o.wiersz) {
+              <li>Wiersz {{ o.wiersz }} („{{ o.nazwa }}”): {{ o.powod }}</li>
+            }
+          </ul>
+        }
+        @if (r.ostrzezenia.length) {
+          <details>
+            <summary>Ostrzeżenia ({{ r.ostrzezenia.length }})</summary>
+            <ul>
+              @for (o of r.ostrzezenia; track $index) {
+                <li>Wiersz {{ o.wiersz }} („{{ o.nazwa }}”): {{ o.tresc }}</li>
+              }
+            </ul>
+          </details>
+        }
+      </section>
+    }
+
+    <h3 class="heading heading--xs">Możliwe duplikaty ({{ wynik.duplikaty.length }})</h3>
+    <p>
+      Ten sam AED w dwóch rekordach: współrzędne w promieniu 20 m albo ta sama nazwa i adres. Duplikatów nie usuwamy
+      automatycznie – w jednym budynku mogą być dwa urządzenia. Decyduje dostawca zbioru źródłowego.
+    </p>
+    @if (wynik.duplikaty.length) {
+      <div class="zz-przewijana" role="region" aria-labelledby="zz-duplikaty-podpis" tabindex="0">
+        <table class="table table-sm zz-tabela">
+          <caption id="zz-duplikaty-podpis">
+            Pary rekordów do sprawdzenia
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Rekord A</th>
+              <th scope="col">Rekord B</th>
+              <th scope="col">Odległość</th>
+              <th scope="col">Powód</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of wynik.duplikaty; track d.a.id_aed + d.b.id_aed) {
+              <tr>
+                <th scope="row">
+                  {{ d.a.nazwa_miejsca }}
+                  <span class="zz-brak">({{ d.a.dostawcaZrodla }}, wiersz {{ d.a.wierszZrodla }})</span>
+                </th>
+                <td>
+                  {{ d.b.nazwa_miejsca }}
+                  <span class="zz-brak">({{ d.b.dostawcaZrodla }}, wiersz {{ d.b.wierszZrodla }})</span>
+                </td>
+                <td>{{ d.odlegloscM }} m</td>
+                <td>{{ d.powod }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <!-- EKSPORT -->
+  <section aria-labelledby="zz-eksport">
+    <h2 id="zz-eksport" class="heading heading--sm">Pobierz zbiór zintegrowany</h2>
+    <p>
+      CSV (UTF-8, RFC 4180) i JSON (RFC 8259) mają te same pola wzorca. GeoJSON zawiera punkty w układzie WGS84.
+      @if (pominieteKolumny.length) {
+        Pominięto kolumny puste we wszystkich rekordach (Standard techniczny, s. 21):
+        <code>{{ pominieteKolumny.join(', ') }}</code
+        >.
+      }
+    </p>
+    <div class="zz-przyciski">
+      <button type="button" class="btn btn-primary" (click)="pobierz('csv')">Pobierz CSV</button>
+      <button type="button" class="btn btn-primary" (click)="pobierz('json')">Pobierz JSON</button>
+      <button type="button" class="btn btn-primary" (click)="pobierz('geojson')">Pobierz GeoJSON</button>
+    </div>
+  </section>
+
+  <!-- DANE: LISTA + MAPA -->
+  <section aria-labelledby="zz-dane">
+    <h2 id="zz-dane" class="heading heading--sm">Dane: lista i mapa</h2>
+
+    <form class="zz-filtry" role="search" aria-label="Filtry zbioru zintegrowanego" (submit)="$event.preventDefault()">
+      <div class="zz-pole zz-pole--szerokie">
+        <label for="zz-szukaj">Szukaj (nazwa miejsca, ulica, miejscowość)</label>
+        <input
+          id="zz-szukaj"
+          class="form-control"
+          type="search"
+          [ngModel]="szukaj()"
+          (ngModelChange)="szukaj.set($event)"
+          name="szukaj" />
+      </div>
+      <div class="zz-pole">
+        <label for="zz-miejscowosc">Miejscowość</label>
+        <select
+          id="zz-miejscowosc"
+          class="form-control"
+          [ngModel]="miejscowosc()"
+          (ngModelChange)="miejscowosc.set($event)"
+          name="miejscowosc">
+          <option value="">Wszystkie</option>
+          @for (m of miejscowosci; track m) {
+            <option [value]="m">{{ m }}</option>
+          }
+        </select>
+      </div>
+      <div class="zz-pole">
+        <label for="zz-dostep">Kto ma dostęp</label>
+        <select
+          id="zz-dostep"
+          class="form-control"
+          [ngModel]="dostep()"
+          (ngModelChange)="dostep.set($event)"
+          name="dostep">
+          <option value="">Wszystkie</option>
+          @for (d of dostepy; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+          <option value="brak">brak danych w źródle</option>
+        </select>
+      </div>
+      <div class="zz-pole">
+        <label for="zz-wewnatrz">Wewnątrz czy na zewnątrz</label>
+        <select
+          id="zz-wewnatrz"
+          class="form-control"
+          [ngModel]="wewnatrz()"
+          (ngModelChange)="wewnatrz.set($event)"
+          name="wewnatrz">
+          <option value="">Wszystkie</option>
+          <option value="tak">wewnątrz budynku</option>
+          <option value="nie">na zewnątrz</option>
+          <option value="brak">brak danych w źródle</option>
+        </select>
+      </div>
+      <div class="zz-pole">
+        <label for="zz-dostawca">Dostawca źródłowy</label>
+        <select
+          id="zz-dostawca"
+          class="form-control"
+          [ngModel]="dostawca()"
+          (ngModelChange)="dostawca.set($event)"
+          name="dostawca">
+          <option value="">Wszyscy</option>
+          @for (d of dostawcy; track d.id) {
+            <option [value]="d.id">{{ d.nazwa }}</option>
+          }
+        </select>
+      </div>
+      <div class="zz-pole form-check">
+        <input
+          id="zz-teraz"
+          class="form-check-input"
+          type="checkbox"
+          [ngModel]="tylkoTeraz()"
+          (ngModelChange)="tylkoTeraz.set($event)"
+          name="teraz"
+          aria-describedby="zz-teraz-opis" />
+        <label class="form-check-label" for="zz-teraz">Dostępny teraz</label>
+        <p id="zz-teraz-opis" class="zz-podpowiedz">
+          Wyliczane z godzin dostępności i bieżącej godziny. {{ bezGodzin }} z {{ wynik.rekordy.length }} AED nie ma
+          godzin w źródle – przy tym filtrze nie są pokazywane.
+        </p>
+      </div>
+      <div class="zz-pole">
+        <button type="button" class="btn btn-outline-primary" (click)="wyczyscFiltry()">Wyczyść filtry</button>
+      </div>
+    </form>
+
+    <!-- Liczba wyników i komunikaty: role="status" zawsze w DOM, zmienia się tylko treść (WCAG 4.1.3). -->
+    <p role="status" class="zz-status">
+      Znaleziono {{ wyniki().length }} z {{ wynik.rekordy.length }} AED. {{ komunikat() }}
+    </p>
+
+    <p class="zz-przelacznik-mapy">
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [attr.aria-expanded]="mapaNaTelefonie()"
+        aria-controls="zz-mapa"
+        (click)="mapaNaTelefonie.set(!mapaNaTelefonie())">
+        {{ mapaNaTelefonie() ? 'Ukryj mapę' : 'Pokaż mapę' }}
+      </button>
+    </p>
+
+    <div class="zz-dane">
+      <div id="zz-mapa" class="zz-dane__mapa" [class.zz-dane__mapa--widoczna]="mapaNaTelefonie()">
+        <app-mapa-aed [rekordy]="wyniki()"></app-mapa-aed>
+      </div>
+
+      <div class="zz-dane__lista">
+        <div class="zz-przewijana" role="region" aria-labelledby="lista-aed-podpis" tabindex="0" id="lista-aed">
+          <table class="table zz-tabela">
+            <caption id="lista-aed-podpis">
+              Lista AED ({{
+                wyniki().length
+              }}) – tekstowy odpowiednik mapy
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Nazwa miejsca</th>
+                <th scope="col">Adres</th>
+                <th scope="col">Dostęp</th>
+                <th scope="col">Godziny</th>
+                <th scope="col">Dostępny teraz</th>
+                <th scope="col">Położenie</th>
+                <th scope="col">Źródło</th>
+                <th scope="col">Data danych</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of wyniki(); track r.id_aed) {
+                <tr>
+                  <th scope="row">
+                    {{ r.nazwa_miejsca }}
+                    @if (r.opis_lokalizacji) {
+                      <span class="zz-opis">{{ r.opis_lokalizacji }}</span>
+                    }
+                  </th>
+                  <td>
+                    {{ [r.ulica, r.numer_budynku].join(' ').trim() || '–' }}<br />{{ r.kod_pocztowy ?? '' }}
+                    {{ r.miejscowosc ?? '' }}
+                  </td>
+                  <td>{{ r.dostep ?? 'brak danych' }}</td>
+                  <td>
+                    @if (r.godziny_dostepnosci) {
+                      <code>{{ r.godziny_dostepnosci }}</code>
+                    } @else {
+                      <span class="zz-brak">brak danych</span>
+                    }
+                  </td>
+                  <td>{{ stanTeraz(r) }}</td>
+                  <td>{{ takNie(r.wewnatrz_budynku) }}</td>
+                  <td>{{ r.dostawcaZrodla }}</td>
+                  <td>
+                    <time [attr.datetime]="r.data_aktualizacji">{{ r.data_aktualizacji }}</time>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="8">Brak AED dla wybranych filtrów.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="zz-dla-dostawcow">
+    <h2 id="zz-dla-dostawcow" class="heading heading--sm">Dla dostawców danych</h2>
+    <p>
+      Publikujesz dane o AED? Sprawdź, czy Twój plik jest zgodny ze wzorcowym zakresem danych, i pobierz go w formacie
+      gotowym do publikacji jako zasób Twojego zbioru.
+    </p>
+    <p>
+      <a class="btn btn-primary" [routerLink]="['/!dataset', '!zgodnosc-ze-wzorcem'] | localize"
+        >Sprawdź zgodność ze wzorcem</a
+      >
+    </p>
+  </section>
+</div>

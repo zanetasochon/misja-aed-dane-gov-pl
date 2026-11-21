@@ -101,6 +101,10 @@
               "proxyConfig": "proxy.local.conf.json",
               "allowedHosts": ["mcod.local"],
               "host": "0.0.0.0"
+            },
+            "public": {
+              "buildTarget": "frontend:build:development",
+              "proxyConfig": "proxy.public.conf.json"
             }
           },
           "defaultConfiguration": "dev"

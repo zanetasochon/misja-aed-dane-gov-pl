@@ -2,6 +2,7 @@ import { AsyncPipe, NgIf } from '@angular/common';
 import { Component, NgZone, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
+import { KartaZbioruZintegrowanegoComponent } from '../../zbior-zintegrowany/karta-zbioru-zintegrowanego.component';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
@@ -77,6 +78,8 @@ import { TooltipDirective } from '@app/shared/tooltip/tooltip.directive';
     PaginationComponent,
     ApiSourceLinkComponent,
     NewDataContactComponent,
+    // HackNation 2026 (zmiana 2026-11-21)
+    KartaZbioruZintegrowanegoComponent,
   ],
 })
 export class DatasetComponent extends ListViewFilterPageAbstractComponent implements OnInit {

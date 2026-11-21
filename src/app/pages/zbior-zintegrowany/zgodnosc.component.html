@@ -1,0 +1,200 @@
+<!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21. -->
+<header class="vertical-spacing">
+  <div class="container">
+    <h1 class="heading">Sprawdź zgodność ze wzorcem AED</h1>
+    <p class="pb-0">
+      Wgraj plik CSV ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych (v1.1) masz, których
+      brakuje i które wartości mają zły format. Na końcu pobierzesz plik przekształcony do wzorca – gotowy do publikacji
+      jako zasób Twojego zbioru na dane.gov.pl. Plik nie jest nigdzie wysyłany: sprawdzanie działa w Twojej
+      przeglądarce.
+    </p>
+  </div>
+</header>
+
+<div class="container zbior-zintegrowany">
+  <section aria-labelledby="zg-plik">
+    <h2 id="zg-plik" class="heading heading--sm">1. Wybierz plik</h2>
+    <div class="zz-pole" [class.zg-blad]="blad()">
+      <label for="zg-plik-input">Plik CSV (UTF-8, separator przecinek albo średnik)</label>
+      @if (blad()) {
+        <p id="zg-plik-blad" class="zg-blad__tresc"><span class="visually-hidden">Błąd: </span>{{ blad() }}</p>
+      }
+      <input
+        id="zg-plik-input"
+        type="file"
+        accept=".csv,text/csv"
+        class="form-control"
+        [attr.aria-invalid]="blad() ? true : null"
+        [attr.aria-describedby]="blad() ? 'zg-plik-blad' : null"
+        (change)="naPlik($event)" />
+    </div>
+    <p>
+      <button type="button" class="btn btn-outline-primary" (click)="uzyjPrzykladu()">
+        Użyj przykładu: prawdziwy plik z Krosna (dane.gov.pl, CC0 1.0)
+      </button>
+    </p>
+    <p class="zz-podpowiedz">
+      Nie masz pliku? Formularz do ręcznego wpisania AED i pobrania pliku jest w drugim module prototypu (do połączenia
+      z tym widokiem).
+    </p>
+  </section>
+
+  <p role="status" class="zz-status">{{ komunikat() }}</p>
+
+  @if (plik(); as p) {
+    @if (raport(); as r) {
+      <section aria-labelledby="zg-mapowanie">
+        <h2 id="zg-mapowanie" class="heading heading--sm">2. Mapowanie kolumn</h2>
+        <p>
+          Zaproponowaliśmy pole wzorca dla każdej kolumny na podstawie jej nazwy. Sprawdź propozycję i popraw ją, jeśli
+          trzeba. Raport niżej aktualizuje się od razu.
+        </p>
+        <div class="zz-przewijana" role="region" aria-labelledby="zg-mapowanie-podpis" tabindex="0">
+          <table class="table table-sm zz-tabela">
+            <caption id="zg-mapowanie-podpis">
+              Kolumny pliku
+              {{
+                p.nazwa
+              }}
+              i pola wzorca
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Kolumna w pliku</th>
+                <th scope="col">Przykładowa wartość</th>
+                <th scope="col">Pole wzorca</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of p.naglowki; track $index; let i = $index) {
+                <tr>
+                  <th scope="row">
+                    <code>{{ h }}</code>
+                  </th>
+                  <td>{{ p.wiersze[0][h] }}</td>
+                  <td>
+                    <label class="visually-hidden" [for]="'zg-map-' + i">Pole wzorca dla kolumny {{ h }}</label>
+                    <select
+                      class="form-control"
+                      [id]="'zg-map-' + i"
+                      [ngModel]="mapowanie()[i]"
+                      (ngModelChange)="zmienMapowanie(i, $event)">
+                      @for (o of opcje; track o.wartosc) {
+                        <option [ngValue]="o.wartosc">{{ o.etykieta }}</option>
+                      }
+                    </select>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="zg-raport">
+        <h2 id="zg-raport" class="heading heading--sm">3. Raport zgodności</h2>
+        <ul class="zg-lista-raportu">
+          <li>
+            <strong>{{ r.brakujaceWymagane.length === 0 ? 'Spełnione' : 'Niespełnione' }}:</strong>
+            pola wymagane – masz {{ 9 - r.brakujaceWymagane.length }}/9.
+            @if (r.brakujaceWymagane.length) {
+              Brakuje:
+              @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
+                <code>{{ b }}</code> ({{ etykietaPola(b) }}){{ ostatni ? '.' : ',' }}
+              }
+            }
+          </li>
+          <li>
+            <strong>{{ r.adresWJednymPolu ? 'Niespełnione' : 'Spełnione' }}:</strong>
+            adres w osobnych polach (Standard techniczny, s. 16).
+            @if (r.adresWJednymPolu) {
+              Adres jest w jednym polu – w pliku wynikowym rozbijamy go na ulicę, numer, kod i miejscowość.
+            }
+          </li>
+          <li>
+            <strong>{{ r.problemy.length === 0 ? 'Spełnione' : 'Niespełnione' }}:</strong>
+            formaty wartości ({{ r.problemy.length }} rodzajów problemów).
+          </li>
+          <li>
+            <strong>{{ r.bezWspolrzednych === 0 ? 'Spełnione' : 'Niespełnione' }}:</strong>
+            współrzędne we wszystkich wierszach.
+            @if (r.bezWspolrzednych) {
+              {{ r.bezWspolrzednych }} wierszy bez współrzędnych nie trafi do pliku wynikowego.
+            }
+          </li>
+          @if (r.staleKolumny.length) {
+            <li>
+              <strong>Uwaga:</strong> kolumny z tą samą wartością w każdym wierszu:
+              <code>{{ r.staleKolumny.join(', ') }}</code
+              >. Sprawdź, czy niosą informację (np. kolumna „Nazwa” = „Defibrylator”).
+            </li>
+          }
+        </ul>
+
+        @if (r.problemy.length) {
+          <div class="zz-przewijana" role="region" aria-labelledby="zg-problemy-podpis" tabindex="0">
+            <table class="table table-sm zz-tabela">
+              <caption id="zg-problemy-podpis">
+                Problemy z formatem wartości
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Kolumna</th>
+                  <th scope="col">Problem</th>
+                  <th scope="col">Liczba wierszy</th>
+                  <th scope="col">Przykład</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (pr of r.problemy; track pr.kolumna + pr.opis) {
+                  <tr>
+                    <th scope="row">
+                      <code>{{ pr.kolumna }}</code>
+                    </th>
+                    <td>{{ pr.opis }}</td>
+                    <td>{{ pr.liczba }}</td>
+                    <td>{{ pr.przyklad }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section aria-labelledby="zg-pobierz">
+        <h2 id="zg-pobierz" class="heading heading--sm">4. Pobierz plik zgodny ze wzorcem</h2>
+        <div class="zz-pole">
+          <label for="zg-identyfikator">Identyfikator Twojego zbioru (trafi do pola zrodlo_danych)</label>
+          <input
+            id="zg-identyfikator"
+            class="form-control"
+            type="text"
+            [ngModel]="identyfikator()"
+            (ngModelChange)="identyfikator.set($event)"
+            aria-describedby="zg-identyfikator-opis" />
+          <p id="zg-identyfikator-opis" class="zz-podpowiedz">
+            Np. adres zbioru na dane.gov.pl: dane.gov.pl/dataset/1234.
+          </p>
+        </div>
+        <p>
+          Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy. CSV w UTF-8 (RFC 4180), kolumny w
+          kolejności wzorca v1.1.
+          @if (pominiete().length) {
+            Pominięte kolumny puste we wszystkich wierszach (Standard techniczny, s. 21):
+            <code>{{ pominiete().join(', ') }}</code
+            >.
+          }
+        </p>
+        <div class="zz-przyciski">
+          <button type="button" class="btn btn-primary" (click)="pobierz('csv')">Pobierz CSV zgodny ze wzorcem</button>
+          <button type="button" class="btn btn-outline-primary" (click)="pobierz('json')">Pobierz JSON</button>
+        </div>
+      </section>
+    }
+  }
+
+  <p>
+    <a [routerLink]="['/!dataset', '!zbior-zintegrowany-aed'] | localize">Wróć do zbioru zintegrowanego AED</a>
+  </p>
+</div>

@@ -58,3 +58,8 @@ error.log
 /junit.xml
 
 .github
+
+# HackNation 2026 (zmiana 2026-11-21): notatki zespołu i asystenta AI nie trafiają do repozytorium
+CLAUDE.md
+CLAUDE.local.md
+.claude/

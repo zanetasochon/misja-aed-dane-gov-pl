@@ -20,6 +20,18 @@ import { Role } from '@app/shared/user-permissions/Role';
 
 const routes: Routes = [
   { path: '', component: DatasetComponent },
+  // HackNation 2026 (zmiana 2026-11-21): zbiór zintegrowany AED i narzędzie zgodności ze wzorcem.
+  {
+    path: '!zbior-zintegrowany-aed',
+    loadComponent: () =>
+      import('../zbior-zintegrowany/zbior-zintegrowany.component').then((c) => c.ZbiorZintegrowanyComponent),
+    data: { breadcrumbs: { translationKey: 'Defibrylatory AED – zbiór zintegrowany', showFullBreadcrumb: true } },
+  },
+  {
+    path: '!zgodnosc-ze-wzorcem',
+    loadComponent: () => import('../zbior-zintegrowany/zgodnosc.component').then((c) => c.ZgodnoscComponent),
+    data: { breadcrumbs: { translationKey: 'Sprawdź zgodność ze wzorcem AED', showFullBreadcrumb: true } },
+  },
   { path: '!sparql', loadChildren: () => import('./sparql/sparql.module').then((m) => m.SparqlModule) },
   {
     path: '!submissions',
