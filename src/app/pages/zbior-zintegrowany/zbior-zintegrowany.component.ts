@@ -29,7 +29,7 @@ import type { RaportZrodla, RekordZintegrowany } from './lib/harmonizacja';
 import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
 import { odlegloscM } from './lib/geometria';
-import { TooltipDirective } from '@app/shared/tooltip/tooltip.directive';
+import { InfoTooltipDirective } from '@app/shared/info-tooltip/info-tooltip.directive';
 import { MapaAedComponent } from './mapa-aed.component';
 
 type TakNie = '' | 'tak' | 'nie' | 'brak';
@@ -63,7 +63,7 @@ export const PROMIEN_AWARYJNY_M = 250;
     MapaAedComponent,
     CollapsibleTextComponent,
     FavoriteCounterComponent,
-    TooltipDirective,
+    InfoTooltipDirective,
   ],
   templateUrl: './zbior-zintegrowany.component.html',
   styleUrl: './zbior-zintegrowany.component.scss',

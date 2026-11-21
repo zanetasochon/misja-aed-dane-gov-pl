@@ -5,55 +5,6 @@
 @use 'base/variables' as v;
 
 // Zakładki jako przyciski (role="tab") – wygląd jak linki tab-list__link w portalu.
-// Zakładki wyglądają jak w portalu (dataset-item: <a class="tab-list__link"> + appInfoTooltip):
-// nieaktywne – niebieski, podkreślony tekst; aktywna – ciemny tekst bez podkreślenia; obok ikona „?”.
-// U nas to <button role="tab"> (obsługa klawiatury według APG), więc styl linku trzeba odtworzyć.
-.zz-zakladka {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  width: 100%;
-  font: inherit;
-  font-weight: bold;
-  color: v.$color-blue-light; // 5,3:1 na białym, 4,7:1 na #eee (telefon)
-
-  .zz-zakladka__tekst {
-    text-decoration: underline;
-  }
-
-  &.tab-list__link--active .zz-zakladka__tekst {
-    text-decoration: none;
-  }
-
-  .zz-zakladka__ikona {
-    flex: 0 0 auto;
-    width: 1.25rem;
-    height: 1.25rem;
-    fill: v.$color-blue-light;
-  }
-
-  // Od md: aktywna jak w portalu (biała karta, ciemny tekst, ramka). Nieaktywne bez tła.
-  @media (min-width: 768px) {
-    background: transparent;
-
-    &.tab-list__link--active {
-      color: v.$color-heading;
-    }
-  }
-
-  // < md portal maluje aktywną zakładkę na niebiesko ($color-blue-light) – tekst i ikona muszą być białe (1.4.3).
-  @media (max-width: 767.98px) {
-    &.tab-list__link--active {
-      color: v.$color-white;
-
-      .zz-zakladka__ikona {
-        fill: v.$color-white;
-      }
-    }
-  }
-}
-
 .tabs-content > [role='tabpanel'] {
   padding-top: 1.5rem;
 
@@ -359,7 +310,6 @@
 :host-context(.black-white),
 :host-context(.black-yellow),
 :host-context(.yellow-black) {
-  .zz-zakladka,
   .zz-podpowiedz,
   .zz-brak,
   .zz-opis,
@@ -376,21 +326,6 @@
   .zg-blad,
   .mapa-aed__kontener {
     border-color: var(--contrast-primary);
-  }
-
-  // Zakładki w trybie kontrastu: nieaktywne – kolor trybu na tle trybu; aktywna – odwrócone (jak w portalu,
-  // a11y/high-contrast/views/_tabs.scss). Bez tego aktywna miała tekst w kolorze swojego tła.
-  .zz-zakladka {
-    background: var(--contrast-secondary);
-  }
-
-  .zz-zakladka.tab-list__link--active {
-    background: var(--contrast-primary);
-    color: var(--contrast-secondary);
-  }
-
-  .zz-zakladka .zz-zakladka__ikona {
-    fill: currentColor;
   }
 
   ::ng-deep .znacznik-aed {

@@ -110,32 +110,24 @@
           <ul class="tab-list row no-gutters" role="tablist" aria-label="Zawartość zbioru zintegrowanego">
             @for (z of zakladki; track z.id; let i = $index) {
               <li class="tab-list__item col-md-4" role="presentation">
-                <button
-                  type="button"
-                  class="tab-list__link zz-zakladka"
+                <!-- 1:1 jak w portalu (dataset-item.component.html): <a class="tab-list__link"> + appInfoTooltip.
+                     Dodane tylko niewidoczne elementy dostępności: aria-controls, tabindex i strzałki (APG). -->
+                <a
+                  class="tab-list__link"
                   role="tab"
                   [id]="'zz-tab-' + z.id"
+                  [appInfoTooltip]="z.podpowiedz"
+                  [tooltipTitle]="z.etykieta"
+                  withoutMargin
+                  [routerLink]="[]"
                   [attr.aria-controls]="'zz-panel-' + z.id"
                   [attr.aria-selected]="zakladka() === z.id"
                   [attr.tabindex]="zakladka() === z.id ? 0 : -1"
                   [class.tab-list__link--active]="zakladka() === z.id"
                   (click)="zakladka.set(z.id)"
-                  [appTooltip]="z.podpowiedz"
-                  [title]="z.etykieta"
-                  placement="bottom"
                   (keydown)="klawiszZakladki($event, i)">
-                  <!-- Ikona podpowiedzi jak appInfoTooltip w portalu, ale bez zagnieżdżonego przycisku:
-                       podpowiedź pokazuje się po najechaniu i fokusie na zakładce, Escape ją zamyka (1.4.13). -->
-                  <span class="zz-zakladka__tekst">{{ z.etykieta }}</span>
-                  <svg
-                    class="icon icon-info zz-zakladka__ikona"
-                    aria-hidden="true"
-                    focusable="false"
-                    height="20"
-                    width="20">
-                    <use [attr.xlink:href]="'/assets/icomoon/sprite/sprite.svg#icon-info'"></use>
-                  </svg>
-                </button>
+                  {{ z.etykieta }}
+                </a>
               </li>
             }
           </ul>
