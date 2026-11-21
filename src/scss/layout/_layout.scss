@@ -70,6 +70,9 @@ a,
   &:active {
     background-color: $primary-hover;
     border-color: $primary-hover;
+    // HackNation 2026 (GPL-3.0), 2026-11-21: bez tego kliknięty przycisk (:focus) miał niebieski tekst
+    // na ciemnoniebieskim tle (#0865c9 na #0753a4, ok. 1,3:1 – WCAG 1.4.3).
+    color: $color-white;
     text-decoration: none;
   }
 }
