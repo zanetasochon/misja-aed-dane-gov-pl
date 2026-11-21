@@ -108,12 +108,12 @@ export class MapaAedComponent implements OnDestroy {
     const ikona = L.divIcon({
       className: 'znacznik-aed',
       html: '<span aria-hidden="true">AED</span>',
-      iconSize: [28, 28],
+      iconSize: [36, 36],
     });
     const ikonaFikcyjna = L.divIcon({
       className: 'znacznik-aed znacznik-aed--fikcyjny',
       html: '<span aria-hidden="true">DEMO</span>',
-      iconSize: [28, 28],
+      iconSize: [52, 32],
     });
     for (const r of this.rekordy()) {
       const adres = [r.ulica, r.numer_budynku, r.miejscowosc].filter(Boolean).join(' ');

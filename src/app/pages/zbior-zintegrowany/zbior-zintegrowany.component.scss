@@ -21,8 +21,7 @@
   padding-top: 1.5rem;
 
   &:focus-visible {
-    outline: 3px solid v.$color-heading;
-    outline-offset: 2px;
+    outline-offset: 2px; // kolor i grubość: globalny $outline portalu
   }
 }
 
@@ -228,8 +227,7 @@
   border: 1px solid v.$color-grey-light-6;
 
   &:focus-visible {
-    outline: 3px solid v.$color-heading;
-    outline-offset: 2px;
+    outline-offset: 2px; // kolor i grubość: globalny $outline portalu
   }
 }
 
@@ -238,25 +236,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px !important; // ≥ 24×24 px (WCAG 2.5.8)
-  height: 28px !important;
+  width: 36px !important; // ≥ 24×24 px (WCAG 2.5.8); rozmiar = iconSize w mapa-aed.component.ts
+  height: 36px !important;
   border: 2px solid v.$color-white;
   border-radius: 50%;
   background: v.$color-red;
   color: v.$color-white;
-  font: bold 8px/1 sans-serif;
+  font-size: 0.75rem; // rem: skaluje się z przełącznikiem wielkości tekstu portalu; min. 12 px (DS Gov.pl)
+  font-weight: bold;
+  line-height: 1;
   box-shadow: 0 0 0 1px v.$color-heading;
 
   &:focus-visible {
-    outline: 3px solid v.$color-heading;
     outline-offset: 2px;
+    box-shadow: 0 0 0 5px v.$color-white; // biały pierścień: fokus widoczny na każdym kafelku mapy
   }
 }
 
-// Znacznik danych fikcyjnych: szary, przerywana ramka i napis „DEMO” (nie tylko kolor).
+// Znacznik danych fikcyjnych: szary prostokąt, przerywana ramka i napis „DEMO” (nie tylko kolor).
 :host ::ng-deep .znacznik-aed--fikcyjny {
-  background: v.$color-grey-dark;
+  width: 52px !important;
+  height: 32px !important;
+  border-radius: 0;
   border-style: dashed;
+  background: v.$color-grey-dark;
 }
 
 // ---- narzędzie zgodności ----
@@ -290,4 +293,83 @@
 
 .zg-lista-raportu li + li {
   margin-top: 0.375rem;
+}
+
+// ---- tryby wysokiego kontrastu portalu (body.black-white / black-yellow / yellow-black) ----
+// Style komponentu mają wyższą specyficzność niż globalne reguły trybów (`body.black-white div`),
+// więc nasze kolory trzeba tu zastąpić kolorami trybu. Wzór: shared/forms/bootstrap-overrides.scss.
+
+:host-context(.black-white) {
+  --contrast-primary: #{v.$color-white};
+  --contrast-secondary: #{v.$color-black};
+}
+
+:host-context(.black-yellow) {
+  --contrast-primary: #{v.$color-yellow};
+  --contrast-secondary: #{v.$color-black};
+}
+
+:host-context(.yellow-black) {
+  --contrast-primary: #{v.$color-black};
+  --contrast-secondary: #{v.$color-yellow};
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  .zz-zakladka,
+  .zz-zakladka.tab-list__link--active,
+  .zz-podpowiedz,
+  .zz-brak,
+  .zz-opis,
+  .zz-podpis,
+  .zz-ostrzezenie,
+  .zz-szczegoly summary,
+  .zg-blad__tresc {
+    color: var(--contrast-primary);
+  }
+
+  .zz-fikcyjne,
+  .zz-w-poblizu,
+  .zz-raport,
+  .zg-blad,
+  .mapa-aed__kontener {
+    border-color: var(--contrast-primary);
+  }
+
+  ::ng-deep .znacznik-aed {
+    background: var(--contrast-primary);
+    color: var(--contrast-secondary);
+    border-color: var(--contrast-secondary);
+    box-shadow: 0 0 0 1px var(--contrast-primary);
+  }
+}
+
+// Komunikat 112: piktogram + tekst (DS Gov.pl: komunikat zawsze z piktogramem; GOV.UK Warning text).
+.zz-112 {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.zz-112__ikona {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: v.$color-heading;
+  color: v.$color-white;
+  font-weight: bold;
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  .zz-112__ikona {
+    background: var(--contrast-primary);
+    color: var(--contrast-secondary);
+  }
 }

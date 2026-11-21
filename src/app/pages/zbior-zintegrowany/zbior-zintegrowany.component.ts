@@ -88,7 +88,7 @@ export class ZbiorZintegrowanyComponent {
   readonly szczegolyWidoczne = signal(true);
   readonly zakladka = signal<Zakladka>('dane');
   readonly zakladki: { id: Zakladka; etykieta: string }[] = [
-    { id: 'dane', etykieta: 'Dane: lista i mapa' },
+    { id: 'dane', etykieta: 'Lista i mapa' },
     { id: 'zrodla', etykieta: 'Zbiory źródłowe' },
     { id: 'raport', etykieta: 'Raport harmonizacji' },
   ];
@@ -96,6 +96,13 @@ export class ZbiorZintegrowanyComponent {
   readonly polaWymagane = POLA_WYMAGANE;
   readonly dostepy = DOSTEP;
   readonly pominieteKolumny = kolumnyEksportu(this.doEksportu).pominiete;
+  /** Rozmiary plików do pobrania (DS Gov.pl: przy pliku podaj format i rozmiar). Dane są stałe, więc liczymy raz. */
+  readonly rozmiary = {
+    csv: rozmiarPliku(doCsv(this.doEksportu)),
+    json: rozmiarPliku(doJson(this.doEksportu)),
+    geojson: rozmiarPliku(doGeoJson(this.doEksportu, this.opisyZrodelEksportu)),
+    zrodla: rozmiarPliku(doCsvZrodel(this.opisyZrodelEksportu)),
+  };
   readonly dataAktualizacji = DATA_AKTUALIZACJI;
   get miejscowosci(): string[] {
     return [...new Set(this.wynik.rekordy.map((r) => r.miejscowosc).filter((m): m is string => !!m))].sort((a, b) =>
@@ -311,6 +318,12 @@ export class ZbiorZintegrowanyComponent {
     this.komunikat.set('Wyczyszczono filtry.');
   }
 
+  /** Treść komunikatu o liczbie wyników – jedno zdanie, bez spacji przed kropką. */
+  tekstWynikow(): string {
+    const promien = this.lokalizacja() ? ` w promieniu ${this.opisPromienia(this.promien())}` : '';
+    return `Znaleziono ${this.wyniki().length} z ${this.wynik.rekordy.length} AED${promien}.`;
+  }
+
   pobierz(format: 'csv' | 'json' | 'geojson' | 'zrodla'): void {
     if (format === 'zrodla') {
       const nazwaZ = 'defibrylatory-aed-zbior-zintegrowany-zrodla-i-licencje.csv';
@@ -325,4 +338,9 @@ export class ZbiorZintegrowanyComponent {
     else pobierzPlik(doGeoJson(r, this.opisyZrodelEksportu), nazwa, 'application/geo+json');
     this.komunikat.set(`Pobrano plik ${nazwa} (${r.length} rekordów).`);
   }
+}
+
+function rozmiarPliku(tresc: string): string {
+  const bajty = new TextEncoder().encode(tresc).length;
+  return bajty < 1024 ? `${bajty} B` : `${Math.round(bajty / 1024)} kB`;
 }

@@ -111,8 +111,8 @@
               <span class="vertical-list__item-label">
                 {{ r.brakujaceWymagane.length === 0 ? 'Spełnione' : 'Niespełnione' }} – pola wymagane:
               </span>
-              masz {{ polaWymagane.length - r.brakujaceWymagane.length }}/{{ polaWymagane.length }} (wzorzec v1.2; pola
-              id_aed, zrodlo_danych i data_aktualizacji nadaje narzędzie).
+              masz {{ polaWymagane.length - r.brakujaceWymagane.length }} z {{ polaWymagane.length }} (wzorzec v1.2;
+              pola id_aed, zrodlo_danych i data_aktualizacji nadaje narzędzie).
               @if (r.brakujaceWymagane.length) {
                 Brakuje:
                 @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {

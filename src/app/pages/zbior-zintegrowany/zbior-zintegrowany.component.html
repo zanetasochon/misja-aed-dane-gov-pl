@@ -114,16 +114,23 @@
             id="zz-panel-dane"
             aria-labelledby="zz-tab-dane"
             tabindex="0">
-            <h2 class="visually-hidden">Dane: lista i mapa</h2>
+            <h2 class="heading heading--sm">Lista i mapa AED</h2>
 
             <!-- pobieranie -->
             <div class="zz-pobieranie">
               <span class="dropdown-label">Pobierz zbiór:</span>
-              <button type="button" class="btn btn-primary btn-sm" (click)="pobierz('csv')">CSV</button>
-              <button type="button" class="btn btn-primary btn-sm" (click)="pobierz('json')">JSON</button>
-              <button type="button" class="btn btn-primary btn-sm" (click)="pobierz('geojson')">GeoJSON</button>
+              <!-- jeden przycisk primary (DS Gov.pl); przy pliku format i rozmiar -->
+              <button type="button" class="btn btn-primary btn-sm" (click)="pobierz('csv')">
+                CSV ({{ rozmiary.csv }})
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="pobierz('json')">
+                JSON ({{ rozmiary.json }})
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="pobierz('geojson')">
+                GeoJSON ({{ rozmiary.geojson }})
+              </button>
               <button type="button" class="btn btn-outline-primary btn-sm" (click)="pobierz('zrodla')">
-                Źródła i licencje (CSV)
+                Źródła i licencje (CSV, {{ rozmiary.zrodla }})
               </button>
             </div>
             <p class="zz-podpowiedz">
@@ -231,8 +238,12 @@
               <fieldset class="zz-pole zz-pole--szerokie zz-w-poblizu" aria-describedby="zz-w-poblizu-opis">
                 <legend class="form-label">W pobliżu</legend>
                 <p class="alert alert-warning zz-112" role="note">
-                  <strong>W nagłym wypadku dzwoń 112.</strong> Dyspozytor wskaże najbliższy AED. Ten zbiór obejmuje
-                  tylko kilka miast i nie zastępuje numeru alarmowego.
+                  <span class="zz-112__ikona" aria-hidden="true">!</span>
+                  <span>
+                    <span class="visually-hidden">Ważne: </span>
+                    <strong>W nagłym wypadku dzwoń 112.</strong> Dyspozytor wskaże najbliższy AED. Ten zbiór obejmuje
+                    tylko kilka miast i nie zastępuje numeru alarmowego.
+                  </span>
                 </p>
                 <p id="zz-w-poblizu-opis" class="zz-podpowiedz">Twoja lokalizacja nie jest nigdzie wysyłana.</p>
                 <div class="zz-w-poblizu__akcje">
@@ -287,13 +298,7 @@
             </form>
 
             <!-- liczba wyników: role="status" zawsze w DOM, zmienia się tylko treść (WCAG 4.1.3) -->
-            <p role="status" class="zz-status">
-              Znaleziono {{ wyniki().length }} z {{ wynik.rekordy.length }} AED
-              @if (lokalizacja()) {
-                w promieniu {{ opisPromienia(promien()) }}
-              }
-              . {{ komunikat() }}
-            </p>
+            <p role="status" class="zz-status">{{ tekstWynikow() }} {{ komunikat() }}</p>
 
             <!-- Wyjaśnienie tylko wtedy, gdy „Dostępny teraz” daje pustą listę z powodu braku godzin w źródłach -->
             @if (tylkoTeraz() && wyniki().length === 0) {
@@ -431,7 +436,7 @@
             id="zz-panel-zrodla"
             aria-labelledby="zz-tab-zrodla"
             tabindex="0">
-            <h2 class="visually-hidden">Zbiory źródłowe</h2>
+            <h2 class="heading heading--sm">Zbiory źródłowe</h2>
             <p>
               Każdy zbiór źródłowy publikuje i aktualizuje jego dostawca. Zbiór zintegrowany tylko je łączy i ujednolica
               według wzorca.
@@ -542,7 +547,7 @@
             id="zz-panel-raport"
             aria-labelledby="zz-tab-raport"
             tabindex="0">
-            <h2 class="visually-hidden">Raport harmonizacji</h2>
+            <h2 class="heading heading--sm">Raport harmonizacji</h2>
             <p>
               Dla każdego źródła: jak zmapowano kolumny na pola wzorca, ile z {{ polaWymagane.length }} pól wymaganych
               źródło dostarcza, które wiersze odrzucono i dlaczego. Brakujących pól integracja nie uzupełnia – zostają
@@ -555,7 +560,7 @@
                 <ul class="vertical-list zz-raport__liczby">
                   <li class="vertical-list__item">
                     <span class="vertical-list__item-label">Pola wymagane: </span>
-                    <span class="text-data">{{ r.polaWymaganeObecne }}/{{ polaWymagane.length }}</span>
+                    <span class="text-data">{{ r.polaWymaganeObecne }} z {{ polaWymagane.length }}</span>
                   </li>
                   <li class="vertical-list__item">
                     <span class="vertical-list__item-label">Przyjęto: </span>
