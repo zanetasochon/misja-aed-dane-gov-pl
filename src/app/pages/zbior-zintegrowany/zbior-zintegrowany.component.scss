@@ -550,3 +550,98 @@
 .zz-nowrap {
   white-space: nowrap;
 }
+
+// ---- aktywne filtry (tagi) ----
+.zz-aktywne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.zz-aktywne__etykieta {
+  font-weight: bold;
+}
+
+.zz-tagi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .btn {
+    min-height: 2rem; // cel ≥ 24 px (WCAG 2.5.8)
+  }
+}
+
+// ---- karty AED na telefonie ----
+.zz-karty {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li + li {
+    margin-top: 0.75rem;
+  }
+}
+
+.zz-karta {
+  padding: 1rem;
+  border: 1px solid v.$color-grey-light-6;
+  background: v.$color-white;
+}
+
+.zz-karta__tytul {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.zz-karta__odleglosc {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.zz-karta__dane {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.125rem 0.75rem;
+  margin: 0.5rem 0;
+
+  dt {
+    font-weight: bold;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.zz-karta__zrodlo {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.zz-lista:focus-visible {
+  outline-offset: 2px;
+}
+
+// Przycisk zamknięcia dymka Leaflet: domyślnie ok. 20 × 14 px → ≥ 24 × 24 px (WCAG 2.5.8).
+:host ::ng-deep .leaflet-container a.leaflet-popup-close-button {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  .zz-karta {
+    border-color: var(--contrast-primary);
+    background: var(--contrast-secondary);
+  }
+}

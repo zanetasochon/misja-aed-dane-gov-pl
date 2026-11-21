@@ -75,7 +75,18 @@ export class MapaAedComponent implements OnDestroy {
       const mod = (await import('leaflet')) as typeof Leaflet & { default?: typeof Leaflet };
       this.L = mod.default ?? mod;
       const L = this.L;
-      this.mapa = L.map(this.kontener.nativeElement, { keyboard: true, zoomControl: false });
+      this.mapa = L.map(this.kontener.nativeElement, {
+        keyboard: true,
+        zoomControl: false,
+        // Kółko myszy przewija stronę, a nie mapę (NN/g: „swipe ambiguity”); zoom: przyciski i +/−.
+        scrollWheelZoom: false,
+      });
+      // Przycisk zamknięcia dymka: polska etykieta (WCAG 3.1.2); rozmiar ≥ 24 px w SCSS (2.5.8).
+      this.mapa.on('popupopen', (e: Leaflet.PopupEvent) => {
+        const zamknij = e.popup.getElement()?.querySelector('.leaflet-popup-close-button');
+        zamknij?.setAttribute('aria-label', 'Zamknij dymek');
+        zamknij?.setAttribute('title', 'Zamknij dymek');
+      });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',

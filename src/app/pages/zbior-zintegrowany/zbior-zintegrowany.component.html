@@ -316,10 +316,27 @@
                   (ngModelChange)="tylkoTeraz.set($event)" />
                 <label class="form-check-label" for="zz-teraz">Dostępny teraz</label>
               </div>
-              <div class="zz-pole">
-                <button type="button" class="btn btn-outline-primary" (click)="wyczyscFiltry()">Wyczyść filtry</button>
-              </div>
             </form>
+
+            <!-- aktywne filtry jako usuwalne tagi (wzór app-remove-button portalu) -->
+            @if (aktywneFiltry().length) {
+              <div class="zz-aktywne">
+                <span class="zz-aktywne__etykieta" id="zz-aktywne-etykieta">Aktywne filtry:</span>
+                <ul class="zz-tagi" aria-labelledby="zz-aktywne-etykieta">
+                  @for (f of aktywneFiltry(); track f.klucz; let i = $index) {
+                    <li>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn--multiline btn--remove"
+                        (click)="usunFiltr(f.klucz, i)">
+                        <span class="visually-hidden">Usuń filtr </span><span>{{ f.etykieta }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+                <button type="button" class="btn btn-link btn-sm" (click)="wyczyscFiltry()">Wyczyść filtry</button>
+              </div>
+            }
 
             <!-- liczba wyników: role="status" zawsze w DOM, zmienia się tylko treść (WCAG 4.1.3) -->
             <p role="status" class="zz-status">{{ tekstWynikow() }} {{ komunikat() }}</p>
@@ -330,6 +347,9 @@
                 @if (bezGodzin === wynik.rekordy.length) {
                   Żaden zbiór źródłowy nie podaje godzin dostępności, więc filtr „Dostępny teraz” nie zwraca wyników. To
                   brak w danych, który wzorzec ma uzupełnić.
+                  <button type="button" class="btn btn-link p-0 align-baseline" (click)="tylkoTeraz.set(false)">
+                    Wyłącz filtr „Dostępny teraz”
+                  </button>
                 } @else {
                   Żaden AED z podanymi godzinami nie jest teraz dostępny. {{ bezGodzin }} z
                   {{ wynik.rekordy.length }} AED nie ma godzin w źródle, więc filtr ich nie uwzględnia.
@@ -367,89 +387,144 @@
                 [promienM]="lokalizacja() ? promien() : null"></app-mapa-aed>
             </div>
 
-            <div
-              class="scrollable-table-wrapper"
-              role="region"
-              aria-labelledby="lista-aed-podpis"
-              tabindex="0"
-              id="lista-aed">
-              <table class="datagrid">
-                <caption id="lista-aed-podpis" class="zz-podpis">
-                  Lista AED ({{
-                    wyniki().length
-                  }}) – tekstowy odpowiednik mapy
-                </caption>
-                <thead>
-                  <tr>
-                    <th class="datagrid__heading" scope="col">Nazwa miejsca</th>
-                    @if (lokalizacja()) {
-                      <th class="datagrid__heading" scope="col">Odległość</th>
-                    }
-                    <th class="datagrid__heading" scope="col">Adres</th>
-                    <th class="datagrid__heading" scope="col">Dostęp</th>
-                    <th class="datagrid__heading" scope="col">Godziny</th>
-                    <th class="datagrid__heading" scope="col">Dostępny teraz</th>
-                    <th class="datagrid__heading" scope="col">Położenie</th>
-                    <th class="datagrid__heading" scope="col">Źródło</th>
-                    <th class="datagrid__heading" scope="col">Data danych</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (r of wyniki(); track r.id_aed) {
-                    <tr class="datagrid__row">
-                      <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
+            <!-- LISTA: tabela od md, karty na telefonie (USWDS: stacked dla katalogów). Ukryta wersja ma display:none,
+                 więc czytnik nie czyta danych dwa razy. -->
+            <section id="lista-aed" class="zz-lista" tabindex="-1" aria-labelledby="lista-aed-tytul">
+              <h3 id="lista-aed-tytul" class="visually-hidden">Lista AED</h3>
+              @if (wyniki().length === 0) {
+                <div class="alert alert-info">
+                  Brak AED dla wybranych filtrów{{ lokalizacja() ? ' w wybranym promieniu' : '' }}.
+                  @if (aktywneFiltry().length) {
+                    <button type="button" class="btn btn-link p-0 align-baseline" (click)="wyczyscFiltry()">
+                      Wyczyść filtry
+                    </button>
+                  }
+                </div>
+              }
+              <ul class="zz-karty d-md-none" aria-label="Lista AED – tekstowy odpowiednik mapy">
+                @for (r of wyniki(); track r.id_aed) {
+                  <li>
+                    <article class="zz-karta">
+                      <h4 class="zz-karta__tytul">
                         @if (r.fikcyjne) {
                           <span class="zz-fikcyjne">DANE FIKCYJNE</span>
                         }
                         {{ r.nazwa_miejsca }}
-                        @if (r.opis_lokalizacji) {
-                          <span class="zz-opis">{{ r.opis_lokalizacji }}</span>
-                        }
-                      </th>
+                      </h4>
                       @if (lokalizacja()) {
-                        <td class="datagrid__cell">{{ opisOdleglosci(odleglosc(r) ?? 0) }}</td>
+                        <p class="zz-karta__odleglosc">{{ opisOdleglosci(odleglosc(r) ?? 0) }} od Ciebie</p>
                       }
-                      <td class="datagrid__cell">
-                        {{ [r.ulica, r.numer_budynku].join(' ').trim() || '–' }}<br />{{ r.kod_pocztowy ?? '' }}
-                        {{ r.miejscowosc ?? '' }}
-                      </td>
-                      <td class="datagrid__cell">{{ r.dostep ?? 'brak danych' }}</td>
-                      <td class="datagrid__cell">
-                        @if (r.godziny_dostepnosci) {
-                          <code>{{ r.godziny_dostepnosci }}</code>
-                        } @else {
-                          <span class="zz-brak">brak danych</span>
-                        }
-                      </td>
-                      <td class="datagrid__cell">{{ stanTeraz(r) }}</td>
-                      <td class="datagrid__cell">{{ takNie(r.wewnatrz_budynku) }}</td>
-                      <td class="datagrid__cell">
+                      @if (r.opis_lokalizacji) {
+                        <p class="zz-opis">{{ r.opis_lokalizacji }}</p>
+                      }
+                      <dl class="zz-karta__dane">
+                        <dt>Adres</dt>
+                        <dd>
+                          {{ [r.ulica, r.numer_budynku].join(' ').trim() || '–' }}, {{ r.kod_pocztowy ?? '' }}
+                          {{ r.miejscowosc ?? '' }}
+                        </dd>
+                        <dt>Dostęp</dt>
+                        <dd>{{ r.dostep ?? 'brak danych' }}</dd>
+                        <dt>Godziny</dt>
+                        <dd>{{ r.godziny_dostepnosci ?? 'brak danych' }}</dd>
+                        <dt>Dostępny teraz</dt>
+                        <dd>{{ stanTeraz(r) }}</dd>
+                        <dt>Położenie</dt>
+                        <dd>{{ takNie(r.wewnatrz_budynku) }}</dd>
+                      </dl>
+                      <p class="zz-karta__zrodlo">
+                        Źródło:
                         @if (r.adresZbioruZrodla) {
                           <a [href]="r.adresZbioruZrodla">{{ r.dostawcaZrodla }}</a>
                         } @else {
                           {{ r.dostawcaZrodla }}
                         }
-                        @if (r.atrybucjaZrodla) {
-                          <span class="zz-opis">{{ r.atrybucjaZrodla }}</span>
-                        }
-                      </td>
-                      <td class="datagrid__cell">
-                        <time [attr.datetime]="r.dataDanychZrodla">{{ data(r.dataDanychZrodla) }}</time>
+                        · dane z <time [attr.datetime]="r.dataDanychZrodla">{{ data(r.dataDanychZrodla) }}</time>
                         @if (nieaktualne(r.dataDanychZrodla)) {
                           <span class="zz-ostrzezenie">Uwaga: dane sprzed {{ opisWieku(r.dataDanychZrodla) }}</span>
                         }
-                      </td>
+                      </p>
+                    </article>
+                  </li>
+                }
+              </ul>
+              <div
+                class="scrollable-table-wrapper d-none d-md-block"
+                role="region"
+                aria-labelledby="lista-aed-podpis"
+                tabindex="0">
+                <table class="datagrid">
+                  <caption id="lista-aed-podpis" class="zz-podpis">
+                    Lista AED ({{
+                      wyniki().length
+                    }}) – tekstowy odpowiednik mapy
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th class="datagrid__heading" scope="col">Nazwa miejsca</th>
+                      @if (lokalizacja()) {
+                        <th class="datagrid__heading" scope="col">Odległość</th>
+                      }
+                      <th class="datagrid__heading" scope="col">Adres</th>
+                      <th class="datagrid__heading" scope="col">Dostęp</th>
+                      <th class="datagrid__heading" scope="col">Godziny</th>
+                      <th class="datagrid__heading" scope="col">Dostępny teraz</th>
+                      <th class="datagrid__heading" scope="col">Położenie</th>
+                      <th class="datagrid__heading" scope="col">Źródło</th>
+                      <th class="datagrid__heading" scope="col">Data danych</th>
                     </tr>
-                  } @empty {
-                    <tr class="datagrid__row">
-                      <td class="datagrid__cell" [attr.colspan]="lokalizacja() ? 9 : 8">
-                        Brak AED dla wybranych filtrów{{ lokalizacja() ? ' w wybranym promieniu' : '' }}.
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    @for (r of wyniki(); track r.id_aed) {
+                      <tr class="datagrid__row">
+                        <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
+                          @if (r.fikcyjne) {
+                            <span class="zz-fikcyjne">DANE FIKCYJNE</span>
+                          }
+                          {{ r.nazwa_miejsca }}
+                          @if (r.opis_lokalizacji) {
+                            <span class="zz-opis">{{ r.opis_lokalizacji }}</span>
+                          }
+                        </th>
+                        @if (lokalizacja()) {
+                          <td class="datagrid__cell">{{ opisOdleglosci(odleglosc(r) ?? 0) }}</td>
+                        }
+                        <td class="datagrid__cell">
+                          {{ [r.ulica, r.numer_budynku].join(' ').trim() || '–' }}<br />{{ r.kod_pocztowy ?? '' }}
+                          {{ r.miejscowosc ?? '' }}
+                        </td>
+                        <td class="datagrid__cell">{{ r.dostep ?? 'brak danych' }}</td>
+                        <td class="datagrid__cell">
+                          @if (r.godziny_dostepnosci) {
+                            <code>{{ r.godziny_dostepnosci }}</code>
+                          } @else {
+                            <span class="zz-brak">brak danych</span>
+                          }
+                        </td>
+                        <td class="datagrid__cell">{{ stanTeraz(r) }}</td>
+                        <td class="datagrid__cell">{{ takNie(r.wewnatrz_budynku) }}</td>
+                        <td class="datagrid__cell">
+                          @if (r.adresZbioruZrodla) {
+                            <a [href]="r.adresZbioruZrodla">{{ r.dostawcaZrodla }}</a>
+                          } @else {
+                            {{ r.dostawcaZrodla }}
+                          }
+                          @if (r.atrybucjaZrodla) {
+                            <span class="zz-opis">{{ r.atrybucjaZrodla }}</span>
+                          }
+                        </td>
+                        <td class="datagrid__cell">
+                          <time [attr.datetime]="r.dataDanychZrodla">{{ data(r.dataDanychZrodla) }}</time>
+                          @if (nieaktualne(r.dataDanychZrodla)) {
+                            <span class="zz-ostrzezenie">Uwaga: dane sprzed {{ opisWieku(r.dataDanychZrodla) }}</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </div>
 
           <!-- ===== ZBIORY ŹRÓDŁOWE ===== -->

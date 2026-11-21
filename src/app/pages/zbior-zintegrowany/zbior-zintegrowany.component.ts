@@ -166,6 +166,41 @@ export class ZbiorZintegrowanyComponent {
       .map((x) => x.r);
   });
 
+  /** Aktywne filtry jako usuwalne tagi (MOJ Filter, app-remove-button portalu). */
+  readonly aktywneFiltry = computed(() => {
+    const t: { klucz: string; etykieta: string }[] = [];
+    const opisWewnatrz: Record<string, string> = { tak: 'wewnątrz budynku', nie: 'na zewnątrz', brak: 'brak danych' };
+    if (this.szukaj().trim()) t.push({ klucz: 'szukaj', etykieta: `Szukaj: ${this.szukaj().trim()}` });
+    if (this.miejscowosc()) t.push({ klucz: 'miejscowosc', etykieta: `Miejscowość: ${this.miejscowosc()}` });
+    if (this.dostep())
+      t.push({ klucz: 'dostep', etykieta: `Dostęp: ${this.dostep() === 'brak' ? 'brak danych' : this.dostep()}` });
+    if (this.wewnatrz()) t.push({ klucz: 'wewnatrz', etykieta: `Położenie: ${opisWewnatrz[this.wewnatrz()]}` });
+    if (this.dostawca()) {
+      const d = this.dostawcy.find((x) => x.id === this.dostawca());
+      t.push({ klucz: 'dostawca', etykieta: `Dostawca: ${d?.nazwa ?? this.dostawca()}` });
+    }
+    if (this.tylkoTeraz()) t.push({ klucz: 'teraz', etykieta: 'Dostępny teraz' });
+    if (this.lokalizacja())
+      t.push({ klucz: 'lokalizacja', etykieta: `W pobliżu: ${this.opisPromienia(this.promien())}` });
+    return t;
+  });
+
+  /** Usuwa jeden filtr; fokus przechodzi na następny tag albo na pole wyszukiwania (WCAG 2.4.3). */
+  usunFiltr(klucz: string, indeks: number): void {
+    if (klucz === 'szukaj') this.szukaj.set('');
+    else if (klucz === 'miejscowosc') this.miejscowosc.set('');
+    else if (klucz === 'dostep') this.dostep.set('');
+    else if (klucz === 'wewnatrz') this.wewnatrz.set('');
+    else if (klucz === 'dostawca') this.dostawca.set('');
+    else if (klucz === 'teraz') this.tylkoTeraz.set(false);
+    else if (klucz === 'lokalizacja') this.lokalizacja.set(null);
+    this.komunikat.set('Usunięto filtr.');
+    setTimeout(() => {
+      const tagi = document.querySelectorAll<HTMLButtonElement>('.zz-tagi button');
+      (tagi[Math.min(indeks, tagi.length - 1)] ?? document.getElementById('zz-szukaj'))?.focus();
+    });
+  }
+
   /** Najbliższy AED, gdy w promieniu nie ma żadnego – żeby lista nigdy nie była bezużyteczna. */
   readonly najblizszyPozaPromieniem = computed(() => {
     if (!this.lokalizacja() || this.wyniki().length) return null;
