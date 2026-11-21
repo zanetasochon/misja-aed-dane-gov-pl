@@ -61,23 +61,56 @@
 
       <!-- 2/2 COLUMN: MAIN -->
       <div class="collapsible-sidebar-view__main">
-        <!-- ACTIONS BAR -->
-        <div class="item-view__actions d-flex flex-wrap align-items-center">
+        <!-- ACTIONS BAR – 1:1 jak w portalu (dataset-item.component.html) -->
+        <div class="item-view__actions d-flex">
+          <!-- hide/show sidebar -->
           <button
             type="button"
             class="btn btn-outline-primary btn-sm d-none d-xl-inline"
             aria-controls="zz-szczegoly"
             [attr.aria-expanded]="szczegolyWidoczne()"
             (click)="szczegolyWidoczne.set(!szczegolyWidoczne())">
-            {{ szczegolyWidoczne() ? 'Ukryj' : 'Pokaż' }} szczegóły
+            @if (szczegolyWidoczne()) {
+              <svg class="icon icon-magnifying-glass">
+                <use href="/assets/icomoon/sprite/sprite.svg#icon-arrow-left2"></use>
+              </svg>
+            }
+
+            {{ (szczegolyWidoczne() ? 'Action.Hide' : 'Action.Show') | translate }}
+            {{ 'Attribute.Details' | translate | lowercase }}
             <span class="visually-hidden">{{ tytul }}</span>
+
+            @if (!szczegolyWidoczne()) {
+              <svg class="icon icon-magnifying-glass">
+                <use href="/assets/icomoon/sprite/sprite.svg#icon-arrow-right2"></use>
+              </svg>
+            }
           </button>
-          <!-- placeholder: zbiór nie istnieje w API, więc nie ma prawdziwych polubień -->
-          <app-favorite-counter [favoritesCount]="0" class="ms-2"></app-favorite-counter>
-          <a
-            class="btn btn-danger btn-sm ml-auto ms-auto"
-            [routerLink]="['/!dataset', '!zgodnosc-ze-wzorcem'] | localize">
+
+          <!-- observe -->
+          <app-subscribe-button
+            tooltipText="{{ 'Tour.Tooltip.DatasetDetails.Follow.text' | translate }}"
+            tooltipTitle="{{ 'Tour.Tooltip.DatasetDetails.Follow.title' | translate }}"
+            [item]="elementObserwowany"></app-subscribe-button>
+
+          <!-- favorite -->
+          <!-- button -->
+          <app-favorite-button
+            [favorite]="ulubiony()"
+            (favoriteRequested)="przelaczUlubione()"
+            tooltipTitle="{{ 'Favorites.Hint.Title' | translate }}"
+            appInfoTooltip="{{ 'Favorites.Hint.Description' | translate }}"
+            class="ms-2 d-flex">
+          </app-favorite-button>
+          <!-- counter -->
+          <app-favorite-counter [favoritesCount]="ulubiony() ? 1 : 0" class="ms-2"> </app-favorite-counter>
+
+          <!-- narzędzie dla dostawców (w miejscu „Zgłoś uwagi do zbioru”, ten sam wzór przycisku) -->
+          <a class="btn btn-danger btn-sm ml-auto" [routerLink]="['/!dataset', '!zgodnosc-ze-wzorcem'] | localize">
             Sprawdź zgodność ze wzorcem
+            <svg class="icon icon-chevrons-right" role="img" aria-hidden="true">
+              <use href="/assets/icomoon/sprite/sprite.svg#icon-chevrons-right"></use>
+            </svg>
           </a>
         </div>
 

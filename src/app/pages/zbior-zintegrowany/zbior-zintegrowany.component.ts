@@ -5,7 +5,7 @@
  * metadane, zbiory źródłowe, raport harmonizacji, eksport oraz widok danych (lista + mapa + filtry).
  */
 
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, LowerCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,7 +20,16 @@ import { RouterLink } from '@angular/router';
 import { CollapsibleTextComponent } from '@app/shared/collapsible-text/collapsible-text.component';
 import { FavoriteCounterComponent } from '@app/shared/favorite-counter/favorite-counter.component';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
-import { DATA_AKTUALIZACJI, OPIS_ZBIORU, SLOWA_KLUCZOWE, TYTUL_ZBIORU } from './lib/element-listy';
+import { FavoriteButtonComponent } from '@app/shared/buttons/favorite-button/favorite-button.component';
+import { SubscribeButtonComponent } from '@app/shared/subscribe-button/subscribe-button.component';
+import { TranslatePipe } from '@ngx-translate/core';
+import {
+  DATA_AKTUALIZACJI,
+  ID_ZBIORU_ZINTEGROWANEGO,
+  OPIS_ZBIORU,
+  SLOWA_KLUCZOWE,
+  TYTUL_ZBIORU,
+} from './lib/element-listy';
 import { doCsv, doCsvZrodel, doGeoJson, doJson, opisyZrodel, pobierzPlik } from './lib/eksport';
 import { czyDostepnyTeraz } from './lib/godziny';
 import { integruj } from './lib/harmonizacja';
@@ -64,6 +73,10 @@ export const PROMIEN_AWARYJNY_M = 250;
     CollapsibleTextComponent,
     FavoriteCounterComponent,
     InfoTooltipDirective,
+    SubscribeButtonComponent,
+    FavoriteButtonComponent,
+    TranslatePipe,
+    LowerCasePipe,
   ],
   templateUrl: './zbior-zintegrowany.component.html',
   styleUrl: './zbior-zintegrowany.component.scss',
@@ -81,6 +94,23 @@ export class ZbiorZintegrowanyComponent {
 
   // Układ strony zbioru jak w portalu: pasek boczny ze szczegółami i zakładki.
   readonly szczegolyWidoczne = signal(true);
+
+  // Pasek akcji jak w dataset-item portalu. Zbioru nie ma w API, więc „Obserwuj” zachowuje się jak dla
+  // niezalogowanego (komunikat portalu), a ulubione są zapisywane tylko w tej przeglądarce – pod tym samym
+  // kluczem co na liście zbiorów (details-result-item, localFavoriteKey).
+  readonly elementObserwowany = { id: ID_ZBIORU_ZINTEGROWANEGO, attributes: { title: TYTUL_ZBIORU } };
+  readonly ulubiony = signal(false);
+  private readonly kluczUlubionych = `hacknation-favourite-${ID_ZBIORU_ZINTEGROWANEGO}`;
+
+  przelaczUlubione(): void {
+    const nowy = !this.ulubiony();
+    this.ulubiony.set(nowy);
+    try {
+      localStorage.setItem(this.kluczUlubionych, String(nowy));
+    } catch {
+      // brak dostępu do localStorage – stan zostaje tylko w pamięci
+    }
+  }
   readonly zakladka = signal<Zakladka>('dane');
   /** Zakładki z podpowiedziami jak w portalu (dataset-item: „Dane”, „Warunki wykorzystywania”, „Historia zbioru”). */
   readonly zakladki: { id: Zakladka; etykieta: string; podpowiedz: string }[] = [
@@ -280,6 +310,11 @@ export class ZbiorZintegrowanyComponent {
     afterNextRender(() => {
       if (!this.wPrzegladarce) return;
       this.teraz.set(new Date());
+      try {
+        this.ulubiony.set(localStorage.getItem(this.kluczUlubionych) === 'true');
+      } catch {
+        // brak dostępu do localStorage (np. tryb prywatny)
+      }
       setInterval(() => this.teraz.set(new Date()), 60_000);
     });
   }
