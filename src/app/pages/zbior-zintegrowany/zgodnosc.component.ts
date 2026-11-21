@@ -28,7 +28,8 @@ interface Plik {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, RouterLink, LocalizeRouterPipe],
   templateUrl: './zgodnosc.component.html',
-  styleUrl: './zbior-zintegrowany.component.scss',
+  // Wspólny arkusz formularzy portalu + nasze style (tabele, status, przyciski).
+  styleUrls: ['../../shared/forms/forms.scss', './zbior-zintegrowany.component.scss'],
 })
 export class ZgodnoscComponent {
   readonly etykiety = ETYKIETY;
