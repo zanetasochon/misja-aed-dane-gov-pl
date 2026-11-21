@@ -14,13 +14,19 @@
     <div class="fieldset-header">
       <h2 id="zg-wzor">Krok 1. Pobierz wzór</h2>
     </div>
-    <p>Wypełnij wzór danymi o swoich defibrylatorach. Dzięki temu Twój zbiór połączy się z danymi innych dostawców.</p>
-    <a
-      class="btn btn-outline-primary align-self-start"
-      href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx"
-      download
-      >Pobierz wzór (XLSX, ok. 21 KB)</a
-    >
+    <p>
+      Wpisz dane o swoich defibrylatorach do pustego szablonu. Dzięki temu Twój zbiór połączy się z danymi innych
+      dostawców. Gotowy arkusz zapisz jako CSV UTF-8 i sprawdź go w kroku 2. Opis wszystkich pól i dozwolonych wartości
+      jest we wzorze.
+    </p>
+    <div class="zz-przyciski">
+      <a class="btn btn-primary" href="/assets/hacknation/szablon-danych-AED-v1.2.xlsx" download
+        >Pobierz pusty szablon (XLSX, ok. 55 KB)</a
+      >
+      <a class="btn btn-outline-primary" href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx" download
+        >Pobierz wzór z opisem pól (XLSX, ok. 21 KB)</a
+      >
+    </div>
   </section>
 
   <div class="fieldset-header col-md-10 col-lg-8">
@@ -88,7 +94,7 @@
       <div class="form-field">
         <p class="zz-podpowiedz mb-2">Nie masz pliku pod ręką? Sprawdź, jak działa narzędzie, na prawdziwych danych:</p>
         <button type="button" class="btn btn-outline-primary" (click)="uzyjPrzykladu()">
-          Użyj przykładu: prawdziwy plik z Krosna (dane.gov.pl, CC0 1.0)
+          Użyj przykładu: plik z Krosna (dane.gov.pl, CC0 1.0)
         </button>
       </div>
     </fieldset>

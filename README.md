@@ -15,14 +15,14 @@ Dane o defibrylatorach AED są rozproszone: na dane.gov.pl jest kilka zbiorów A
 
 ### Źródła danych w prototypie
 
-| Źródło | Dostawca | Licencja | Charakter |
-| --- | --- | --- | --- |
-| [Defibrylatory zlokalizowane w Mieście Krosno](https://dane.gov.pl/pl/dataset/3624,defibrylatory-zlokalizowane-w-miescie-krosno) (zasób 54632, dane z 2024-02-19) | Urząd Miasta Krosna | CC0 1.0 | **prawdziwe**, plik bez zmian |
-| [Zdrowie – wykaz defibrylatorów AED w Legionowie](https://dane.gov.pl/pl/dataset/40593,zdowie) (zasób 2625221, dane z 2026-09-14) | Urząd Miasta Legionowo | CC0 1.0 | **prawdziwe**, plik bez zmian |
-| [Lokalizacje AED w Przemyślu](https://dane.gov.pl/pl/dataset/4581,lokalizacje-aed-automatycznych-defibrylatorow-zewn) (zasób 62095, dane z 2024-11-06) | Urząd Miejski w Przemyślu | CC0 1.0 | **prawdziwe**, plik bez zmian (współrzędne w kolumnie `geometry` jako GeoJSON) |
-| [Defibrylatory na terenie Miasta Marki](https://dane.gov.pl/pl/dataset/4955,defibrylatory-zlokalizowane-na-terenie-miasta-markI) (zasób 68353, dane z 2025-07-10) | Urząd Miasta Marki | CC BY 4.0 – „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0” | **prawdziwe**, plik bez zmian (uszkodzony u źródła, naprawiany przy odczycie) |
-| [Lokalizacja defibrylatorów (AED)](https://dane.gov.pl/pl/dataset/39512,lokalizacja-defibryzatorow-aed) | Urząd m.st. Warszawy | CC BY 4.0 | **niewykorzystane**: źródło niedostępne maszynowo (link prowadzi do strony HTML); nie pobieramy danych ze strony |
-| Defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. (fikcyjny) | – | **fikcyjne** (`dane/port-lotniczy.ts`): 3 AED na liście i mapie jak inne, fikcyjność widać w nazwie dostawcy i w zakładce „Zbiory źródłowe”; nie trafia do eksportu |
+| Źródło                                                                                                                                                            | Dostawca                                  | Licencja                                                         | Charakter                                                                                                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Defibrylatory zlokalizowane w Mieście Krosno](https://dane.gov.pl/pl/dataset/3624,defibrylatory-zlokalizowane-w-miescie-krosno) (zasób 54632, dane z 2024-02-19) | Urząd Miasta Krosna                       | CC0 1.0                                                          | **prawdziwe**, plik bez zmian                                                                                                                                       |
+| [Zdrowie – wykaz defibrylatorów AED w Legionowie](https://dane.gov.pl/pl/dataset/40593,zdowie) (zasób 2625221, dane z 2026-09-14)                                 | Urząd Miasta Legionowo                    | CC0 1.0                                                          | **prawdziwe**, plik bez zmian                                                                                                                                       |
+| [Lokalizacje AED w Przemyślu](https://dane.gov.pl/pl/dataset/4581,lokalizacje-aed-automatycznych-defibrylatorow-zewn) (zasób 62095, dane z 2024-11-06)            | Urząd Miejski w Przemyślu                 | CC0 1.0                                                          | **prawdziwe**, plik bez zmian (współrzędne w kolumnie `geometry` jako GeoJSON)                                                                                      |
+| [Defibrylatory na terenie Miasta Marki](https://dane.gov.pl/pl/dataset/4955,defibrylatory-zlokalizowane-na-terenie-miasta-markI) (zasób 68353, dane z 2025-07-10) | Urząd Miasta Marki                        | CC BY 4.0 – „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0” | **prawdziwe**, plik bez zmian (uszkodzony u źródła, naprawiany przy odczycie)                                                                                       |
+| [Lokalizacja defibrylatorów (AED)](https://dane.gov.pl/pl/dataset/39512,lokalizacja-defibryzatorow-aed)                                                           | Urząd m.st. Warszawy                      | CC BY 4.0                                                        | **niewykorzystane**: źródło niedostępne maszynowo (link prowadzi do strony HTML); nie pobieramy danych ze strony                                                    |
+| Defibrylatory w porcie lotniczym                                                                                                                                  | Port Lotniczy Przykładowo S.A. (fikcyjny) | –                                                                | **fikcyjne** (`dane/port-lotniczy.ts`): 3 AED na liście i mapie jak inne, fikcyjność widać w nazwie dostawcy i w zakładce „Zbiory źródłowe”; nie trafia do eksportu |
 
 Pliki leżą w `src/app/pages/zbior-zintegrowany/dane/`, a w nagłówku każdego pliku jest źródło, licencja i data pobrania (2026-11-21).
 
@@ -58,7 +58,7 @@ npx eslint src/app/pages/zbior-zintegrowany
 5. **Mapa:** znaczniki AED na podkładzie OpenStreetMap. Można przesuwać strzałkami, gdy mapa ma fokus, albo przyciskami „Przesuń…”, „Przybliż”, „Oddal”. Do znaczników prowadzi klawisz Tab, a Enter pokazuje opis. Lista pod mapą jest jej pełnym tekstowym odpowiednikiem. Na telefonie domyślnie widać listę, a mapę włącza przycisk „Pokaż mapę”.
 6. **Eksport:** przyciski „Pobierz CSV”, „Pobierz JSON” i „Pobierz GeoJSON”. CSV jest w UTF-8, zgodnie z RFC 4180, bez całkowicie pustych kolumn (Standard techniczny, s. 21). JSON i GeoJSON mają te same pola wzorca.
 7. **Narzędzie zgodności:** przycisk „Sprawdź zgodność ze wzorcem” (adres `/pl/dataset/zgodnosc-ze-wzorcem`).
-   - Wgraj własny CSV albo kliknij „Użyj przykładu: prawdziwy plik z Krosna”.
+   - Wgraj własny CSV albo kliknij „Użyj przykładu: plik z Krosna”.
    - Zobaczysz propozycję mapowania kolumn, którą możesz zmienić, oraz raport zgodności („Spełnione / Niespełnione”): pola wymagane, adres w osobnych polach, formaty wartości i współrzędne.
    - Pobierz plik zgodny ze wzorcem (CSV albo JSON). Plik nie opuszcza przeglądarki.
 
@@ -77,6 +77,7 @@ Ograniczenie: żaden obecny zbiór źródłowy nie podaje godzin dostępności, 
 ## Pliki w formacie AED Sync
 
 Narzędzie „Sprawdź zgodność ze wzorcem” rozpoznaje kolumny plików AED Sync (nagłówki PL i EN):
+
 - godziny podane osobno dla każdego dnia (`poniedzialek_godziny` … `niedziela_godziny`) są łączone w jedno pole `godziny_dostepnosci` w składni opening_hours, np. `Mo-Th 08:00-16:30; Fr 08:00-15:30`; „Niedostępny” / „Closed” to dzień zamknięty;
 - **pusta komórka dnia to brak danych, a nie dostępność całodobowa** – narzędzie ostrzega o takich dniach;
 - „Odpowiedzialny za AED” i jego telefon trafiają do `dysponent_nazwa` i `telefon_kontaktowy`, „Stan AED” „Sprawny” do `status_urzadzenia` = `sprawne`;
@@ -103,7 +104,7 @@ Szczegóły techniczne przeniesione ze strony zbioru (21.11), bo użytkownikowi 
 
 ## Licencje
 
-- **Kod:** GNU GPL v3, jak kod portalu dane.gov.pl. Pełny tekst licencji jest w pliku [COPYING](COPYING). Każda strona prototypu ma u góry pasek „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.”, a w stopce informację o licencji, braku gwarancji i link do kodu. Nasze pliki są w `src/app/pages/zbior-zintegrowany/` i mają nagłówek z datą. Zmiany w plikach portalu opisuje `ZMIANY-HACKNATION.md`.
+- **Kod:** GNU GPL v3, jak kod portalu dane.gov.pl. Pełny tekst licencji jest w pliku [COPYING](COPYING). Stopka każdej strony prototypu ma zastrzeżenie „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.”, informację o licencji, braku gwarancji i link do kodu. Strony mają `noindex`, więc wyszukiwarki ich nie indeksują. Nasze pliki są w `src/app/pages/zbior-zintegrowany/` i mają nagłówek z datą. Zmiany w plikach portalu opisuje `ZMIANY-HACKNATION.md`.
 - **Dane źródłowe:** Krosno i Legionowo na CC0 1.0. Źródło „Port Lotniczy Przykładowo” jest fikcyjne.
 - **Podkład mapy:** © OpenStreetMap contributors (ODbL). Atrybucja jest widoczna na mapie.
 - **Biblioteka mapy:** Leaflet 1.9 (BSD-2-Clause), już będąca zależnością portalu.
@@ -114,7 +115,8 @@ Szczegóły techniczne przeniesione ze strony zbioru (21.11), bo użytkownikowi 
 
 ## Installation
 
-Recommended node and npm versions 
+Recommended node and npm versions
+
 - node > 20.10.0
 - npm > 10.9.2
 
@@ -126,13 +128,13 @@ with `npm --version` command.
 # Global installations are optional
 npm install -g npm@latest
 npm install -g @angular/cli
- 
+
 npm install
 ```
 
 ### Start application locally
 
-To run your application locally, all you need to run is npm script. Script definition can be 
+To run your application locally, all you need to run is npm script. Script definition can be
 found inside `package.json`.
 
 ```shell
@@ -160,7 +162,7 @@ Usage:
 Run local environment with local backend
 
 ```shell
-npm run start-local 
+npm run start-local
 ```
 
 Run local environment with dev backend
@@ -191,7 +193,7 @@ Proxy options:
 - `changeOrigin` - important setting for cross origin calls, needs to stay `true` unless frontend and backend are served
   on the same domain
 
-for example if your API stands on ```localhost:8000```, you need change `target` for `/api` in `proxy.conf.json` file,
+for example if your API stands on `localhost:8000`, you need change `target` for `/api` in `proxy.conf.json` file,
 for your cms you need
 do the same; change `target` for `/cms` (in this example is `localhost:8001`).
 
@@ -231,10 +233,13 @@ Example `proxy.conf.json` file:
     }
 }
 ```
+
 ## To connect the frontend with the
+
 Modify the `docker-compose.yml` file to:
 
 1. add a connection to the backend network
+
 ```yaml
 # top level element
 networks:
@@ -243,49 +248,53 @@ networks:
     name: backend_backend
     external: true
 ```
+
 2. Connect the `serve` service to these networks
+
 ```yaml
-  serve:
-    networks:
-      - frontend
-      - backend
+serve:
+  networks:
+    - frontend
+    - backend
 ```
 
 3. Amend `/etc/hosts` of the container
+
 ```yaml
-  serve:
-    extra_hosts:
-      - "api.mcod.local:172.18.18.100"
-      - "cms.mcod.local:172.18.18.100"
+serve:
+  extra_hosts:
+    - 'api.mcod.local:172.18.18.100'
+    - 'cms.mcod.local:172.18.18.100'
 ```
 
-4. Change the *host* port to 4200
+4. Change the _host_ port to 4200
+
 ```yaml
-  serve:
-    ports:
-      - "4200:4000"
+serve:
+  ports:
+    - '4200:4000'
 ```
 
 The network name, port, and the addresses need to be coordinated with backend's `docker-compose.yml` and nginx config.
-Warning: this configuration *requires* the backend network.
+Warning: this configuration _requires_ the backend network.
 
 ## CI/CD — zmienne konfigurowalne w jobach
 
 Poniższe zmienne można ustawić ręcznie przy uruchamianiu pipeline'u w GitLabie
-(*Run pipeline* → *Variables*). Zmienne z domyślną wartością `""` są zaprojektowane
+(_Run pipeline_ → _Variables_). Zmienne z domyślną wartością `""` są zaprojektowane
 jawnie pod nadpisywanie.
 
 ### Zmienne użytkownika
 
 | Zmienna            | Job                     | Domyślnie | Opis                                                                                                                                            |
-|--------------------|-------------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------ | ----------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `OVERRIDE_VERSION` | `bump-version`          | `""`      | Wymusza wersję zamiast wyprowadzania jej z nazwy gałęzi `release/<x.y.z>`. Format: `MAJOR.MINOR.PATCH[-suffix]`.                                |
 | `RELEASE_VERSION`  | `create-release-branch` | `""`      | Wersja nowej gałęzi `release/<x.y.z>` z `develop`. Puste → automatycznie następny minor z `package.json`. Format: `MAJOR.MINOR.PATCH[-suffix]`. |
 
 ### Zmienne środowiskowe release'u (nadpisywane w jobach `release-*`)
 
 | Zmienna                        | Możliwe wartości                                 | Opis                                                                                    |
-|--------------------------------|--------------------------------------------------|-----------------------------------------------------------------------------------------|
+| ------------------------------ | ------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | `MCOD_BUILD_CONFIGURATION_ENV` | `int`, `production`                              | Przekazywana jako `--build-arg` do `docker build`; wybiera konfigurację Angulara.       |
 | `IMAGE_TAG`                    | `pre-dev`, `dev`, `master`, `master-prod-latest` | Tag obrazu publikowany do rejestru; dodatkowo taguje `${IMAGE_TAG}-${PACKAGE_VERSION}`. |
 | `RELEASE_DOCKER_BUILD_TARGET`  | `serve-static`                                   | Docelowy stage z `Dockerfile` używany do release'ów.                                    |
@@ -298,7 +307,7 @@ jawnie pod nadpisywanie.
 
 ### Wymagane sekrety CI
 
-Ustawiane w *Settings → CI/CD → Variables*:
+Ustawiane w _Settings → CI/CD → Variables_:
 
 - `GITLAB_ACCESS_TOKEN` — token z uprawnieniami do pushowania i tworzenia MR-ów;
   używany przez `scripts/bump-version.sh` i `scripts/create-release-branch.sh`.

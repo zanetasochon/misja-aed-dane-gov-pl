@@ -9,7 +9,7 @@ Prototyp powstał na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek�
 | Data | Plik | Zmiana |
 |---|---|---|
 | 2026-11-21 | `COPYING` (nowy) | Pełny tekst GNU GPL v3.0 (https://www.gnu.org/licenses/gpl-3.0.txt). |
-| 2026-11-21 | `src/app/layout/main-layout/main-layout.component.html` | Pasek na górze każdej strony: „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.” |
+| 2026-11-21 | `src/app/layout/main-layout/main-layout.component.html` | (usunięte 2026-11-22) Pasek na górze każdej strony: „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.” |
 | 2026-11-21 | `src/app/layout/footer/footer.component.html` | W stopce informacja o licencji GPL-3.0, braku gwarancji, liście zmian i link do kodu źródłowego (GPL §5d). |
 | 2026-11-21 | `proxy.public.conf.json` (nowy) | Proxy deweloperskie do publicznego API produkcyjnego `api.dane.gov.pl/1.4`. Tylko do odczytu. |
 | 2026-11-21 | `angular.json` | Nowa konfiguracja `serve` o nazwie `public`, korzystająca z proxy powyżej. |
@@ -33,6 +33,10 @@ Prototyp powstał na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek�
 | 2026-11-21 | `package.json` | `engines.node`: `>=20` → `22.x`, żeby Vercel uruchamiał funkcję i build na Node 22 (domyślnie ustawił 26.x, którego Angular 18 nie wspiera). |
 | 2026-11-21 | `src/scss/layout/_layout.scss` | Poprawka dostępności: `.btn-outline-primary` w stanach `:hover`, `:focus`, `:active` dostaje biały tekst. W oryginale tło zmieniało się na `$primary-hover` (#0753a4), a tekst zostawał `$primary` (#0865c9), więc kliknięty przycisk miał kontrast ok. 1,3:1 (WCAG 1.4.3 wymaga 4,5:1). Dotyczy całego portalu. |
 | 2026-11-21 | `src/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx` (nowy) | Kopia wzorcowego zakresu danych AED v1.2 (bez zmian) do pobrania na stronie „Sprawdź zgodność ze wzorcem” (krok „Pobierz wzór”). |
+| 2026-11-22 | `src/assets/hacknation/szablon-danych-AED-v1.2.xlsx` (nowy) | Pusty szablon do wypełnienia: arkusz „Dane” z jednym wierszem nagłówka (27 pól wzorca v1.2 bez `id_aed`, `zrodlo_danych` i `data_aktualizacji`, które nadaje narzędzie), kolumnami tekstowymi, listami wartości i podpowiedziami; arkusz „Jak wypełnić”. |
+| 2026-11-22 | `src/app/layout/main-layout/main-layout.component.html` | Usunięty pasek na górze strony (decyzja zespołu). Zastrzeżenie „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.” przeniesione do stopki. |
+| 2026-11-22 | `src/app/layout/footer/footer.component.html` | Zastrzeżenie „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.” nad informacją o licencji. |
+| 2026-11-22 | `src/index.html` | `<meta name="robots" content="noindex, nofollow">`: wyszukiwarki nie indeksują prototypu. |
 
 Uruchomienie: `npm ci`, a potem `npm run start:public -- --port 4300`.
 
