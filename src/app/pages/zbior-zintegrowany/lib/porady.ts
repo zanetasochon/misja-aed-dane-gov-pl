@@ -1,8 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * „Jak poprawić” dla komunikatów walidacji (walidacja-rekordu.ts, zgodnosc.ts). Raport mówi nie tylko,
- * co jest źle, ale też co zrobić (WCAG 3.3.3, GOV.UK Error message).
+ * „Jak poprawić” dla komunikatów walidacji (walidacja-rekordu.ts, zgodnosc.ts).
  */
 
 const PORADY: [RegExp, string][] = [

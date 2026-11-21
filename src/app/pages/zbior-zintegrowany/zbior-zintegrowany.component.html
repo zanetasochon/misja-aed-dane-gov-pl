@@ -1,5 +1,4 @@
-<!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
-     Układ jak na stronie zbioru w portalu (dataset-item): nagłówek, pasek boczny ze szczegółami, akcje i zakładki. -->
+<!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21. -->
 
 <!-- DETAILS: HEADER -->
 <header class="data-item-view__header vertical-spacing">
@@ -61,7 +60,7 @@
 
       <!-- 2/2 COLUMN: MAIN -->
       <div class="collapsible-sidebar-view__main">
-        <!-- ACTIONS BAR – 1:1 jak w portalu (dataset-item.component.html) -->
+        <!-- ACTIONS BAR -->
         <div class="item-view__actions d-flex">
           <!-- hide/show sidebar -->
           <button
@@ -105,7 +104,6 @@
           <!-- counter -->
           <app-favorite-counter [favoritesCount]="ulubiony() ? 1 : 0" class="ms-2"> </app-favorite-counter>
 
-          <!-- narzędzie dla dostawców (w miejscu „Zgłoś uwagi do zbioru”, ten sam wzór przycisku) -->
           <a class="btn btn-danger btn-sm ml-auto" [routerLink]="['/!dataset', '!zgodnosc-ze-wzorcem'] | localize">
             Sprawdź zgodność ze wzorcem
             <svg class="icon icon-chevrons-right" role="img" aria-hidden="true">
@@ -119,8 +117,6 @@
           <ul class="tab-list row no-gutters" role="tablist" aria-label="Zawartość zbioru zintegrowanego">
             @for (z of zakladki; track z.id; let i = $index) {
               <li class="tab-list__item col-md-4" role="presentation">
-                <!-- 1:1 jak w portalu (dataset-item.component.html): <a class="tab-list__link"> + appInfoTooltip.
-                     Dodane tylko niewidoczne elementy dostępności: aria-controls, tabindex i strzałki (APG). -->
                 <a
                   class="tab-list__link"
                   role="tab"
@@ -154,7 +150,6 @@
             tabindex="0">
             <h2 class="heading heading--sm">Lista i mapa AED</h2>
 
-            <!-- PRZYCISK AWARYJNY: jedyny przycisk primary na stronie; AED dostępne teraz w promieniu 250 m -->
             <section class="zz-awaryjne" aria-labelledby="zz-awaryjne-przycisk">
               <button
                 id="zz-awaryjne-przycisk"
@@ -196,7 +191,6 @@
             <!-- pobieranie -->
             <div class="zz-pobieranie">
               <span class="dropdown-label">Pobierz zbiór:</span>
-              <!-- przy pliku format i rozmiar (DS Gov.pl); primary ma tylko przycisk awaryjny -->
               <button type="button" class="btn btn-outline-primary btn-sm" (click)="pobierz('csv')">
                 CSV ({{ rozmiary.csv }})
               </button>
@@ -289,7 +283,6 @@
               </div>
             </form>
 
-            <!-- aktywne filtry jako usuwalne tagi (wzór app-remove-button portalu) -->
             @if (aktywneFiltry().length) {
               <div class="zz-aktywne">
                 <span class="zz-aktywne__etykieta" id="zz-aktywne-etykieta">Aktywne filtry:</span>
@@ -309,7 +302,6 @@
               </div>
             }
 
-            <!-- liczba wyników: role="status" zawsze w DOM, zmienia się tylko treść (WCAG 4.1.3) -->
             <p role="status" class="zz-status">{{ tekstWynikow() }} {{ komunikat() }}</p>
 
             <p class="zz-przelacznik-mapy">
@@ -330,8 +322,6 @@
                 [promienM]="lokalizacja() ? promien() : null"></app-mapa-aed>
             </div>
 
-            <!-- LISTA: tabela od md, karty na telefonie (USWDS: stacked dla katalogów). Ukryta wersja ma display:none,
-                 więc czytnik nie czyta danych dwa razy. -->
             <section id="lista-aed" class="zz-lista" tabindex="-1" aria-labelledby="lista-aed-tytul">
               <h3 id="lista-aed-tytul" class="visually-hidden">Lista AED</h3>
               @if (wyniki().length === 0 && !brakDostepnychWPoblizu()) {
@@ -596,7 +586,6 @@
               puste, żeby nie udawać danych, których nie ma.
             </p>
 
-            <!-- porównanie źródeł w jednej tabeli (zakładki i sekcje utrudniają porównywanie) -->
             <div
               class="scrollable-table-wrapper mb-4"
               role="region"

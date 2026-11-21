@@ -33,7 +33,7 @@ interface Opcja {
 const polaDostawcy = KOLUMNY.filter((k) => k !== 'zrodlo_danych' && k !== 'data_aktualizacji');
 const opcjaPola = (k: PoleRekordu): Opcja => ({ wartosc: k as Cel, etykieta: `${k} – ${ETYKIETY[k]}` });
 
-/** Kroki narzędzia (lista kroków u góry strony, USWDS Step indicator / DS Gov.pl Stepper). */
+/** Kroki narzędzia (lista kroków u góry strony). */
 const KROKI = [
   { id: 'zg-krok-1', nazwa: 'Wybierz plik' },
   { id: 'zg-krok-2', nazwa: 'Sprawdź dopasowanie kolumn' },
@@ -105,7 +105,7 @@ export class ZgodnoscComponent {
     };
   });
 
-  /** Werdykt na początku raportu: jedno zdanie, poziom i ikona (tekst + ikona, nie sam kolor – WCAG 1.4.1). */
+  /** Werdykt na początku raportu: jedno zdanie, poziom i ikona. */
   readonly werdykt = computed(() => {
     const r = this.raport();
     if (!r) return null;
@@ -175,7 +175,6 @@ export class ZgodnoscComponent {
     const input = event.target as HTMLInputElement;
     const f = input.files?.[0];
     if (!f) return;
-    // Komunikaty jak w GOV.UK File upload: co jest nie tak z wybranym plikiem i jak to naprawić.
     const blad = !/\.csv$/i.test(f.name)
       ? 'Wybrany plik musi być w formacie CSV. Zapisz arkusz jako „CSV UTF-8 (rozdzielany przecinkami)”.'
       : f.size === 0

@@ -3,7 +3,7 @@
  *
  * Stały identyfikator rekordu (id_aed): UUID w wersji 5 (RFC 4122, SHA-1, przestrzeń nazw URL)
  * wyliczany z adresu zbioru źródłowego i identyfikatora rekordu w źródle. Ten sam rekord dostaje
- * ten sam UUID przy każdym przeliczeniu zbioru zintegrowanego (decyzja B, 21.11).
+ * ten sam UUID przy każdym przeliczeniu zbioru zintegrowanego.
  */
 
 /** Przestrzeń nazw URL z RFC 4122, dodatek C. */

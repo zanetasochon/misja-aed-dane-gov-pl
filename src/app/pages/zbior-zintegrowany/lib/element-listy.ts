@@ -52,7 +52,7 @@ export function elementZbioruZintegrowanego(): ElementZbioruZintegrowanego {
       tags: [],
       author: 'Ministerstwo Cyfryzacji (administrator portalu)',
       category: { description: '', title: 'Zdrowie; Bezpieczeństwo', id: '' },
-      // Placeholder licznika ulubionych: zbiór nie istnieje w API, więc nie ma prawdziwych polubień.
+      // Zbioru nie ma w API, więc nie ma prawdziwych polubień.
       likes_count: 0,
       is_liked_by_current_user: false,
     } as ISearchResult['attributes'] & { likes_count: number; is_liked_by_current_user: boolean },

@@ -53,10 +53,7 @@ export interface Lokalizacja {
 /** Średnie tempo marszu do szacowania czasu dojścia: 5 km/h ≈ 83 m na minutę. */
 const METRY_NA_MINUTE = 5000 / 60;
 
-/**
- * Promień przycisku awaryjnego „Pokaż najbliższe dostępne defibrylatory” (decyzja Żanety, 21.11):
- * AED, do którego świadek zdąży dojść i wrócić w ciągu ok. 3 minut (AHA: 1,5–2,5 min ≈ 150–250 m w jedną stronę).
- */
+/** Promień wyszukiwania najbliższych dostępnych AED: ok. 3 minuty marszu tam i z powrotem. */
 export const PROMIEN_AWARYJNY_M = 250;
 
 @Component({
@@ -82,7 +79,6 @@ export const PROMIEN_AWARYJNY_M = 250;
   styleUrl: './zbior-zintegrowany.component.scss',
 })
 export class ZbiorZintegrowanyComponent {
-  // Tylko prawdziwe źródła (przełącznik danych fikcyjnych usunięty 21.11 na prośbę Żanety).
   readonly wynik = integruj(ZRODLA);
   readonly niedostepne = ZRODLA_NIEDOSTEPNE;
   readonly doEksportu = this.wynik.rekordy;
@@ -92,12 +88,9 @@ export class ZbiorZintegrowanyComponent {
   readonly opis = OPIS_ZBIORU;
   readonly slowaKluczowe = SLOWA_KLUCZOWE;
 
-  // Układ strony zbioru jak w portalu: pasek boczny ze szczegółami i zakładki.
   readonly szczegolyWidoczne = signal(true);
 
-  // Pasek akcji jak w dataset-item portalu. Zbioru nie ma w API, więc „Obserwuj” zachowuje się jak dla
-  // niezalogowanego (komunikat portalu), a ulubione są zapisywane tylko w tej przeglądarce – pod tym samym
-  // kluczem co na liście zbiorów (details-result-item, localFavoriteKey).
+  // Zbioru nie ma w API: ulubione tylko w localStorage, pod tym samym kluczem co na liście zbiorów.
   readonly elementObserwowany = { id: ID_ZBIORU_ZINTEGROWANEGO, attributes: { title: TYTUL_ZBIORU } };
   readonly ulubiony = signal(false);
   private readonly kluczUlubionych = `hacknation-favourite-${ID_ZBIORU_ZINTEGROWANEGO}`;
@@ -112,7 +105,7 @@ export class ZbiorZintegrowanyComponent {
     }
   }
   readonly zakladka = signal<Zakladka>('dane');
-  /** Zakładki z podpowiedziami jak w portalu (dataset-item: „Dane”, „Warunki wykorzystywania”, „Historia zbioru”). */
+  /** Zakładki z podpowiedziami (appInfoTooltip). */
   readonly zakladki: { id: Zakladka; etykieta: string; podpowiedz: string }[] = [
     {
       id: 'dane',
@@ -136,7 +129,7 @@ export class ZbiorZintegrowanyComponent {
   readonly etykiety = ETYKIETY;
   readonly polaWymagane = POLA_WYMAGANE;
   readonly dostepy = DOSTEP;
-  /** Rozmiary plików do pobrania (DS Gov.pl: przy pliku podaj format i rozmiar). Dane są stałe, więc liczymy raz. */
+  /** Rozmiary plików do pobrania – dane są stałe, więc liczymy raz. */
   readonly rozmiary = {
     csv: rozmiarPliku(doCsv(this.doEksportu)),
     json: rozmiarPliku(doJson(this.doEksportu)),
@@ -163,7 +156,7 @@ export class ZbiorZintegrowanyComponent {
   readonly mapaNaTelefonie = signal(false);
   readonly komunikat = signal('');
 
-  // „W pobliżu”: lokalizacja użytkownika liczona tylko w przeglądarce (niczego nie wysyłamy).
+  // Lokalizacja użytkownika – liczona tylko w przeglądarce, niczego nie wysyłamy.
   readonly lokalizacja = signal<Lokalizacja | null>(null);
   readonly promien = signal(PROMIEN_AWARYJNY_M);
   readonly ustalaLokalizacje = signal(false);
@@ -205,7 +198,7 @@ export class ZbiorZintegrowanyComponent {
       .map((x) => x.r);
   });
 
-  /** Aktywne filtry jako usuwalne tagi (MOJ Filter, app-remove-button portalu). */
+  /** Aktywne filtry jako usuwalne tagi. */
   readonly aktywneFiltry = computed(() => {
     const t: { klucz: string; etykieta: string }[] = [];
     const opisWewnatrz: Record<string, string> = { tak: 'wewnątrz budynku', nie: 'na zewnątrz', brak: 'brak danych' };
@@ -224,7 +217,7 @@ export class ZbiorZintegrowanyComponent {
     return t;
   });
 
-  /** Usuwa jeden filtr; fokus przechodzi na następny tag albo na pole wyszukiwania (WCAG 2.4.3). */
+  /** Usuwa jeden filtr; fokus przechodzi na następny tag albo na pole wyszukiwania. */
   usunFiltr(klucz: string, indeks: number): void {
     if (klucz === 'szukaj') this.szukaj.set('');
     else if (klucz === 'miejscowosc') this.miejscowosc.set('');
@@ -369,7 +362,7 @@ export class ZbiorZintegrowanyComponent {
       .map((k) => ETYKIETY[k.pole]);
   }
 
-  /** Dane starsze niż 12 miesięcy dostają ostrzeżenie tekstowe (nie tylko kolor – WCAG 1.4.1). */
+  /** Dane starsze niż 12 miesięcy dostają ostrzeżenie. */
   nieaktualne(dataDanych: string): boolean {
     return czyNieaktualne(dataDanych);
   }
@@ -401,7 +394,6 @@ export class ZbiorZintegrowanyComponent {
     this.komunikat.set('Wyczyszczono filtry.');
   }
 
-  /** Treść komunikatu o liczbie wyników – jedno zdanie, bez spacji przed kropką. */
   tekstWynikow(): string {
     if (this.lokalizacja() && this.tylkoTeraz())
       return `Znaleziono ${this.wyniki().length} AED dostępnych teraz w promieniu ${this.opisPromienia(this.promien())} od Ciebie.`;

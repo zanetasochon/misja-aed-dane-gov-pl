@@ -120,7 +120,7 @@ export const ETYKIETY: Record<PoleRekordu, string> = {
 
 /**
  * Pola oznaczone „wymagane” w arkuszu „Zakres danych” wzorca v1.2 (kolumna G) – 15 pól.
- * Kompletność źródła liczymy względem tej listy, np. „9/15”.
+ * Kompletność źródła liczymy względem tej listy, np. „10 z 15”.
  */
 export const POLA_WYMAGANE: readonly PoleRekordu[] = [
   'id_aed',

@@ -4,7 +4,6 @@
 
 @use 'base/variables' as v;
 
-// Zakładki jako przyciski (role="tab") – wygląd jak linki tab-list__link w portalu.
 .tabs-content > [role='tabpanel'] {
   padding-top: 1.5rem;
 
@@ -14,7 +13,7 @@
   }
 
   &:focus-visible {
-    outline-offset: 2px; // kolor i grubość: globalny $outline portalu
+    outline-offset: 2px;
   }
 }
 
@@ -128,7 +127,6 @@
   }
 }
 
-// Dane fikcyjne: napis, nie tylko kolor (WCAG 1.4.1).
 .zz-fikcyjne {
   display: inline-block;
   margin-right: 0.25rem;
@@ -148,7 +146,6 @@
   }
 }
 
-// W pobliżu
 .zz-w-poblizu {
   border: 1px solid v.$color-grey-light-6;
   padding: 1rem;
@@ -206,7 +203,7 @@
 
 .mapa-aed__przyciski {
   .btn {
-    min-height: 2.75rem; // cel ≥ 24 px (WCAG 2.5.8), wygodny także na telefonie
+    min-height: 2.75rem; // cel ≥ 24 px (WCAG 2.5.8)
   }
 
   display: flex;
@@ -229,24 +226,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px !important; // ≥ 24×24 px (WCAG 2.5.8); rozmiar = iconSize w mapa-aed.component.ts
+  width: 36px !important; // ≥ 24×24 px (WCAG 2.5.8); musi się zgadzać z iconSize w mapa-aed.component.ts
   height: 36px !important;
   border: 2px solid v.$color-white;
   border-radius: 50%;
   background: v.$color-red;
   color: v.$color-white;
-  font-size: 0.75rem; // rem: skaluje się z przełącznikiem wielkości tekstu portalu; min. 12 px (DS Gov.pl)
+  font-size: 0.75rem; // rem: rośnie z przełącznikiem wielkości tekstu portalu
   font-weight: bold;
   line-height: 1;
   box-shadow: 0 0 0 1px v.$color-heading;
 
   &:focus-visible {
     outline-offset: 2px;
-    box-shadow: 0 0 0 5px v.$color-white; // biały pierścień: fokus widoczny na każdym kafelku mapy
+    box-shadow: 0 0 0 5px v.$color-white; // fokus widoczny na każdym kafelku mapy
   }
 }
 
-// Znacznik danych fikcyjnych: szary prostokąt, przerywana ramka i napis „DEMO” (nie tylko kolor).
 :host ::ng-deep .znacznik-aed--fikcyjny {
   width: 52px !important;
   height: 32px !important;
@@ -336,7 +332,7 @@
   }
 }
 
-// Komunikat 112: piktogram + tekst (DS Gov.pl: komunikat zawsze z piktogramem; GOV.UK Warning text).
+// Komunikat 112
 .zz-112 {
   display: flex;
   gap: 0.75rem;

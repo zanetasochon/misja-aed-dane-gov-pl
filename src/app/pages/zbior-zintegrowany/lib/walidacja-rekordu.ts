@@ -2,7 +2,7 @@
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
  * JEDNA funkcja walidacji rekordu względem wzorca AED v1.2 – używana przez harmonizację
- * zbioru zintegrowanego i przez narzędzie „Sprawdź zgodność ze wzorcem” (audyt, poprawka 8).
+ * zbioru zintegrowanego i przez narzędzie „Sprawdź zgodność ze wzorcem”.
  *
  * - błędy → rekord odrzucony (brak nazwy, brak/niepoprawne współrzędne, punkt poza Polską);
  * - ostrzeżenia → rekord zostaje, a niepoprawne pole jest puste – komunikat mówi to wprost;

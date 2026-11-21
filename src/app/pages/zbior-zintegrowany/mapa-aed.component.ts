@@ -1,11 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Mapa AED (Leaflet, podkład OpenStreetMap). Dostępność:
- * - lista obok jest pełnym tekstowym odpowiednikiem mapy (WCAG 1.1.1) – link „Przejdź do listy”;
- * - znaczniki 28×28 px (2.5.8), dostępne z klawiatury (Tab, Enter otwiera opis);
- * - przyciski przesuwania i powiększania jako alternatywa dla przeciągania (2.5.7);
- * - kontener mapy ma etykietę; strzałki przesuwają mapę, gdy ma fokus.
+ * Mapa AED (Leaflet, podkład OpenStreetMap). Lista AED pod mapą jest jej tekstowym odpowiednikiem.
  */
 
 import { isPlatformBrowser } from '@angular/common';
@@ -56,7 +52,7 @@ import type { RekordZintegrowany } from './lib/harmonizacja';
 })
 export class MapaAedComponent implements OnDestroy {
   rekordy = input.required<RekordZintegrowany[]>();
-  /** Lokalizacja użytkownika („W pobliżu”) – punkt i okrąg promienia na mapie. */
+  /** Lokalizacja użytkownika – punkt i okrąg promienia na mapie. */
   lokalizacja = input<{ szer: number; dlug: number; opis: string } | null>(null);
   promienM = input<number | null>(null);
 
@@ -78,10 +74,10 @@ export class MapaAedComponent implements OnDestroy {
       this.mapa = L.map(this.kontener.nativeElement, {
         keyboard: true,
         zoomControl: false,
-        // Kółko myszy przewija stronę, a nie mapę (NN/g: „swipe ambiguity”); zoom: przyciski i +/−.
+        // Kółko myszy przewija stronę, a nie mapę.
         scrollWheelZoom: false,
       });
-      // Przycisk zamknięcia dymka: polska etykieta (WCAG 3.1.2); rozmiar ≥ 24 px w SCSS (2.5.8).
+      // Polska etykieta przycisku zamknięcia dymka.
       this.mapa.on('popupopen', (e: Leaflet.PopupEvent) => {
         const zamknij = e.popup.getElement()?.querySelector('.leaflet-popup-close-button');
         zamknij?.setAttribute('aria-label', 'Zamknij dymek');

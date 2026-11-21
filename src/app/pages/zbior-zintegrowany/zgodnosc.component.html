@@ -1,7 +1,4 @@
-<!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
-     Układ jak w formularzach portalu (shared/forms: form-header, form-part, fieldset-header, form-field).
-     Prowadzenie użytkownika: lista 4 kroków (USWDS Step indicator, DS Gov.pl Stepper), werdykt na początku
-     raportu, „Jak poprawić” przy każdym problemie i „Co dalej” na końcu. -->
+<!-- HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21. -->
 <section class="container">
   <h1 class="form-header">Sprawdź zgodność ze wzorcem AED</h1>
   <div class="form-description col-md-10 col-lg-8">
@@ -13,7 +10,6 @@
     <p>Plik nie jest nigdzie wysyłany: sprawdzanie działa w Twojej przeglądarce.</p>
   </div>
 
-  <!-- LISTA KROKÓW: status tekstem, aria-current tylko na bieżącym kroku -->
   <nav class="zg-kroki" aria-label="Kroki sprawdzania pliku">
     <ol>
       @for (k of kroki; track k.id; let n = $index) {
@@ -80,7 +76,6 @@
       </div>
     </fieldset>
 
-    <!-- komunikat o stanie: zawsze w DOM, zmienia się tylko treść (WCAG 4.1.3) -->
     <p role="status" class="zz-status col-md-10 col-lg-8">{{ komunikat() }}</p>
 
     @if (plik(); as p) {
@@ -155,7 +150,7 @@
           </div>
         </section>
 
-        <!-- 3. RAPORT: najpierw werdykt, potem trzy grupy -->
+        <!-- 3. RAPORT -->
         <section id="zg-krok-3" class="form-part" aria-labelledby="zg-raport" tabindex="-1">
           <div class="fieldset-header">
             <h2 id="zg-raport">Krok 3 z 4: Przeczytaj raport</h2>
@@ -356,7 +351,6 @@
         </section>
       }
     } @else {
-      <!-- kroki 2–4 widoczne od początku: użytkownik wie, co go czeka -->
       @for (k of kroki.slice(1); track k.id; let n = $index) {
         <section class="form-part col-md-10 col-lg-8 zg-krok-zapowiedz" [attr.aria-labelledby]="k.id + '-zapowiedz'">
           <h2 [id]="k.id + '-zapowiedz'" class="zg-krok-zapowiedz__tytul">Krok {{ n + 2 }} z 4: {{ k.nazwa }}</h2>
