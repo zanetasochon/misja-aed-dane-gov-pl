@@ -67,12 +67,12 @@
   }
 
   &.form-check {
-    padding-left: 1.75rem;
+    padding-left: 2rem;
 
     .form-check-input {
-      width: 1.25rem; // cel ≥ 24 px razem z etykietą (WCAG 2.5.8)
-      height: 1.25rem;
-      margin-left: -1.75rem;
+      width: 1.5rem; // cel 24 × 24 px (WCAG 2.5.8)
+      height: 1.5rem;
+      margin-left: -2rem;
     }
   }
 }
@@ -151,8 +151,8 @@
   margin-bottom: 1rem;
 
   .form-check-input {
-    width: 1.25rem; // cel ≥ 24 px razem z etykietą (WCAG 2.5.8)
-    height: 1.25rem;
+    width: 1.5rem; // cel 24 × 24 px (WCAG 2.5.8)
+    height: 1.5rem;
   }
 }
 
@@ -213,6 +213,10 @@
 }
 
 .mapa-aed__przyciski {
+  .btn {
+    min-height: 2.75rem; // cel ≥ 24 px (WCAG 2.5.8), wygodny także na telefonie
+  }
+
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;

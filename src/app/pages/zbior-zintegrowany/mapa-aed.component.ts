@@ -32,7 +32,8 @@ import type { RekordZintegrowany } from './lib/harmonizacja';
     <div class="mapa-aed">
       <p class="mapa-aed__opis" id="mapa-aed-opis">
         Mapa pokazuje {{ rekordy().length }} AED z listy. Ten sam zestaw jest w tabeli –
-        <a href="#lista-aed">przejdź do listy</a>. Przesuwaj mapę strzałkami, gdy ma fokus, albo przyciskami.
+        <a href="#lista-aed" (click)="przejdzDoListy($event)">przejdź do listy</a>. Przesuwaj mapę strzałkami, gdy ma
+        fokus, albo przyciskami.
       </p>
       <div class="mapa-aed__przyciski" role="group" aria-label="Sterowanie mapą">
         <button type="button" class="btn btn-sm btn-outline-primary" (click)="przesun(0, -1)">Przesuń w górę</button>
@@ -65,6 +66,7 @@ export class MapaAedComponent implements OnDestroy {
   private mapa: Leaflet.Map | null = null;
   private warstwa: Leaflet.LayerGroup | null = null;
   private readonly wPrzegladarce = isPlatformBrowser(inject(PLATFORM_ID));
+  private obserwatorRozmiaru: ResizeObserver | null = null;
 
   constructor() {
     afterNextRender(async () => {
@@ -80,6 +82,16 @@ export class MapaAedComponent implements OnDestroy {
       }).addTo(this.mapa);
       this.warstwa = L.layerGroup().addTo(this.mapa);
       this.rysuj();
+      // Na telefonie mapa startuje w ukrytym kontenerze (display: none). Po pokazaniu
+      // (przełącznik „Pokaż mapę”) Leaflet musi przeliczyć rozmiar i dopasować widok.
+      if ('ResizeObserver' in window) {
+        this.obserwatorRozmiaru = new ResizeObserver(() => {
+          if (!this.mapa || this.kontener.nativeElement.offsetWidth === 0) return;
+          this.mapa.invalidateSize();
+          this.dopasuj();
+        });
+        this.obserwatorRozmiaru.observe(this.kontener.nativeElement);
+      }
     });
     effect(() => {
       this.rekordy();
@@ -204,7 +216,20 @@ export class MapaAedComponent implements OnDestroy {
       });
   }
 
+  /**
+   * Link „przejdź do listy”: strona ma <base href="/">, więc samo href="#lista-aed" przeniosłoby
+   * na stronę główną. Przewijamy i przenosimy fokus na listę (WCAG 2.4.3).
+   */
+  przejdzDoListy(event: Event): void {
+    const lista = document.getElementById('lista-aed');
+    if (!lista) return;
+    event.preventDefault();
+    lista.scrollIntoView({ block: 'start' });
+    lista.focus();
+  }
+
   ngOnDestroy(): void {
+    this.obserwatorRozmiaru?.disconnect();
     this.mapa?.remove();
   }
 }

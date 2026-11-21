@@ -28,6 +28,8 @@ interface Plik {
   selector: 'app-zgodnosc',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Treść stron jest po polsku także w wersji EN portalu (WCAG 3.1.2).
+  host: { lang: 'pl' },
   imports: [FormsModule, RouterLink, LocalizeRouterPipe],
   templateUrl: './zgodnosc.component.html',
   // Wspólny arkusz formularzy portalu + nasze style (tabele, status, przyciski).

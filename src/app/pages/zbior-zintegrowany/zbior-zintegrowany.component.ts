@@ -54,6 +54,8 @@ export const LOKALIZACJA_PRZYKLADOWA: Lokalizacja = {
   selector: 'app-zbior-zintegrowany',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Treść stron jest po polsku także w wersji EN portalu (WCAG 3.1.2).
+  host: { lang: 'pl' },
   imports: [
     FormsModule,
     RouterLink,

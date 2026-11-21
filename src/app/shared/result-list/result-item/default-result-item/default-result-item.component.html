@@ -7,7 +7,10 @@
       (item.zbiorZintegrowany ? 'Datasets.Integrated' : 'Attribute.PromotedData') | translate
     }}</span>
   </div>
-  <h2 class="heading heading--primary-link heading--sm highlight result-item-heading">
+  <!-- HackNation 2026 (zmiana 2026-11-21): treść zbioru zintegrowanego jest po polsku także w wersji EN (WCAG 3.1.2) -->
+  <h2
+    class="heading heading--primary-link heading--sm highlight result-item-heading"
+    [attr.lang]="item.zbiorZintegrowany ? 'pl' : null">
     <a
       [routerLink]="[detailsUrl]"
       [queryParams]="queryParams ? queryParams : ''"
@@ -75,7 +78,10 @@
   </h2>
 
   <!-- notes -->
-  <app-notes *ngIf="showNotes" [notes]="item.attributes.notes"></app-notes>
+  <app-notes
+    *ngIf="showNotes"
+    [notes]="item.attributes.notes"
+    [attr.lang]="item.zbiorZintegrowany ? 'pl' : null"></app-notes>
 
   <!-- institution (short) -->
   <ng-container *ngIf="!fromDatasetEndpoint">
@@ -134,6 +140,8 @@
 
   <!-- keywords -->
   <div *ngIf="item.attributes.keywords?.length">
-    <app-keywords [tags]="item.attributes.keywords"></app-keywords>
+    <app-keywords
+      [tags]="item.attributes.keywords"
+      [attr.lang]="item.zbiorZintegrowany ? 'pl' : null"></app-keywords>
   </div>
 </ng-container>
