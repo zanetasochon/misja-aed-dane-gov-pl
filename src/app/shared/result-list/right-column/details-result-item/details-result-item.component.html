@@ -65,7 +65,8 @@
         [useConfirmation]="useConfirmation()" />
     </div>
     <!-- counter -->
-    <div *ngIf="isDatasetView && datasetId">
+    <!-- HackNation 2026 (zmiana 2026-11-21): favoritesCounterOnly – sam licznik bez przycisku (placeholder) -->
+    <div *ngIf="isDatasetView && (datasetId || favoritesCounterOnly)">
       <app-favorite-counter [favoritesCount]="favoritesCount()" />
     </div>
   </div>

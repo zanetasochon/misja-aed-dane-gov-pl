@@ -2,7 +2,7 @@ import { AsyncPipe, NgIf } from '@angular/common';
 import { Component, NgZone, OnInit } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
-import { KartaZbioruZintegrowanegoComponent } from '../../zbior-zintegrowany/karta-zbioru-zintegrowanego.component';
+import { dolaczZbiorZintegrowany } from '../../zbior-zintegrowany/lib/element-listy';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
@@ -78,8 +78,6 @@ import { TooltipDirective } from '@app/shared/tooltip/tooltip.directive';
     PaginationComponent,
     ApiSourceLinkComponent,
     NewDataContactComponent,
-    // HackNation 2026 (zmiana 2026-11-21)
-    KartaZbioruZintegrowanegoComponent,
   ],
 })
 export class DatasetComponent extends ListViewFilterPageAbstractComponent implements OnInit {
@@ -370,7 +368,12 @@ export class DatasetComponent extends ListViewFilterPageAbstractComponent implem
     if (this.filters) {
       results = this.addInsitutions(results);
     }
-    this.items = this.listViewDetailsService.extendViewDetails(results);
+    // HackNation 2026 (zmiana 2026-11-21): zbiór zintegrowany AED jako element listy, jak pozostałe zbiory.
+    this.items = dolaczZbiorZintegrowany(
+      this.listViewDetailsService.extendViewDetails(results),
+      this.params,
+      this.selectedFiltersCount,
+    );
     this.count = response.count;
     this.selfApi = response.links.self;
     this.isQueryFormVisible =

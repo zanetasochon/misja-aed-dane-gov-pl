@@ -16,7 +16,8 @@
           [detailsData]="item.detailsData"
           [titleTranslationKey]="item.titleTranslationKey"
           [isDatasetView]="isDatasetView(item)"
-          [datasetId]="isDatasetView(item) ? item.id : null"
+          [datasetId]="isDatasetView(item) && !item.zbiorZintegrowany ? item.id : null"
+          [favoritesCounterOnly]="!!item.zbiorZintegrowany"
           [listPosition]="index + 1"
           [favorite]="item.attributes.is_liked_by_current_user === true"
           [likesCount]="item.attributes.likes_count ?? 0"
@@ -24,7 +25,8 @@
         </app-details-result-item>
       </div>
 
-      <div *ngIf="isUserLoggedIn() && item.attributes.model === apiModel.DATASET">
+      <!-- HackNation 2026 (zmiana 2026-11-21): zbiór zintegrowany nie istnieje w API – bez ulubionych i obserwowania -->
+      <div *ngIf="isUserLoggedIn() && item.attributes.model === apiModel.DATASET && !item.zbiorZintegrowany">
         <!-- subscribe/unsubscribe -->
         <app-subscribe-button
           tooltipText="{{ 'Tour.Tooltip.Dataset.Follow.text' | translate }}"

@@ -11,10 +11,12 @@ Prototyp powstał na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek�
 | 2026-11-21 | `proxy.public.conf.json` (nowy) | Proxy deweloperskie do publicznego API produkcyjnego `api.dane.gov.pl/1.4`. Tylko do odczytu. |
 | 2026-11-21 | `angular.json` | Nowa konfiguracja `serve` o nazwie `public`, korzystająca z proxy powyżej. |
 | 2026-11-21 | `package.json` | Nowy skrypt `start:public`. |
+| 2026-11-21 | `README.md` | Nowa sekcja o prototypie HackNation na początku pliku (rozwiązanie, uruchomienie, „Jak przetestować”, ograniczenia, licencje). Oryginalna treść zostaje niżej, nagłówek ma dopisek „Oryginalna dokumentacja frontendu portalu”. |
 | 2026-11-21 | `.gitignore` | Wykluczenie `CLAUDE.md`, `CLAUDE.local.md` i `.claude/` (notatki zespołu poza repozytorium). |
 | 2026-11-21 | `src/app/pages/dataset/dataset-routing.module.ts` | Dwie nowe trasy przed `!:id`: `!zbior-zintegrowany-aed` i `!zgodnosc-ze-wzorcem` (ładowane leniwie). |
-| 2026-11-21 | `src/app/pages/dataset/dataset-page/dataset.component.html` | Karta zbioru zintegrowanego nad listą wyników (`<app-karta-zbioru-zintegrowanego>`). |
-| 2026-11-21 | `src/app/pages/dataset/dataset-page/dataset.component.ts` | Import komponentu karty (2 linie). |
+| 2026-11-21 | `src/app/pages/dataset/dataset-page/dataset.component.ts` | W `setData()` zbiór zintegrowany AED jest dołączany jako pierwszy element listy (na 1. stronie, gdy brak filtrów i fraza pasuje do AED). Renderuje go ten sam szablon co pozostałe zbiory. |
+| 2026-11-21 | `src/app/shared/result-list/right-column/details-result-item/details-result-item.component.ts`, `.html` | Nowe wejście `favoritesCounterOnly`: sam licznik ulubionych bez przycisku. Używane jako placeholder dla zbioru zintegrowanego. |
+| 2026-11-21 | `src/app/pages/dataset/dataset-results/dataset-results.component.ts`, `.html` | Pole `zbiorZintegrowany` w elemencie listy. Dla zbioru zintegrowanego nie są pokazywane ulubione ani obserwowanie, bo nie istnieje on w API. |
 | 2026-11-21 | `src/app/pages/zbior-zintegrowany/` (nowy katalog) | Kod zespołu: zbiór zintegrowany AED (metadane, źródła, raport harmonizacji, eksport CSV/JSON/GeoJSON, lista z filtrami i mapa Leaflet) oraz narzędzie „Sprawdź zgodność ze wzorcem”. |
 | 2026-11-21 | `src/app/pages/zbior-zintegrowany/dane/krosno.ts`, `legionowo.ts` | Prawdziwe dane z dane.gov.pl na licencji CC0 1.0 (źródło i data w nagłówku pliku). `port-lotniczy.ts`: dane fikcyjne. |
 

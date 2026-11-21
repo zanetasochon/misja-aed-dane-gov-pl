@@ -15,6 +15,8 @@ interface DatasetResultItem {
   detailsData: ResultItemDetailsData[];
   titleTranslationKey: string;
   attributes: { model: ApiModel; is_liked_by_current_user?: boolean; likes_count?: number };
+  /** HackNation 2026 (zmiana 2026-11-21): element zbioru zintegrowanego AED (nie istnieje w API). */
+  zbiorZintegrowany?: boolean;
 }
 /**
  * Component to show dataset results

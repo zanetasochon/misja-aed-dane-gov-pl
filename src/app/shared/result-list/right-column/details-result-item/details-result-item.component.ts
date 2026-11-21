@@ -115,6 +115,8 @@ export class DetailsResultItemComponent implements OnInit, OnDestroy {
   @Input() isDatasetView = false;
 
   @Input() datasetId: string | null = null;
+  /** HackNation 2026 (zmiana 2026-11-21): pokazuje sam licznik ulubionych, bez przycisku (np. zbiór spoza API). */
+  @Input() favoritesCounterOnly = false;
   /** 1-based position of the item on the current list page (saved for returning after login) */
   @Input() listPosition = 1;
   @Input() favorite = false;
