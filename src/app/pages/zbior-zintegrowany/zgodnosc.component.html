@@ -10,6 +10,23 @@
     <p>Plik nie jest nigdzie wysyłany: sprawdzanie działa w Twojej przeglądarce.</p>
   </div>
 
+  <section class="form-part col-md-10 col-lg-8" aria-labelledby="zg-wzor">
+    <div class="fieldset-header">
+      <h2 id="zg-wzor">Krok 1. Pobierz wzór</h2>
+    </div>
+    <p>Wypełnij wzór danymi o swoich defibrylatorach. Dzięki temu Twój zbiór połączy się z danymi innych dostawców.</p>
+    <a
+      class="btn btn-outline-primary align-self-start"
+      href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx"
+      download
+      >Pobierz wzór (XLSX, ok. 21 KB)</a
+    >
+  </section>
+
+  <div class="fieldset-header col-md-10 col-lg-8">
+    <h2 id="zg-sprawdz">Krok 2. Sprawdź swój plik</h2>
+  </div>
+
   <nav class="zg-kroki" aria-label="Kroki sprawdzania pliku">
     <ol>
       @for (k of kroki; track k.id; let n = $index) {
@@ -18,7 +35,7 @@
           [class.zg-krok--biezacy]="biezacyKrok() === n + 1"
           [class.zg-krok--ukonczony]="biezacyKrok() > n + 1"
           [attr.aria-current]="biezacyKrok() === n + 1 ? 'step' : null">
-          <span class="zg-krok__numer" aria-hidden="true">{{ biezacyKrok() > n + 1 ? '✓' : n + 1 }}</span>
+          <span class="zg-krok__numer" aria-hidden="true">{{ biezacyKrok() > n + 1 ? '✓' : '2.' + (n + 1) }}</span>
           @if (n === 0 || plik()) {
             <a href="#{{ k.id }}" (click)="przejdzDo($event, k.id)">{{ k.nazwa }}</a>
           } @else {
@@ -44,7 +61,7 @@
     <!-- 1. PLIK -->
     <fieldset id="zg-krok-1" class="form-part col-md-10 col-lg-8" tabindex="-1">
       <legend class="fieldset-header fieldset-header--compact">
-        <h2>Krok 1 z 4: Wybierz plik</h2>
+        <h3>2.1 Wybierz plik</h3>
       </legend>
       <div class="form-field">
         <label for="zg-plik-input" class="form-label">Plik CSV z danymi o AED</label>
@@ -83,7 +100,7 @@
         <!-- 2. MAPOWANIE -->
         <section id="zg-krok-2" class="form-part" aria-labelledby="zg-mapowanie" tabindex="-1">
           <div class="fieldset-header">
-            <h2 id="zg-mapowanie">Krok 2 z 4: Sprawdź dopasowanie kolumn</h2>
+            <h3 id="zg-mapowanie">2.2 Sprawdź dopasowanie kolumn</h3>
             <p>
               Dla każdej kolumny Twojego pliku zaproponowaliśmy pole wzorca na podstawie jej nazwy i zawartości. Jeśli
               propozycja jest zła, wybierz inne pole – raport w kroku 3 zmieni się od razu.
@@ -153,7 +170,7 @@
         <!-- 3. RAPORT -->
         <section id="zg-krok-3" class="form-part" aria-labelledby="zg-raport" tabindex="-1">
           <div class="fieldset-header">
-            <h2 id="zg-raport">Krok 3 z 4: Przeczytaj raport</h2>
+            <h3 id="zg-raport">2.3 Przeczytaj raport</h3>
             <p>Wynik dla {{ r.wierszy }} wierszy pliku {{ p.nazwa }}.</p>
           </div>
 
@@ -165,6 +182,13 @@
                 <p class="mb-0">{{ w.opis }}</p>
               </div>
             </div>
+          }
+          @if (r.brakujaceWymagane.length) {
+            <p>
+              <a href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx" download
+                >Pobierz wzór (XLSX, ok. 21 KB)</a
+              >
+            </p>
           }
 
           <ul class="vertical-list zg-raport">
@@ -185,9 +209,9 @@
 
           <!-- DO POPRAWY -->
           @if (r.brakujaceWymagane.length || r.odrzucone.length) {
-            <h3 class="zz-h4 zg-grupa">
+            <h4 class="zz-h4 zg-grupa">
               <span class="zg-grupa__ikona zg-grupa__ikona--blad" aria-hidden="true">✕</span>Do poprawy
-            </h3>
+            </h4>
             @if (r.brakujaceWymagane.length) {
               <p>
                 Brakujące pola wymagane:
@@ -234,9 +258,9 @@
 
           <!-- WARTO POPRAWIĆ -->
           @if (grupyProblemow().doPoprawy.length || r.staleKolumny.length) {
-            <h3 class="zz-h4 zg-grupa">
+            <h4 class="zz-h4 zg-grupa">
               <span class="zg-grupa__ikona zg-grupa__ikona--uwaga" aria-hidden="true">!</span>Warto poprawić
-            </h3>
+            </h4>
             @if (r.staleKolumny.length) {
               <p>
                 Kolumny z tą samą wartością w każdym wierszu: <code>{{ r.staleKolumny.join(', ') }}</code
@@ -279,9 +303,9 @@
 
           <!-- POPRAWIONE AUTOMATYCZNIE -->
           @if (grupyProblemow().automatycznie.length || r.adresWJednymPolu) {
-            <h3 class="zz-h4 zg-grupa">
+            <h4 class="zz-h4 zg-grupa">
               <span class="zg-grupa__ikona zg-grupa__ikona--ok" aria-hidden="true">✓</span>Poprawione automatycznie
-            </h3>
+            </h4>
             <ul>
               @if (r.adresWJednymPolu) {
                 <li>Adres z jednego pola rozbito na ulicę, numer budynku, kod pocztowy i miejscowość.</li>
@@ -299,7 +323,7 @@
         <!-- 4. POBIERZ -->
         <fieldset id="zg-krok-4" class="form-part col-md-10 col-lg-8" tabindex="-1">
           <legend class="fieldset-header">
-            <h2>Krok 4 z 4: Pobierz plik zgodny ze wzorcem</h2>
+            <h3>2.4 Pobierz plik zgodny ze wzorcem</h3>
           </legend>
           <p>
             Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy: CSV w UTF-8 (RFC 4180) albo JSON, kolumny
@@ -353,7 +377,7 @@
     } @else {
       @for (k of kroki.slice(1); track k.id; let n = $index) {
         <section class="form-part col-md-10 col-lg-8 zg-krok-zapowiedz" [attr.aria-labelledby]="k.id + '-zapowiedz'">
-          <h2 [id]="k.id + '-zapowiedz'" class="zg-krok-zapowiedz__tytul">Krok {{ n + 2 }} z 4: {{ k.nazwa }}</h2>
+          <h3 [id]="k.id + '-zapowiedz'" class="zg-krok-zapowiedz__tytul">2.{{ n + 2 }} {{ k.nazwa }}</h3>
           <p class="zz-podpowiedz">Ten krok pojawi się po wybraniu pliku.</p>
         </section>
       }

@@ -312,7 +312,7 @@
 
 .zg-krok {
   display: grid;
-  grid-template-columns: 1.75rem 1fr;
+  grid-template-columns: auto 1fr;
   align-content: start;
   align-items: center;
   gap: 0 0.5rem;
@@ -568,4 +568,17 @@
 
 .alert-danger .zz-112__ikona {
   background: v.$color-darker-red;
+}
+
+// Podkroki 2.1–2.4 narzędzia zgodności (h3 pod „Krok 2. Sprawdź swój plik”).
+.fieldset-header h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.zg-krok__numer {
+  width: auto;
+  min-width: 1.75rem;
+  padding: 0 0.3rem;
+  border-radius: 1rem;
 }
