@@ -22,7 +22,7 @@ Dane o defibrylatorach AED są rozproszone: na dane.gov.pl jest kilka zbiorów A
 | [Lokalizacje AED w Przemyślu](https://dane.gov.pl/pl/dataset/4581,lokalizacje-aed-automatycznych-defibrylatorow-zewn) (zasób 62095, dane z 2024-11-06) | Urząd Miejski w Przemyślu | CC0 1.0 | **prawdziwe**, plik bez zmian (współrzędne w kolumnie `geometry` jako GeoJSON) |
 | [Defibrylatory na terenie Miasta Marki](https://dane.gov.pl/pl/dataset/4955,defibrylatory-zlokalizowane-na-terenie-miasta-markI) (zasób 68353, dane z 2025-07-10) | Urząd Miasta Marki | CC BY 4.0 – „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0” | **prawdziwe**, plik bez zmian (uszkodzony u źródła, naprawiany przy odczycie) |
 | [Lokalizacja defibrylatorów (AED)](https://dane.gov.pl/pl/dataset/39512,lokalizacja-defibryzatorow-aed) | Urząd m.st. Warszawy | CC BY 4.0 | **niewykorzystane**: źródło niedostępne maszynowo (link prowadzi do strony HTML); nie pobieramy danych ze strony |
-| DANE FIKCYJNE – defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. | – | **fikcyjne**, plik zostaje w kodzie (`dane/port-lotniczy.ts`), ale strona go nie pokazuje (przełącznik usunięty 21.11) i nie trafia do eksportu |
+| Defibrylatory w porcie lotniczym | Port Lotniczy Przykładowo S.A. (fikcyjny) | – | **fikcyjne** (`dane/port-lotniczy.ts`): 3 AED na liście i mapie jak inne, fikcyjność widać w nazwie dostawcy i w zakładce „Zbiory źródłowe”; nie trafia do eksportu |
 
 Pliki leżą w `src/app/pages/zbior-zintegrowany/dane/`, a w nagłówku każdego pliku jest źródło, licencja i data pobrania (2026-11-21).
 
@@ -73,6 +73,14 @@ Dlaczego 250 m: wytyczne AHA dla miejsc pracy zakładają AED osiągalny w 3–5
 Ograniczenie: żaden obecny zbiór źródłowy nie podaje godzin dostępności, więc przy prawdziwych danych przycisk zawsze kończy się komunikatem 112. To uczciwy wynik: AED o nieznanych godzinach może być zamknięty. Pokazuje też, po co we wzorcu jest wymagane pole `godziny_dostepnosci`.
 
 Źródła: [AHA – AED Implementation Guide (2023)](https://ECCGuidelines.Heart.org/-/media/CPR-Files/Training-Programs/AED-Implementation/2023-updates/KJ1683-AED-Guide.pdf), [badanie rozmieszczenia AED – PMC4992180](https://pmc.ncbi.nlm.nih.gov/articles/PMC4992180).
+
+## Pliki w formacie AED Sync
+
+Narzędzie „Sprawdź zgodność ze wzorcem” rozpoznaje kolumny plików AED Sync (nagłówki PL i EN):
+- godziny podane osobno dla każdego dnia (`poniedzialek_godziny` … `niedziela_godziny`) są łączone w jedno pole `godziny_dostepnosci` w składni opening_hours, np. `Mo-Th 08:00-16:30; Fr 08:00-15:30`; „Niedostępny” / „Closed” to dzień zamknięty;
+- **pusta komórka dnia to brak danych, a nie dostępność całodobowa** – narzędzie ostrzega o takich dniach;
+- „Odpowiedzialny za AED” i jego telefon trafiają do `dysponent_nazwa` i `telefon_kontaktowy`, „Stan AED” „Sprawny” do `status_urzadzenia` = `sprawne`;
+- województwo, powiat, gmina, e-mail, dostawca, data dostarczenia i kod zbioru nie mają pól we wzorcu v1.2 – kolumny są pomijane.
 
 ## Format plików eksportu
 

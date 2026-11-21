@@ -117,16 +117,11 @@ export class MapaAedComponent implements OnDestroy {
       html: '<span aria-hidden="true">AED</span>',
       iconSize: [36, 36],
     });
-    const ikonaFikcyjna = L.divIcon({
-      className: 'znacznik-aed znacznik-aed--fikcyjny',
-      html: '<span aria-hidden="true">DEMO</span>',
-      iconSize: [52, 32],
-    });
     for (const r of this.rekordy()) {
       const adres = [r.ulica, r.numer_budynku, r.miejscowosc].filter(Boolean).join(' ');
-      const etykieta = `${r.fikcyjne ? 'DANE FIKCYJNE – ' : ''}AED: ${r.nazwa_miejsca}${adres ? ', ' + adres : ''}`;
+      const etykieta = `AED: ${r.nazwa_miejsca}${adres ? ', ' + adres : ''}`;
       const m = L.marker([r.szerokosc_geograficzna, r.dlugosc_geograficzna], {
-        icon: r.fikcyjne ? ikonaFikcyjna : ikona,
+        icon: ikona,
         keyboard: true,
         title: etykieta,
       })
@@ -187,11 +182,6 @@ export class MapaAedComponent implements OnDestroy {
       const at = document.createElement('div');
       at.textContent = r.atrybucjaZrodla;
       div.append(at);
-    }
-    if (r.fikcyjne) {
-      const f = document.createElement('strong');
-      f.textContent = 'DANE FIKCYJNE – nie wskazują prawdziwego AED.';
-      div.prepend(f);
     }
     return div;
   }

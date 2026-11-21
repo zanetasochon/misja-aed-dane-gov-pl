@@ -15,7 +15,7 @@ import { doDatyCzasuWzorca } from './lib/wiek-danych';
 import { ZRODLA } from './lib/zrodla';
 import type { PoleRekordu } from './lib/model';
 import { czyPoprawioneAutomatycznie, jakPoprawic } from './lib/porady';
-import { OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
+import { CELE_DNI, OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
 import type { Cel } from './lib/zgodnosc';
 
 interface Plik {
@@ -62,7 +62,10 @@ export class ZgodnoscComponent {
     { etykieta: 'Pozostałe pola wzorca', opcje: polaDostawcy.filter((k) => !POLA_WYMAGANE.includes(k)).map(opcjaPola) },
     {
       etykieta: 'Kolumny do rozbicia lub połączenia',
-      opcje: (['ADRES', 'CECHA_ULICY', 'GEOMETRIA'] as const).map((c) => ({ wartosc: c, etykieta: OPIS_CELU[c] })),
+      opcje: (['ADRES', 'CECHA_ULICY', 'GEOMETRIA', ...CELE_DNI] as const).map((c) => ({
+        wartosc: c,
+        etykieta: OPIS_CELU[c],
+      })),
     },
   ];
 

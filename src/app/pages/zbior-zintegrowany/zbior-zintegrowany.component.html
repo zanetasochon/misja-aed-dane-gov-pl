@@ -339,9 +339,6 @@
                   <li>
                     <article class="zz-karta">
                       <h4 class="zz-karta__tytul">
-                        @if (r.fikcyjne) {
-                          <span class="zz-fikcyjne">DANE FIKCYJNE</span>
-                        }
                         {{ r.nazwa_miejsca }}
                       </h4>
                       @if (lokalizacja()) {
@@ -413,9 +410,6 @@
                     @for (r of wynikiStrony(); track r.id_aed) {
                       <tr class="datagrid__row">
                         <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
-                          @if (r.fikcyjne) {
-                            <span class="zz-fikcyjne">DANE FIKCYJNE</span>
-                          }
                           {{ r.nazwa_miejsca }}
                           @if (r.opis_lokalizacji) {
                             <span class="zz-opis">{{ r.opis_lokalizacji }}</span>

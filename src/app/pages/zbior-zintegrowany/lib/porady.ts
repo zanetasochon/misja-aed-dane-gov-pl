@@ -21,6 +21,11 @@ const PORADY: [RegExp, string][] = [
   [/true albo false/i, 'Wpisz true (AED wewnątrz budynku) albo false (na zewnątrz).'],
   [/Piętro/i, 'Wpisz liczbę całkowitą: 0 = parter, 1 = pierwsze piętro, -1 = piwnica.'],
   [/spoza słownika/i, 'Użyj jednej z wartości z arkusza „Słowniki” we wzorcu.'],
+  [
+    /Brak godzin we wszystkich dniach|Brak godzin w części dni/i,
+    'Wpisz godziny dla każdego dnia (np. 08:00-16:30); dla dni zamkniętych wpisz „Niedostępny”, a dla całej doby 00:00-24:00.',
+  ],
+  [/Godziny dnia/i, 'Wpisz jeden przedział HH:MM-HH:MM (np. 08:00-16:30) albo „Niedostępny”.'],
   [/opening_hours/i, 'Zapisz godziny jak w przykładach: 24/7 albo Mo-Fr 08:00-16:00; Sa 09:00-13:00.'],
   [/REGON/i, 'Wpisz 9 albo 14 cyfr REGON, bez spacji i kresek.'],
   [/Telefon/i, 'Wpisz 9 cyfr albo numer z kierunkowym kraju, np. +48123456789.'],

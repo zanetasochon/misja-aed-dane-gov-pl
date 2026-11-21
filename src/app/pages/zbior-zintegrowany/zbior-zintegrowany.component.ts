@@ -85,7 +85,7 @@ export const PROMIEN_AWARYJNY_M = 250;
   styleUrl: './zbior-zintegrowany.component.scss',
 })
 export class ZbiorZintegrowanyComponent {
-  // Prawdziwe źródła + źródło fikcyjne (oznaczone „DANE FIKCYJNE”, nigdy w eksporcie).
+  // Prawdziwe źródła + źródło fikcyjne (port lotniczy) – nigdy w eksporcie.
   readonly wynik = integruj([...ZRODLA, ZRODLO_DEMO]);
   readonly niedostepne = ZRODLA_NIEDOSTEPNE;
   readonly doEksportu = this.wynik.rekordy.filter((r) => !r.fikcyjne);

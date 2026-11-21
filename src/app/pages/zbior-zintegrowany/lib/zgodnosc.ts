@@ -12,16 +12,35 @@ import { walidujRekord } from './walidacja-rekordu';
 import type { RekordWejsciowy } from './walidacja-rekordu';
 import { punktZGeoJson } from './geometria';
 import { rozbijAdres } from './zrodla';
+import { DNI_PL, godzinyZDni } from './godziny-dni';
 
-/** Cel mapowania: pole wzorca, adres w jednym polu (do rozbicia), cecha ulicy albo pominięcie. */
-export type Cel = PoleRekordu | 'ADRES' | 'CECHA_ULICY' | 'GEOMETRIA' | '';
+/** Godziny jednego dnia (0 = poniedziałek) – łączone w godziny_dostepnosci. */
+export type CelDnia = 'DZIEN_0' | 'DZIEN_1' | 'DZIEN_2' | 'DZIEN_3' | 'DZIEN_4' | 'DZIEN_5' | 'DZIEN_6';
+export const CELE_DNI: readonly CelDnia[] = [
+  'DZIEN_0',
+  'DZIEN_1',
+  'DZIEN_2',
+  'DZIEN_3',
+  'DZIEN_4',
+  'DZIEN_5',
+  'DZIEN_6',
+];
 
-export const OPIS_CELU: Record<'ADRES' | 'CECHA_ULICY' | 'GEOMETRIA' | '', string> = {
+/** Cel mapowania: pole wzorca, adres w jednym polu (do rozbicia), cecha ulicy, godziny dnia albo pominięcie. */
+export type Cel = PoleRekordu | 'ADRES' | 'CECHA_ULICY' | 'GEOMETRIA' | CelDnia | '';
+
+export const OPIS_CELU: Record<'ADRES' | 'CECHA_ULICY' | 'GEOMETRIA' | CelDnia | '', string> = {
   GEOMETRIA: 'geometria GeoJSON w komórce (punkt → szerokość i długość)',
   ADRES: 'adres w jednym polu (rozbij na ulicę, numer, kod, miejscowość)',
   CECHA_ULICY: 'cecha ulicy (ul., al., pl.) – dołącz do ulicy',
+  ...(Object.fromEntries(
+    CELE_DNI.map((c, i) => [c, `godziny – ${DNI_PL[i]} (połącz w godziny_dostepnosci)`]),
+  ) as Record<CelDnia, string>),
   '': 'pomiń kolumnę',
 };
+
+/** Stan urządzenia z plików AED Sync → słownik wzorca. „Nieznany” = brak danych. */
+const STAN_AED: Record<string, string> = { sprawny: 'sprawne', nieznany: '' };
 
 export const normalizujNaglowek = (h: string) =>
   h
@@ -89,6 +108,38 @@ const SYNONIMY: Record<string, Cel> = {
   phone: 'telefon_kontaktowy',
   id: 'id_aed',
   numer_id: 'id_aed',
+  // AED Sync (nagłówki PL i EN)
+  facility_name: 'nazwa_miejsca',
+  locality: 'miejscowosc',
+  building_number: 'numer_budynku',
+  komentarz_aed: 'opis_lokalizacji',
+  aed_comment: 'opis_lokalizacji',
+  szerokosc_geograficzna_aed: 'szerokosc_geograficzna',
+  aed_latitude: 'szerokosc_geograficzna',
+  dlugosc_geograficzna_aed: 'dlugosc_geograficzna',
+  aed_longitude: 'dlugosc_geograficzna',
+  stan_aed: 'status_urzadzenia',
+  aed_status: 'status_urzadzenia',
+  data_weryfikacji_stanu_aed: 'data_ostatniego_przegladu',
+  aed_status_verification_date: 'data_ostatniego_przegladu',
+  odpowiedzialny_za_aed: 'dysponent_nazwa',
+  aed_responsible_entity: 'dysponent_nazwa',
+  telefon_odpowiedzialnego_za_aed: 'telefon_kontaktowy',
+  aed_responsible_phone: 'telefon_kontaktowy',
+  poniedzialek_godziny: 'DZIEN_0',
+  monday_hours: 'DZIEN_0',
+  wtorek_godziny: 'DZIEN_1',
+  tuesday_hours: 'DZIEN_1',
+  sroda_godziny: 'DZIEN_2',
+  wednesday_hours: 'DZIEN_2',
+  czwartek_godziny: 'DZIEN_3',
+  thursday_hours: 'DZIEN_3',
+  piatek_godziny: 'DZIEN_4',
+  friday_hours: 'DZIEN_4',
+  sobota_godziny: 'DZIEN_5',
+  saturday_hours: 'DZIEN_5',
+  niedziela_godziny: 'DZIEN_6',
+  sunday_hours: 'DZIEN_6',
 };
 
 export function zaproponujMapowanie(
@@ -181,8 +232,11 @@ export function sprawdzZgodnosc(
       (['szerokosc_geograficzna', 'dlugosc_geograficzna'] as const).forEach((p) => kolumnaPola.set(p, h));
     else if (c === 'ADRES')
       (['ulica', 'numer_budynku', 'kod_pocztowy', 'miejscowosc'] as const).forEach((p) => kolumnaPola.set(p, h));
-    else if (c && c !== 'CECHA_ULICY') kolumnaPola.set(c, h);
+    else if (c && (CELE_DNI as readonly string[]).includes(c)) {
+      if (!kolumnaPola.has('godziny_dostepnosci')) kolumnaPola.set('godziny_dostepnosci', h);
+    } else if (c && c !== 'CECHA_ULICY') kolumnaPola.set(c as PoleRekordu, h);
   });
+  const sGodzinyDni = mapowanie.some((c) => (CELE_DNI as readonly string[]).includes(c));
 
   // Ostrzegamy tylko o kolumnach, które mają opisywać konkretny AED (stała miejscowość w pliku gminy to norma).
   const staleKolumny = naglowki.filter(
@@ -197,6 +251,7 @@ export function sprawdzZgodnosc(
   wiersze.forEach((w, i) => {
     const wej: RekordWejsciowy = {};
     let cecha = '';
+    const dni: (string | null)[] = Array(7).fill(null);
     naglowki.forEach((h, j) => {
       const cel = mapowanie[j];
       const v = (w[h] ?? '').trim();
@@ -209,9 +264,32 @@ export function sprawdzZgodnosc(
           wej.szerokosc_geograficzna = punkt[1];
         } else zglos(h, 'Geometria nie jest punktem GeoJSON.', v.slice(0, 60));
       } else if (cel === 'CECHA_ULICY') cecha = CECHA[v.toLowerCase()] ?? v;
-      else wej[cel] = v;
+      else if ((CELE_DNI as readonly string[]).includes(cel)) dni[CELE_DNI.indexOf(cel as CelDnia)] = v;
+      else if (cel === 'status_urzadzenia') {
+        const stan = STAN_AED[v.toLowerCase()];
+        if (stan !== '') wej[cel] = stan ?? v;
+      } else wej[cel as PoleRekordu] = v;
     });
     if (cecha && wej.ulica) wej.ulica = `${cecha} ${wej.ulica}`;
+    if (sGodzinyDni && !wej.godziny_dostepnosci) {
+      const g = godzinyZDni(dni);
+      const kol = kolumnaPola.get('godziny_dostepnosci') ?? 'godziny';
+      if (g.zapis) wej.godziny_dostepnosci = g.zapis;
+      for (const b of g.bledne)
+        zglos(
+          kol,
+          `Godziny dnia (${b.dzien}) nie mają formatu HH:MM-HH:MM ani „Niedostępny” – ten dzień pominięto.`,
+          b.wartosc,
+        );
+      if (g.bezDanych.length === 7)
+        zglos(kol, 'Brak godzin we wszystkich dniach – pusta komórka nie oznacza dostępności całodobowej.', '');
+      else if (g.bezDanych.length)
+        zglos(
+          kol,
+          'Brak godzin w części dni – pusta komórka nie oznacza dostępności całodobowej; te dni uznano za niedostępne.',
+          g.bezDanych.join(', '),
+        );
+    }
 
     const { rekord, bledy, ostrzezenia } = walidujRekord(wej);
     for (const o of ostrzezenia) zglos(kolumnaPola.get(o.pole) ?? o.pole, o.opis, o.wartosc);

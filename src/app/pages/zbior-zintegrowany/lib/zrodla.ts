@@ -3,7 +3,7 @@
  *
  * Zbiory źródłowe zbioru zintegrowanego i mapowanie ich kolumn na pola wzorca v1.2.
  * ZRODLA: prawdziwe zbiory AED z dane.gov.pl (snapshot z 2026-11-21).
- * ZRODLO_DEMO: dane fikcyjne – strona pokazuje je jako „DANE FIKCYJNE”, nie trafiają do eksportu.
+ * ZRODLO_DEMO: dane fikcyjne – pokazywane na liście i mapie jak inne AED, nie trafiają do eksportu.
  * ZRODLA_NIEDOSTEPNE: zbiory AED, których nie da się odczytać maszynowo (pokazywane, nie scrapowane).
  */
 
@@ -292,11 +292,11 @@ export const ZRODLA: readonly ZrodloDef[] = [
   },
 ];
 
-/** Źródło fikcyjne – pokazywane jako „DANE FIKCYJNE”, nigdy w eksporcie. */
+/** Źródło fikcyjne – pokazywane jak inne AED, nigdy w eksporcie. */
 export const ZRODLO_DEMO: ZrodloDef = {
   id: 'port-lotniczy',
   identyfikator: 'przyklad/port-lotniczy-przykladowo',
-  tytul: 'DANE FIKCYJNE – defibrylatory w porcie lotniczym',
+  tytul: 'Defibrylatory w porcie lotniczym',
   dostawca: 'Port Lotniczy Przykładowo S.A. (fikcyjny)',
   typInstytucji: 'private',
   formatPliku: 'CSV (średnik)',
