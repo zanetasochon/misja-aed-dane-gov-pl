@@ -272,14 +272,9 @@
                     class="form-check-input"
                     type="checkbox"
                     name="teraz"
-                    aria-describedby="zz-teraz-opis"
                     [ngModel]="tylkoTeraz()"
                     (ngModelChange)="tylkoTeraz.set($event)" />
                   <label class="form-check-label" for="zz-teraz">Dostępny teraz</label>
-                  <p id="zz-teraz-opis" class="zz-podpowiedz">
-                    Wyliczane z godzin dostępności. {{ bezGodzin }} z {{ wynik.rekordy.length }} AED nie ma godzin w
-                    źródle – przy tym filtrze nie są pokazywane.
-                  </p>
                 </div>
                 <div class="zz-pole">
                   <button type="button" class="btn btn-outline-primary" (click)="wyczyscFiltry()">
@@ -296,6 +291,19 @@
                 }
                 . {{ komunikat() }}
               </p>
+
+              <!-- Wyjaśnienie tylko wtedy, gdy „Dostępny teraz” daje pustą listę z powodu braku godzin w źródłach -->
+              @if (tylkoTeraz() && wyniki().length === 0) {
+                <p class="alert alert-info">
+                  @if (bezGodzin === wynik.rekordy.length) {
+                    Żaden zbiór źródłowy nie podaje godzin dostępności, więc filtr „Dostępny teraz” nie zwraca wyników.
+                    To brak w danych, który wzorzec ma uzupełnić.
+                  } @else {
+                    Żaden AED z podanymi godzinami nie jest teraz dostępny. {{ bezGodzin }} z
+                    {{ wynik.rekordy.length }} AED nie ma godzin w źródle, więc filtr ich nie uwzględnia.
+                  }
+                </p>
+              }
 
               @if (najblizszyPozaPromieniem(); as n) {
                 <p class="alert alert-info">
