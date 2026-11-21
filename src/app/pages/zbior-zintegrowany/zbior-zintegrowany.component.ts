@@ -146,6 +146,15 @@ export class ZbiorZintegrowanyComponent {
       : d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
+  /** Data z godziną jak w portalu (format D MMMM YYYY, HH:mm), np. „20 listopada 2026, 13:10”. */
+  dataGodzina(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const dzien = d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+    const godzina = d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+    return `${dzien}, ${godzina}`;
+  }
+
   takNie(v: boolean | null): string {
     return v === null ? 'brak danych' : v ? 'wewnątrz' : 'na zewnątrz';
   }

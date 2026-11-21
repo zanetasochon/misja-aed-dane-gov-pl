@@ -37,7 +37,10 @@ export interface ZrodloDef {
   licencja: string;
   adresZbioru: string | null;
   adresPliku: string | null;
+  /** Data danych zasobu (data_date) – trafia do data_aktualizacji rekordów. */
   dataDanych: string;
+  /** Data i godzina ostatniej zmiany zbioru w portalu (modified z API) – jak „Data aktualizacji” na liście. */
+  zmodyfikowano: string;
   prawdziwe: boolean;
   tresc: string;
   mapowanie: MapowanieKolumny[];
@@ -100,6 +103,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
     adresZbioru: 'https://dane.gov.pl/pl/dataset/3624,defibrylatory-zlokalizowane-w-miescie-krosno',
     adresPliku: 'https://api.dane.gov.pl/media/resources/20240219/Defibrylator_jAmxQcp.csv',
     dataDanych: '2024-02-19',
+    zmodyfikowano: '2024-03-19T19:17:59Z',
     prawdziwe: true,
     tresc: CSV_KROSNO,
     mapowanie: [
@@ -133,6 +137,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
     adresZbioru: 'https://dane.gov.pl/pl/dataset/40593,zdowie',
     adresPliku: 'https://api.dane.gov.pl/media/resources/20260914/aed.csv',
     dataDanych: '2026-09-14',
+    zmodyfikowano: '2026-09-21T08:31:31Z',
     prawdziwe: true,
     tresc: CSV_LEGIONOWO,
     mapowanie: [
@@ -180,6 +185,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
     adresZbioru: null,
     adresPliku: null,
     dataDanych: '2026-11-20',
+    zmodyfikowano: '2026-11-20T13:10:00+01:00',
     prawdziwe: false,
     tresc: CSV_PORT_LOTNICZY,
     mapowanie: [

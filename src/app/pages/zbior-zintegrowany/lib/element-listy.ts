@@ -18,11 +18,13 @@ export const OPIS_ZBIORU =
   '<p>Ogólnopolski zbiór lokalizacji i dostępności defibrylatorów AED. Powstaje z połączenia zbiorów o AED publikowanych na dane.gov.pl przez różnych dostawców i jest ujednolicony według wzorcowego zakresu danych AED. Każdy rekord wskazuje zbiór źródłowy i datę danych, a za dane odpowiada dostawca zbioru źródłowego.</p>';
 export const SLOWA_KLUCZOWE = ['AED', 'defibrylator', 'pierwsza pomoc', 'zbiór zintegrowany'];
 
-/** Najnowsza data danych wśród zbiorów źródłowych – data aktualizacji zbioru zintegrowanego. */
-export const DATA_AKTUALIZACJI =
-  ZRODLA.map((z) => z.dataDanych)
-    .sort()
-    .at(-1) ?? '';
+/**
+ * Data aktualizacji zbioru zintegrowanego: najnowsza data i godzina zmiany wśród zbiorów źródłowych
+ * (jak `verified` przy zbiorach w portalu – z godziną).
+ */
+export const DATA_AKTUALIZACJI = ZRODLA.map((z) => z.zmodyfikowano).reduce((a, b) =>
+  new Date(a).getTime() >= new Date(b).getTime() ? a : b,
+);
 
 export type ElementZbioruZintegrowanego = ISearchResult & { zbiorZintegrowany: true };
 
@@ -34,9 +36,7 @@ export function elementZbioruZintegrowanego(): ElementZbioruZintegrowanego {
     url: `../${RouterEndpoints.DATASETS}/${ID_ZBIORU_ZINTEGROWANEGO}`,
     // Klucz dodany do assets/i18n (pl: „Zbiór zintegrowany”, en: „Integrated dataset”).
     titleTranslationKey: 'Datasets.Integrated',
-    detailsData: [
-      { titleTranslationKey: 'Attribute.UpdateDate', data: DATA_AKTUALIZACJI, isDate: true, dateFormat: 'D MMMM YYYY' },
-    ],
+    detailsData: [{ titleTranslationKey: 'Attribute.UpdateDate', data: DATA_AKTUALIZACJI, isDate: true }],
     relationships: {} as ISearchResult['relationships'],
     attributes: {
       model: ApiModel.DATASET,
