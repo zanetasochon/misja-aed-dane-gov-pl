@@ -63,3 +63,5 @@ error.log
 CLAUDE.md
 CLAUDE.local.md
 .claude/
+.vercel
+.env*

@@ -25,5 +25,15 @@ Prototyp powstał na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek�
 | 2026-11-21 | `src/app/pages/dataset/dataset-results/dataset-results.component.ts`, `.html` | Pole `zbiorZintegrowany` w elemencie listy. Dla zbioru zintegrowanego nie są pokazywane ulubione ani obserwowanie, bo nie istnieje on w API. |
 | 2026-11-21 | `src/app/pages/zbior-zintegrowany/` (nowy katalog) | Kod zespołu: zbiór zintegrowany AED (metadane, źródła, raport harmonizacji, eksport CSV/JSON/GeoJSON, lista z filtrami i mapa Leaflet) oraz narzędzie „Sprawdź zgodność ze wzorcem”. |
 | 2026-11-21 | `src/app/pages/zbior-zintegrowany/dane/krosno.ts`, `legionowo.ts` | Prawdziwe dane z dane.gov.pl na licencji CC0 1.0 (źródło i data w nagłówku pliku). `port-lotniczy.ts`: dane fikcyjne. |
+| 2026-11-21 | `angular.json` | Nowa konfiguracja `build` o nazwie `vercel`: budżety i `outputHashing` jak w `production`, ale **bez** podmiany `environment.ts` na `environment.prod.ts`. W trybie `production` portal woła `https://api.<host>` i `https://cms.<host>`, a takich adresów na Vercelu nie ma. Z `environment.production = false` używa względnych `/api` i `/cms`, tak jak przy proxy deweloperskim. Logika aplikacji bez zmian. |
+| 2026-11-21 | `vercel.json` (nowy) | Konfiguracja wdrożenia statycznego na Vercel: build `npx ng build --configuration vercel`, katalog `dist/frontend/browser`, rewrites `/api`, `/media`, `/flags`, `/cms` (odwzorowanie `proxy.public.conf.json`) i fallback SPA do `index.html`. |
+| 2026-11-21 | `.vercelignore` (nowy) | Pliki pomijane przy wysyłce do Vercela (`node_modules`, `dist`, notatki zespołu). |
+| 2026-11-21 | `.gitignore` | Dopisane przez Vercel CLI: `.vercel` i `.env*` (lokalne powiązanie projektu i token). |
 
 Uruchomienie: `npm ci`, a potem `npm run start:public -- --port 4300`.
+
+## Wdrożenie na Vercel (2026-11-21)
+
+- Adres: https://misja-aed-gamma.vercel.app (projekt Vercel `misja-aed`, bez podłączonego repozytorium GitHub).
+- Build lokalny i wysyłka gotowego wyniku: `npx vercel@latest build --prod`, a potem `npx vercel@latest deploy --prebuilt --prod`. Lokalny build pozwala uniknąć Node 26, który Vercel ustawił domyślnie (Angular 18 go nie wspiera).
+- **Ograniczenie:** `api.dane.gov.pl`, `cms.dane.gov.pl` i `dane.gov.pl` odpowiadają `301` na każde żądanie z nagłówkiem `X-Forwarded-Host`, a Vercel zawsze go dodaje przy rewrite. Z tego powodu wywołania `/api` i `/cms` nie działają, a lista `/pl/dataset` i modal RODO są puste. Strony zbioru zintegrowanego i narzędzie „Sprawdź zgodność ze wzorcem” działają, bo mają dane osadzone w kodzie. Szczegóły: `robocze/wdrozenie.md` (poza repozytorium).

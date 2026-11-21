@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npx ng build --configuration vercel",
+  "outputDirectory": "dist/frontend/browser",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://api.dane.gov.pl/1.4/$1" },
+    { "source": "/media/(.*)", "destination": "https://dane.gov.pl/media/$1" },
+    { "source": "/flags/(.*)", "destination": "https://dane.gov.pl/flags/$1" },
+    { "source": "/cms/(.*)", "destination": "https://cms.dane.gov.pl/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

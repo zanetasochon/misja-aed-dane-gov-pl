@@ -1,0 +1,8 @@
+# HackNation 2026 – pliki pomijane przy wysyłce do Vercela (GPL-3.0), 2026-11-21
+node_modules
+dist
+.angular
+coverage
+CLAUDE.md
+CLAUDE.local.md
+.claude
