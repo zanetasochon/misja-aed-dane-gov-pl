@@ -5,10 +5,10 @@
   "buildCommand": "npx ng build --configuration vercel",
   "outputDirectory": "dist/frontend/browser",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://api.dane.gov.pl/1.4/$1" },
-    { "source": "/media/(.*)", "destination": "https://dane.gov.pl/media/$1" },
-    { "source": "/flags/(.*)", "destination": "https://dane.gov.pl/flags/$1" },
-    { "source": "/cms/(.*)", "destination": "https://cms.dane.gov.pl/$1" },
+    { "source": "/api/(.*)", "destination": "/api/proxy?__t=api&__p=$1" },
+    { "source": "/media/(.*)", "destination": "/api/proxy?__t=media&__p=$1" },
+    { "source": "/flags/(.*)", "destination": "/api/proxy?__t=flags&__p=$1" },
+    { "source": "/cms/(.*)", "destination": "/api/proxy?__t=cms&__p=$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
