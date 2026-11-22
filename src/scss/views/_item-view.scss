@@ -31,6 +31,30 @@
     & > *:not(:last-child) {
       margin-right: 4px;
     }
+
+    // HackNation 2026 (GPL-3.0), 2026-11-22: przyciski paska akcji („Obserwuj”, „Dodaj do ulubionych”, licznik,
+    // przycisk akcji) były ściśnięte w jednym rzędzie, a tekst łamał się w środku słowa. Teraz elementy się nie
+    // kurczą i przechodzą do kolejnego wiersza, gdy brakuje miejsca (flex-wrap).
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+
+    & > * {
+      flex: 0 0 auto;
+    }
+
+    & > *:not(:last-child) {
+      margin-right: 0;
+    }
+
+    // Przycisk akcji (np. „Zgłoś uwagi do zbioru”) na telefonie rozciąga się na całą wolną szerokość wiersza –
+    // gdy spada do nowego wiersza, zajmuje go w całości.
+    @media (max-width: 767.98px) {
+      & > .btn.ml-auto {
+        flex: 1 0 auto;
+        text-align: center;
+      }
+    }
   }
 
   &__attribute {

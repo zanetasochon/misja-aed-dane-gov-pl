@@ -6,6 +6,12 @@
   font: inherit;
   cursor: pointer;
   outline: inherit;
+  // HackNation 2026 (GPL-3.0), 2026-11-22: cel dotykowy co najmniej 24 × 24 px (WCAG 2.2, 2.5.8) – ikona zostaje 20 px.
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   .icon {
     fill: currentColor;
