@@ -378,9 +378,9 @@ export class ZbiorZintegrowanyComponent {
     return opisGodzin(POLA_DNI.map((p) => r[p]));
   }
 
-  /** Trasa piesza w Google Maps od bieżącej lokalizacji do AED (bez klucza API; nic nie jest wysyłane przed kliknięciem). */
+  /** Trasa piesza w Google Maps do AED – od ustalonej lokalizacji (pokazowej), a bez niej od bieżącej. */
   trasa(r: RekordZintegrowany): string | null {
-    return trasaDoAed(r);
+    return trasaDoAed(r, this.lokalizacja());
   }
 
   /** Numer do linku tel: bez spacji. */

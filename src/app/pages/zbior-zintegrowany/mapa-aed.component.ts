@@ -200,7 +200,7 @@ export class MapaAedComponent implements OnDestroy {
         'Odpowiedzialny',
         `${r.odpowiedzialny_za_aed}${r.telefon_odpowiedzialnego_za_aed ? ', tel. ' + r.telefon_odpowiedzialnego_za_aed : ''}`,
       );
-    const url = trasaDoAed(r);
+    const url = trasaDoAed(r, this.lokalizacja());
     if (url) {
       const trasa = document.createElement('a');
       trasa.href = url;
