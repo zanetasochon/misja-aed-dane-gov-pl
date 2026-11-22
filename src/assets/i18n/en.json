@@ -436,6 +436,7 @@
     "Single": "Dataset",
     "Integrated": "Integrated dataset",
     "IntegratedTooltip": "Integrated dataset: combines datasets on the same topic from different providers according to a reference data model. Each record points to its source dataset.",
+    "IntegratedFileLabel": "CSV or XLSX file with AED data",
     "Genitive": "Dataset",
     "Choose": "Select dataset",
     "SearchFor": "Search for dataset",

@@ -1,7 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Eksport zbioru zintegrowanego (reguły z arkusza „Reguły pliku” wzorca v1.2, Standard techniczny):
+ * Eksport zbioru zintegrowanego (reguły z arkusza „Reguły pliku” wzorca v1.3, Standard techniczny):
  * - CSV wg RFC 4180: UTF-8, przecinek, CRLF, jeden wiersz nagłówka, bez całkowicie pustych kolumn (ST s. 20–21);
  * - JSON wg RFC 8259 z tymi samymi polami co CSV;
  * - GeoJSON (RFC 7946): FeatureCollection punktów [długość, szerokość] w WGS84.
@@ -117,7 +117,11 @@ export function doGeoJson(rekordy: readonly RekordAed[], zrodla: readonly OpisZr
       features: rekordy.map((r) => ({
         type: 'Feature',
         id: r.id_aed,
-        geometry: { type: 'Point', coordinates: [r.dlugosc_geograficzna, r.szerokosc_geograficzna] },
+        // Współrzędne są opcjonalne (v1.3) – bez nich geometria jest null (RFC 7946 §3.2).
+        geometry:
+          r.szerokosc_geograficzna !== null && r.dlugosc_geograficzna !== null
+            ? { type: 'Point', coordinates: [r.dlugosc_geograficzna, r.szerokosc_geograficzna] }
+            : null,
         properties: tylkoWzorzec(r, wlasciwosci),
       })),
     },

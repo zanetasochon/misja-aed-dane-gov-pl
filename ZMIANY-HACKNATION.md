@@ -33,10 +33,12 @@ Prototyp powstał na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek�
 | 2026-11-21 | `package.json` | `engines.node`: `>=20` → `22.x`, żeby Vercel uruchamiał funkcję i build na Node 22 (domyślnie ustawił 26.x, którego Angular 18 nie wspiera). |
 | 2026-11-21 | `src/scss/layout/_layout.scss` | Poprawka dostępności: `.btn-outline-primary` w stanach `:hover`, `:focus`, `:active` dostaje biały tekst. W oryginale tło zmieniało się na `$primary-hover` (#0753a4), a tekst zostawał `$primary` (#0865c9), więc kliknięty przycisk miał kontrast ok. 1,3:1 (WCAG 1.4.3 wymaga 4,5:1). Dotyczy całego portalu. |
 | 2026-11-21 | `src/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx` (nowy) | Kopia wzorcowego zakresu danych AED v1.2 (bez zmian) do pobrania na stronie „Sprawdź zgodność ze wzorcem” (krok „Pobierz wzór”). |
-| 2026-11-22 | `src/assets/hacknation/szablon-danych-AED-v1.2.xlsx` (nowy) | Pusty szablon do wypełnienia: arkusz „Dane” z jednym wierszem nagłówka (27 pól wzorca v1.2 bez `id_aed`, `zrodlo_danych` i `data_aktualizacji`, które nadaje narzędzie), kolumnami tekstowymi, listami wartości i podpowiedziami; arkusz „Jak wypełnić”. |
+| 2026-11-22 | `src/assets/hacknation/szablon-danych-AED-v1.2.xlsx` (nowy, zastąpiony tego samego dnia przez v1.3) | Pusty szablon do wypełnienia: arkusz „Dane” z jednym wierszem nagłówka (27 pól wzorca v1.2 bez `id_aed`, `zrodlo_danych` i `data_aktualizacji`, które nadaje narzędzie), kolumnami tekstowymi, listami wartości i podpowiedziami; arkusz „Jak wypełnić”. |
 | 2026-11-22 | `src/app/layout/main-layout/main-layout.component.html` | Usunięty pasek na górze strony (decyzja zespołu). Zastrzeżenie „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.” przeniesione do stopki. |
 | 2026-11-22 | `src/app/layout/footer/footer.component.html` | Zastrzeżenie „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.” nad informacją o licencji. |
 | 2026-11-22 | `src/index.html` | `<meta name="robots" content="noindex, nofollow">`: wyszukiwarki nie indeksują prototypu. |
+| 2026-11-22 | `src/assets/hacknation/wzorcowy-zakres-danych-AED-v1.3.xlsx`, `szablon-danych-AED-v1.3.xlsx` (nowe) | Wzorzec v1.3 (43 pola, 9 wymaganych, nagłówki PL i EN, rozwiązania z formatu AED Sync) i pusty szablon v1.3 (arkusze „Dane PL”, „Data EN”, „Jak wypełnić”). Zastępują pliki v1.2 w `src/assets/hacknation/` (usunięte). |
+| 2026-11-22 | `src/assets/i18n/pl.json`, `en.json` | Nowy klucz `Datasets.IntegratedFileLabel` („Plik CSV lub XLSX z danymi o AED”) – etykieta pola pliku portalu (`app-file-upload`) w narzędziu „Sprawdź zgodność ze wzorcem”. |
 
 Uruchomienie: `npm ci`, a potem `npm run start:public -- --port 4300`.
 

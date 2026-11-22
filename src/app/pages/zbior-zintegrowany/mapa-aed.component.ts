@@ -13,6 +13,7 @@ import {
   PLATFORM_ID,
   ViewChild,
   afterNextRender,
+  computed,
   effect,
   inject,
   input,
@@ -27,7 +28,11 @@ import type { RekordZintegrowany } from './lib/harmonizacja';
   template: `
     <div class="mapa-aed">
       <p class="mapa-aed__opis" id="mapa-aed-opis">
-        Mapa pokazuje {{ rekordy().length }} AED z listy. Ten sam zestaw jest w tabeli –
+        Mapa pokazuje {{ naMapie().length }} AED z listy.
+        @if (bezWspolrzednych() > 0) {
+          {{ bezWspolrzednych() }} AED bez współrzędnych jest tylko na liście.
+        }
+        Pełny zestaw jest w tabeli –
         <a href="#lista-aed" (click)="przejdzDoListy($event)">przejdź do listy</a>. Przesuwaj mapę strzałkami, gdy ma
         fokus, albo przyciskami.
       </p>
@@ -55,6 +60,15 @@ export class MapaAedComponent implements OnDestroy {
   /** Lokalizacja użytkownika – punkt i okrąg promienia na mapie. */
   lokalizacja = input<{ szer: number; dlug: number; opis: string } | null>(null);
   promienM = input<number | null>(null);
+
+  /** Współrzędne są opcjonalne (wzorzec v1.3) – na mapie tylko AED, które je mają. */
+  readonly naMapie = computed(() =>
+    this.rekordy().filter(
+      (r): r is RekordZintegrowany & { szerokosc_geograficzna: number; dlugosc_geograficzna: number } =>
+        r.szerokosc_geograficzna !== null && r.dlugosc_geograficzna !== null,
+    ),
+  );
+  readonly bezWspolrzednych = computed(() => this.rekordy().length - this.naMapie().length);
 
   @ViewChild('kontener', { static: true }) kontener!: ElementRef<HTMLDivElement>;
 
@@ -117,9 +131,9 @@ export class MapaAedComponent implements OnDestroy {
       html: '<span aria-hidden="true">AED</span>',
       iconSize: [36, 36],
     });
-    for (const r of this.rekordy()) {
+    for (const r of this.naMapie()) {
       const adres = [r.ulica, r.numer_budynku, r.miejscowosc].filter(Boolean).join(' ');
-      const etykieta = `AED: ${r.nazwa_miejsca}${adres ? ', ' + adres : ''}`;
+      const etykieta = `AED: ${r.etykieta}${adres ? ', ' + adres : ''}`;
       const m = L.marker([r.szerokosc_geograficzna, r.dlugosc_geograficzna], {
         icon: ikona,
         keyboard: true,
@@ -154,12 +168,12 @@ export class MapaAedComponent implements OnDestroy {
     // Budujemy DOM, a nie HTML z napisów – dane ze źródeł nie są interpretowane jako kod.
     const div = document.createElement('div');
     const h = document.createElement('strong');
-    h.textContent = r.nazwa_miejsca;
+    h.textContent = r.etykieta;
     div.append(h);
     const linie = [
       [r.ulica, r.numer_budynku].filter(Boolean).join(' '),
       [r.kod_pocztowy, r.miejscowosc].filter(Boolean).join(' '),
-      r.opis_lokalizacji ?? '',
+      r.nazwa_miejsca ? (r.opis_lokalizacji ?? '') : '',
       `Godziny: ${r.godziny_dostepnosci ?? 'brak danych w źródle'}`,
     ].filter(Boolean);
     for (const l of linie) {
@@ -196,7 +210,7 @@ export class MapaAedComponent implements OnDestroy {
 
   dopasuj(): void {
     const L = this.L;
-    const r = this.rekordy();
+    const r = this.naMapie();
     if (!L || !this.mapa) return;
     const lok = this.lokalizacja();
     const promien = this.promienM();

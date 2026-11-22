@@ -183,7 +183,8 @@ export class ZbiorZintegrowanyComponent {
     const teraz = this.teraz();
     const lok = this.lokalizacja();
     const lista = this.wynik.rekordy.filter((r) => {
-      if (q && !this.normalizuj([r.nazwa_miejsca, r.ulica, r.miejscowosc].join(' ')).includes(q)) return false;
+      if (q && !this.normalizuj([r.etykieta, r.opis_lokalizacji, r.ulica, r.miejscowosc].join(' ')).includes(q))
+        return false;
       if (this.miejscowosc() && r.miejscowosc !== this.miejscowosc()) return false;
       if (this.dostep() === 'brak' ? r.dostep !== null : this.dostep() && r.dostep !== this.dostep()) return false;
       const w = this.wewnatrz();
@@ -195,8 +196,10 @@ export class ZbiorZintegrowanyComponent {
       return true;
     });
     if (!lok) return lista.map((r) => ({ r, m: null as number | null }));
+    // AED bez współrzędnych (opcjonalne w v1.3) nie ma odległości – nie trafia do wyników w promieniu.
     return lista
-      .map((r) => ({ r, m: odlegloscM(lok, { szer: r.szerokosc_geograficzna, dlug: r.dlugosc_geograficzna }) }))
+      .map((r) => ({ r, m: this.odleglosc(r) }))
+      .filter((x): x is { r: RekordZintegrowany; m: number } => x.m !== null)
       .sort((a, b) => a.m - b.m);
   });
 
@@ -205,7 +208,7 @@ export class ZbiorZintegrowanyComponent {
     const lok = this.lokalizacja();
     const p = this.promien();
     return this.poFiltrach()
-      .filter((x) => !lok || (x.m ?? 0) <= p)
+      .filter((x) => !lok || (x.m !== null && x.m <= p))
       .map((x) => x.r);
   });
 
@@ -287,7 +290,8 @@ export class ZbiorZintegrowanyComponent {
   /** Odległość w metrach od lokalizacji użytkownika (null bez lokalizacji). */
   odleglosc(r: RekordZintegrowany): number | null {
     const lok = this.lokalizacja();
-    return lok ? odlegloscM(lok, { szer: r.szerokosc_geograficzna, dlug: r.dlugosc_geograficzna }) : null;
+    if (!lok || r.szerokosc_geograficzna === null || r.dlugosc_geograficzna === null) return null;
+    return odlegloscM(lok, { szer: r.szerokosc_geograficzna, dlug: r.dlugosc_geograficzna });
   }
 
   opisOdleglosci(m: number): string {

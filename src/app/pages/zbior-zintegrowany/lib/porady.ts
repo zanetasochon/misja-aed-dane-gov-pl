@@ -6,11 +6,19 @@
 
 const PORADY: [RegExp, string][] = [
   [
-    /poprawiono|Usunięto apostrof/i,
+    /poprawiono|Usunięto apostrof|Uzupełniono/i,
     'Nic nie musisz robić – narzędzie poprawiło to samo. Warto poprawić plik źródłowy.',
   ],
-  [/Brak nazwy miejsca/i, 'Wpisz nazwę miejsca, np. „Urząd Miejski” albo „Hala sportowa”.'],
-  [/Brak współrzędnych/i, 'Wpisz szerokość i długość geograficzną (WGS84) z kropką dziesiętną, np. 49.6887 i 21.7706.'],
+  [/Brak nazwy miejsca/i, 'Wpisz nazwę miejsca (np. „Hala sportowa”) albo opis, gdzie jest AED.'],
+  [
+    /Brak współrzędnych i miejscowości/i,
+    'Wpisz co najmniej miejscowość. Współrzędne są opcjonalne, ale bez nich AED nie pojawi się na mapie.',
+  ],
+  [/niepełne/i, 'Wpisz obie współrzędne (WGS84) z kropką dziesiętną, np. 49.6887 i 21.7706, albo zostaw obie puste.'],
+  [/Puste pole wymagane/i, 'Uzupełnij wartość w podanych wierszach – opis pola jest w arkuszu „Zakres danych” wzorca.'],
+  [/Województwo/i, 'Wpisz nazwę województwa małymi literami, np. mazowieckie (lista w arkuszu „Słowniki”).'],
+  [/Kod zbioru/i, 'Wpisz AED-SYNC-PL w każdym wierszu.'],
+  [/e-mail/i, 'Wpisz adres w postaci nazwa@domena.pl, np. aed@urzad.example.'],
   [
     /poza Polską/i,
     'Sprawdź, czy szerokość (49–55) i długość (14–25) nie są zamienione albo przesunięte o rząd wielkości.',
@@ -23,9 +31,9 @@ const PORADY: [RegExp, string][] = [
   [/spoza słownika/i, 'Użyj jednej z wartości z arkusza „Słowniki” we wzorcu.'],
   [
     /Brak godzin we wszystkich dniach|Brak godzin w części dni/i,
-    'Wpisz godziny dla każdego dnia (np. 08:00-16:30); dla dni zamkniętych wpisz „Niedostępny”, a dla całej doby 00:00-24:00.',
+    'Wpisz godziny dla każdego dnia (np. 08:00-16:30); dla dni zamkniętych wpisz „Niedostępny”, a dla całej doby „24h”.',
   ],
-  [/Godziny dnia/i, 'Wpisz jeden przedział HH:MM-HH:MM (np. 08:00-16:30) albo „Niedostępny”.'],
+  [/Godziny dnia/i, 'Wpisz jeden przedział HH:MM-HH:MM (np. 08:00-16:30), „Niedostępny” albo „24h”.'],
   [/opening_hours/i, 'Zapisz godziny jak w przykładach: 24/7 albo Mo-Fr 08:00-16:00; Sa 09:00-13:00.'],
   [/REGON/i, 'Wpisz 9 albo 14 cyfr REGON, bez spacji i kresek.'],
   [/Telefon/i, 'Wpisz 9 cyfr albo numer z kierunkowym kraju, np. +48123456789.'],
@@ -42,5 +50,5 @@ export function jakPoprawic(opis: string): string {
 
 /** Problemy, które narzędzie samo naprawiło (wartość trafi do pliku poprawiona). */
 export function czyPoprawioneAutomatycznie(opis: string): boolean {
-  return /poprawiono|Usunięto apostrof/i.test(opis);
+  return /poprawiono|Usunięto apostrof|Uzupełniono/i.test(opis);
 }

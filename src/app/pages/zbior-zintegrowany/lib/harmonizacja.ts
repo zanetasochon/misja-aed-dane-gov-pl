@@ -1,10 +1,13 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Harmonizacja zbiorów źródłowych do wzorca v1.2:
+ * Harmonizacja zbiorów źródłowych do wzorca v1.3:
  * - mapowanie kolumn (zrodla.ts) i normalizacja formatów (ST s. 15–16);
- * - odrzucenie tylko wtedy, gdy rekordu nie da się użyć (brak nazwy, brak/niepoprawne współrzędne);
+ * - odrzucenie tylko wtedy, gdy rekordu nie da się użyć (nie wiadomo, gdzie jest AED, albo brak nazwy i opisu);
  *   brakujące pola wzorca zostają puste (null) – integracja nie zmyśla danych;
+ * - integracja uzupełnia tylko to, co wynika ze źródła: kod_zbioru_danych (AED-SYNC-PL), dostawcę
+ *   (wydawca zbioru źródłowego) oraz województwo, powiat i gminę, gdy rekord leży w miejscowości,
+ *   której dotyczy zbiór źródłowy;
  * - każdy rekord zachowuje zrodlo_danych (zbiór źródłowy) i data_aktualizacji ze źródła;
  * - wykrywanie duplikatów: ≤ 20 m albo ta sama nazwa i adres. Duplikaty oznaczamy, nie usuwamy –
  *   w jednym budynku mogą być dwa AED; decyzja należy do dostawcy danych.
@@ -12,7 +15,7 @@
 
 import { wierszeJakoObiekty } from './csv';
 import { odlegloscM } from './geometria';
-import { POLA_WYMAGANE } from './model';
+import { KOD_ZBIORU, KOLUMNY, POLA_WYMAGANE } from './model';
 import { uuidV5 } from './uuid';
 import { walidujRekord } from './walidacja-rekordu';
 import { doDatyCzasuWzorca } from './wiek-danych';
@@ -21,6 +24,8 @@ import { ZRODLA } from './zrodla';
 import type { ZrodloDef } from './zrodla';
 
 export interface RekordZintegrowany extends RekordAed {
+  /** Nazwa do wyświetlenia: nazwa miejsca, a gdy jej brak – opis lokalizacji (nazwa jest opcjonalna w v1.3). */
+  etykieta: string;
   /** Id źródła (krosno, legionowo, …) – do filtrów i raportu. */
   zrodloId: string;
   dostawcaZrodla: string;
@@ -60,14 +65,15 @@ export interface RaportZrodla {
   odrzucone: OdrzuconyWiersz[];
   ostrzezenia: OstrzezenieWiersza[];
   kompletnosc: KompletnoscPola[];
-  /** Liczba pól wymaganych wzorca (15), które źródło dostarcza choć w jednym rekordzie (np. 9 z 15). */
+  /** Liczba pól wymaganych wzorca (9), które źródło dostarcza choć w jednym rekordzie (np. 6 z 9). */
   polaWymaganeObecne: number;
 }
 
 export interface Duplikat {
   a: RekordZintegrowany;
   b: RekordZintegrowany;
-  odlegloscM: number;
+  /** null, gdy jeden z rekordów nie ma współrzędnych. */
+  odlegloscM: number | null;
   powod: string;
 }
 
@@ -87,37 +93,7 @@ const norm = (s: string | null) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
-function pustyRekord(): Omit<
-  RekordAed,
-  'id_aed' | 'nazwa_miejsca' | 'szerokosc_geograficzna' | 'dlugosc_geograficzna' | 'zrodlo_danych' | 'data_aktualizacji'
-> {
-  return {
-    opis_lokalizacji: null,
-    opis_lokalizacji_en: null,
-    ulica: null,
-    numer_budynku: null,
-    numer_lokalu: null,
-    kod_pocztowy: null,
-    miejscowosc: null,
-    teryt_terc: null,
-    teryt_simc: null,
-    teryt_ulic: null,
-    wewnatrz_budynku: null,
-    pietro: null,
-    dostep: null,
-    godziny_dostepnosci: null,
-    typ_dysponenta: null,
-    dysponent_nazwa: null,
-    dysponent_regon: null,
-    telefon_kontaktowy: null,
-    producent: null,
-    model: null,
-    status_urzadzenia: null,
-    data_ostatniego_przegladu: null,
-    opis_dodatkowy: null,
-    osm_id: null,
-  };
-}
+const pustyRekord = () => Object.fromEntries(KOLUMNY.map((k) => [k, null])) as unknown as RekordAed;
 
 export function harmonizujZrodlo(z: ZrodloDef): { rekordy: RekordZintegrowany[]; raport: RaportZrodla } {
   const tresc = z.przygotuj ? z.przygotuj(z.tresc) : z.tresc;
@@ -139,7 +115,7 @@ export function harmonizujZrodlo(z: ZrodloDef): { rekordy: RekordZintegrowany[];
       szerokosc_geograficzna: m.szerokosc,
       dlugosc_geograficzna: m.dlugosc,
     });
-    const nazwa = rekord.nazwa_miejsca ?? '(brak)';
+    const nazwa = rekord.nazwa_miejsca ?? rekord.opis_lokalizacji ?? '(brak)';
     if (bledy.length) {
       odrzucone.push({ wiersz: nr, nazwa, powod: bledy.join(' ') });
       return;
@@ -150,13 +126,18 @@ export function harmonizujZrodlo(z: ZrodloDef): { rekordy: RekordZintegrowany[];
     // Stały identyfikator: UUID v5 z adresu zbioru i ID rekordu w źródle (bez ID – z nazwy i adresu).
     const kluczRekordu =
       m.idZrodlowe || norm([rekord.nazwa_miejsca, rekord.ulica, rekord.numer_budynku, rekord.miejscowosc].join(' '));
+    // Województwo, powiat i gmina – tylko gdy rekord leży w miejscowości, której dotyczy zbiór źródłowy.
+    const wObszarze = z.obszar && norm(rekord.miejscowosc ?? '') === norm(z.obszar.miejscowosc);
     rekordy.push({
       ...pustyRekord(),
       ...rekord,
       id_aed: uuidV5(`${z.identyfikator}#${kluczRekordu}`),
-      nazwa_miejsca: rekord.nazwa_miejsca!,
-      szerokosc_geograficzna: rekord.szerokosc_geograficzna!,
-      dlugosc_geograficzna: rekord.dlugosc_geograficzna!,
+      kod_zbioru_danych: KOD_ZBIORU,
+      wojewodztwo: rekord.wojewodztwo ?? (wObszarze ? z.obszar!.wojewodztwo : null),
+      powiat: rekord.powiat ?? (wObszarze ? z.obszar!.powiat : null),
+      gmina: rekord.gmina ?? (wObszarze ? z.obszar!.gmina : null),
+      dostawca: rekord.dostawca ?? z.dostawca,
+      etykieta: nazwa,
       zrodlo_danych: z.identyfikator,
       // Data i godzina ostatniej zmiany zbioru źródłowego (xlsx: „data i czas ostatniej zmiany rekordu”).
       data_aktualizacji: doDatyCzasuWzorca(z.zmodyfikowano),
@@ -172,18 +153,19 @@ export function harmonizujZrodlo(z: ZrodloDef): { rekordy: RekordZintegrowany[];
 
   // Punkt odległy o ponad 30 km od mediany punktów źródła – prawdopodobny błąd (np. współrzędne skopiowane
   // z innego zbioru). Tylko ostrzeżenie: rekord zostaje, decyzja należy do dostawcy.
-  if (rekordy.length >= 3) {
+  const zPunktem = rekordy.filter((x) => x.szerokosc_geograficzna !== null && x.dlugosc_geograficzna !== null);
+  if (zPunktem.length >= 3) {
     const mediana = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
     const srodek = {
-      szer: mediana(rekordy.map((x) => x.szerokosc_geograficzna)),
-      dlug: mediana(rekordy.map((x) => x.dlugosc_geograficzna)),
+      szer: mediana(zPunktem.map((x) => x.szerokosc_geograficzna!)),
+      dlug: mediana(zPunktem.map((x) => x.dlugosc_geograficzna!)),
     };
-    for (const x of rekordy) {
-      const km = odlegloscM(srodek, { szer: x.szerokosc_geograficzna, dlug: x.dlugosc_geograficzna }) / 1000;
+    for (const x of zPunktem) {
+      const km = odlegloscM(srodek, { szer: x.szerokosc_geograficzna!, dlug: x.dlugosc_geograficzna! }) / 1000;
       if (km > 30)
         ostrzezenia.push({
           wiersz: x.wierszZrodla,
-          nazwa: x.nazwa_miejsca,
+          nazwa: x.etykieta,
           tresc: `Punkt leży ok. ${Math.round(km)} km od pozostałych punktów tego źródła – sprawdź współrzędne (mogą pochodzić z innego zbioru).`,
         });
     }
@@ -214,20 +196,26 @@ export function wykryjDuplikaty(rekordy: readonly RekordZintegrowany[], progM = 
     for (let j = i + 1; j < rekordy.length; j++) {
       const a = rekordy[i];
       const b = rekordy[j];
-      const odl = odlegloscM(
-        { szer: a.szerokosc_geograficzna, dlug: a.dlugosc_geograficzna },
-        { szer: b.szerokosc_geograficzna, dlug: b.dlugosc_geograficzna },
-      );
+      const odl =
+        a.szerokosc_geograficzna !== null &&
+        a.dlugosc_geograficzna !== null &&
+        b.szerokosc_geograficzna !== null &&
+        b.dlugosc_geograficzna !== null
+          ? odlegloscM(
+              { szer: a.szerokosc_geograficzna, dlug: a.dlugosc_geograficzna },
+              { szer: b.szerokosc_geograficzna, dlug: b.dlugosc_geograficzna },
+            )
+          : Infinity;
       const adresA = norm([a.ulica, a.numer_budynku, a.miejscowosc].join(' '));
       const tenSamAdresINazwa =
         a.ulica !== null &&
         adresA === norm([b.ulica, b.numer_budynku, b.miejscowosc].join(' ')) &&
-        norm(a.nazwa_miejsca) === norm(b.nazwa_miejsca);
+        norm(a.etykieta) === norm(b.etykieta);
       if (odl <= progM || tenSamAdresINazwa) {
         wynik.push({
           a,
           b,
-          odlegloscM: Math.round(odl),
+          odlegloscM: Number.isFinite(odl) ? Math.round(odl) : null,
           powod: [
             odl <= progM ? `współrzędne w promieniu ${progM} m` : '',
             tenSamAdresINazwa ? 'ta sama nazwa i adres' : '',

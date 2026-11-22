@@ -4,7 +4,7 @@
  * DANE FIKCYJNE. „Port Lotniczy Przykładowo” nie istnieje. Współrzędne są przykładowe
  * i nie wskazują żadnego AED. Plik celowo ma inne nazwy kolumn i średnik jako separator,
  * jak w prawdziwych zbiorach (np. Przemyśl). Wiersz 4 celowo nie ma współrzędnych –
- * pokazuje odrzucenie w raporcie harmonizacji.
+ * we wzorcu v1.3 są opcjonalne, więc ten AED jest na liście, ale nie na mapie.
  */
 
 export const CSV_PORT_LOTNICZY = [

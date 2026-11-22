@@ -1,7 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Zbiory źródłowe zbioru zintegrowanego i mapowanie ich kolumn na pola wzorca v1.2.
+ * Zbiory źródłowe zbioru zintegrowanego i mapowanie ich kolumn na pola wzorca v1.3.
  * ZRODLA: prawdziwe zbiory AED z dane.gov.pl (snapshot z 2026-11-21).
  * ZRODLO_DEMO: dane fikcyjne – pokazywane na liście i mapie jak inne AED, nie trafiają do eksportu.
  * ZRODLA_NIEDOSTEPNE: zbiory AED, których nie da się odczytać maszynowo (pokazywane, nie scrapowane).
@@ -47,6 +47,11 @@ export interface ZrodloDef {
   /** Data i godzina ostatniej zmiany zbioru w portalu (modified z API) – jak „Data aktualizacji” na liście. */
   zmodyfikowano: string;
   prawdziwe: boolean;
+  /**
+   * Obszar, którego dotyczy zbiór (np. zbiór miasta). Rekordy z tej miejscowości dostają województwo,
+   * powiat i gminę słownie (pola wymagane w v1.3), bo źródła ich nie podają.
+   */
+  obszar?: { miejscowosc: string; wojewodztwo: string; powiat: string; gmina: string };
   /** Uznanie autorstwa wymagane licencją (np. CC BY 4.0) – pokazywane w widoku i w pliku źródeł przy eksporcie. */
   atrybucja?: string;
   /** Naprawa pliku przed odczytem (np. wiersze w całości w cudzysłowie) – opisana w uwagiDoPliku. */
@@ -116,6 +121,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
     dataDanych: '2024-02-19',
     zmodyfikowano: '2024-03-19T19:17:59Z',
     prawdziwe: true,
+    obszar: { miejscowosc: 'Krosno', wojewodztwo: 'podkarpackie', powiat: 'Krosno', gmina: 'Krosno' },
     tresc: CSV_KROSNO,
     mapowanie: [
       { kolumna: 'Długość geograficzna', pola: ['dlugosc_geograficzna'] },
@@ -150,6 +156,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
     dataDanych: '2026-09-14',
     zmodyfikowano: '2026-09-21T08:31:31Z',
     prawdziwe: true,
+    obszar: { miejscowosc: 'Legionowo', wojewodztwo: 'mazowieckie', powiat: 'legionowski', gmina: 'Legionowo' },
     tresc: CSV_LEGIONOWO,
     mapowanie: [
       { kolumna: 'nazwa', pola: ['nazwa_miejsca'] },
@@ -198,6 +205,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
     dataDanych: '2024-11-06',
     zmodyfikowano: '2024-11-06T06:42:45Z',
     prawdziwe: true,
+    obszar: { miejscowosc: 'Przemyśl', wojewodztwo: 'podkarpackie', powiat: 'Przemyśl', gmina: 'Przemyśl' },
     tresc: CSV_PRZEMYSL,
     uwagiDoPliku: [
       'Nagłówki po angielsku, separator średnik.',
@@ -212,7 +220,11 @@ export const ZRODLA: readonly ZrodloDef[] = [
       { kolumna: 'street', pola: ['ulica'] },
       { kolumna: 'home_number', pola: ['numer_budynku'] },
       { kolumna: 'postcode', pola: ['kod_pocztowy'] },
-      { kolumna: 'phone', pola: ['telefon_kontaktowy'], uwaga: 'Usunięty apostrof na początku (ślad po Excelu).' },
+      {
+        kolumna: 'phone',
+        pola: ['telefon_odpowiedzialnego_za_aed'],
+        uwaga: 'Usunięty apostrof na początku (ślad po Excelu).',
+      },
       {
         kolumna: 'email, www, youtube_url, panorama_url, gallery, attachments, links',
         pola: [],
@@ -237,7 +249,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
           numer_budynku: lubNull(w['home_number']),
           kod_pocztowy: lubNull(w['postcode']),
           miejscowosc: lubNull(w['city']),
-          telefon_kontaktowy: telefon ? telefon.replace(/[\s-]/g, '') : null,
+          telefon_odpowiedzialnego_za_aed: telefon ? telefon.replace(/[\s-]/g, '') : null,
         },
       };
     },
@@ -257,6 +269,7 @@ export const ZRODLA: readonly ZrodloDef[] = [
     dataDanych: '2025-07-10',
     zmodyfikowano: '2025-07-10T12:13:16Z',
     prawdziwe: true,
+    obszar: { miejscowosc: 'Marki', wojewodztwo: 'mazowieckie', powiat: 'wołomiński', gmina: 'Marki' },
     tresc: CSV_MARKI,
     uwagiDoPliku: [
       'Każdy wiersz jest w całości ujęty w cudzysłów, więc czytnik CSV widzi jedną kolumnę – przed odczytem usunięto zewnętrzne cudzysłowy.',
@@ -307,6 +320,7 @@ export const ZRODLO_DEMO: ZrodloDef = {
   dataDanych: '2026-11-20',
   zmodyfikowano: '2026-11-20T13:10:00+01:00',
   prawdziwe: false,
+  obszar: { miejscowosc: 'Przykładowo', wojewodztwo: 'łódzkie', powiat: 'przykładowski', gmina: 'Przykładowo' },
   tresc: CSV_PORT_LOTNICZY,
   mapowanie: [
     { kolumna: 'ID', pola: ['id_aed'], uwaga: 'Użyty w identyfikatorze rekordu.' },
@@ -345,8 +359,8 @@ export const ZRODLO_DEMO: ZrodloDef = {
         godziny_dostepnosci: lubNull(w['Godziny']),
         wewnatrz_budynku: wb === 'TAK' ? true : wb === 'NIE' ? false : null,
         pietro: poziom !== null && /^-?\d+$/.test(poziom) ? Number(poziom) : null,
-        dysponent_nazwa: 'Port Lotniczy Przykładowo S.A. (fikcyjny)',
-        typ_dysponenta: 'transport',
+        odpowiedzialny_za_aed: 'Port Lotniczy Przykładowo S.A. (fikcyjny)',
+        typ_odpowiedzialnego_za_aed: 'transport',
       },
     };
   },

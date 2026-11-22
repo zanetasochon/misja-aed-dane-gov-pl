@@ -1,17 +1,20 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * JEDNA funkcja walidacji rekordu względem wzorca AED v1.2 – używana przez harmonizację
+ * JEDNA funkcja walidacji rekordu względem wzorca AED v1.3 – używana przez harmonizację
  * zbioru zintegrowanego i przez narzędzie „Sprawdź zgodność ze wzorcem”.
  *
- * - błędy → rekord odrzucony (brak nazwy, brak/niepoprawne współrzędne, punkt poza Polską);
+ * - błędy → rekord odrzucony: nie wiadomo, gdzie jest AED (brak współrzędnych i miejscowości)
+ *   albo nie da się go opisać (brak nazwy miejsca i opisu lokalizacji);
+ * - współrzędne są opcjonalne (v1.3); niepoprawne albo poza Polską → ostrzeżenie i puste pole;
  * - ostrzeżenia → rekord zostaje, a niepoprawne pole jest puste – komunikat mówi to wprost;
  * - normalizacja do reguł Standardu technicznego (ST s. 15–16): kropka dziesiętna, true/false,
  *   kod 00-000, numery bez spacji, daty ISO 8601.
  */
 
 import { czyDostepnyTeraz } from './godziny';
-import { DOSTEP, STATUS_URZADZENIA, TYP_DYSPONENTA } from './model';
+import { DNI_PL, godzinyZDni, normalizujDzien } from './godziny-dni';
+import { DOSTEP, KOD_ZBIORU, POLA_DNI, STATUS_URZADZENIA, TYP_ODPOWIEDZIALNEGO, WOJEWODZTWA } from './model';
 import type { Dostep, PoleRekordu, RekordAed } from './model';
 
 export type WartoscWejsciowa = string | number | boolean | null | undefined;
@@ -51,6 +54,8 @@ const DOSTEP_SYNONIMY: Record<string, Dostep> = {
   'tylko personel': 'ograniczony',
 };
 
+const STATUS_AED_SYNC: Record<string, string> = { sprawny: 'sprawne', niesprawny: 'niesprawne' };
+
 const PRAWDA = new Set(['true', 'tak', '1', 'yes', 't']);
 const FALSZ = new Set(['false', 'nie', '0', 'no', 'n']);
 
@@ -89,11 +94,14 @@ export function walidujRekord(wej: RekordWejsciowy): WynikWalidacji {
     'nazwa_miejsca',
     'opis_lokalizacji',
     'opis_lokalizacji_en',
+    'powiat',
+    'gmina',
     'ulica',
     'numer_budynku',
     'numer_lokalu',
     'miejscowosc',
-    'dysponent_nazwa',
+    'odpowiedzialny_za_aed',
+    'dostawca',
     'producent',
     'model',
     'opis_dodatkowy',
@@ -101,14 +109,36 @@ export function walidujRekord(wej: RekordWejsciowy): WynikWalidacji {
     (r as Record<string, unknown>)[p] = tekst(wej[p]);
   }
 
-  // Nazwa – bez niej rekordu nie da się opisać.
-  if (!r.nazwa_miejsca) bledy.push('Brak nazwy miejsca – rekordu nie da się opisać na liście ani mapie.');
+  // Bez nazwy miejsca i opisu lokalizacji rekordu nie da się opisać na liście ani mapie.
+  if (!r.nazwa_miejsca && !r.opis_lokalizacji)
+    bledy.push('Brak nazwy miejsca i opisu lokalizacji – rekordu nie da się opisać na liście ani mapie.');
 
-  // Współrzędne (WGS84, kropka dziesiętna) – wymagane, w granicach Polski.
+  // Kod zbioru – stała wartość, po której integrator rozpoznaje dane.
+  const kodZbioru = tekst(wej.kod_zbioru_danych);
+  r.kod_zbioru_danych = kodZbioru?.toUpperCase() === KOD_ZBIORU ? KOD_ZBIORU : null;
+  if (kodZbioru && !r.kod_zbioru_danych)
+    ostrzez('kod_zbioru_danych', `Kod zbioru danych powinien mieć wartość ${KOD_ZBIORU}` + PUSTE, kodZbioru);
+
+  // Województwo słownie, ze słownika 16 województw („Województwo Mazowieckie” → „mazowieckie”).
+  const woj = tekst(wej.wojewodztwo);
+  const wojNorm = woj ? bezOgonkow(woj).replace(/^wojewodztwo\s+/, '') : null;
+  r.wojewodztwo = wojNorm ? (WOJEWODZTWA.find((w) => bezOgonkow(w) === wojNorm) ?? null) : null;
+  if (woj && !r.wojewodztwo) ostrzez('wojewodztwo', 'Województwo spoza listy 16 województw' + PUSTE, woj);
+
+  // Współrzędne (WGS84, kropka dziesiętna) – opcjonalne (v1.3), w granicach Polski.
   let szer = liczba(wej.szerokosc_geograficzna);
   let dlug = liczba(wej.dlugosc_geograficzna);
+  const szerTekst = tekst(wej.szerokosc_geograficzna);
+  const dlugTekst = tekst(wej.dlugosc_geograficzna);
+  r.szerokosc_geograficzna = null;
+  r.dlugosc_geograficzna = null;
   if (szer === null || dlug === null) {
-    bledy.push('Brak współrzędnych albo nie są liczbami – AED nie da się pokazać na mapie.');
+    if (szerTekst || dlugTekst)
+      ostrzez(
+        'szerokosc_geograficzna',
+        'Współrzędne są niepełne albo nie są liczbami – AED nie pojawi się na mapie' + PUSTE,
+        `${szerTekst ?? ''}, ${dlugTekst ?? ''}`,
+      );
   } else {
     if (!wZakresie(szer, ZAKRES_SZEROKOSCI) && wZakresie(szer, ZAKRES_DLUGOSCI) && wZakresie(dlug, ZAKRES_SZEROKOSCI)) {
       [szer, dlug] = [dlug, szer];
@@ -119,13 +149,15 @@ export function walidujRekord(wej: RekordWejsciowy): WynikWalidacji {
       );
     }
     if (!wZakresie(szer, ZAKRES_SZEROKOSCI) || !wZakresie(dlug, ZAKRES_DLUGOSCI)) {
-      bledy.push(`Współrzędne poza Polską (${szer}, ${dlug}).`);
+      ostrzez('szerokosc_geograficzna', 'Współrzędne poza Polską' + PUSTE, `${szer}, ${dlug}`);
     } else {
       // 6 miejsc po przecinku – jak w przykładzie ze wzorca (≈ 0,1 m).
       r.szerokosc_geograficzna = Math.round(szer * 1e6) / 1e6;
       r.dlugosc_geograficzna = Math.round(dlug * 1e6) / 1e6;
     }
   }
+  if (r.szerokosc_geograficzna === null && !r.miejscowosc)
+    bledy.push('Brak współrzędnych i miejscowości – nie wiadomo, gdzie jest AED.');
 
   // Adres w osobnych polach (ST s. 16).
   let kod = tekst(wej.kod_pocztowy);
@@ -173,16 +205,45 @@ export function walidujRekord(wej: RekordWejsciowy): WynikWalidacji {
   r.dostep = dostep ? (DOSTEP_SYNONIMY[bezOgonkow(dostep)] ?? null) : null;
   if (dostep && !r.dostep) ostrzez('dostep', `Wartość spoza słownika (${DOSTEP.join(', ')})` + PUSTE, dostep);
 
-  const status = tekst(wej.status_urzadzenia);
+  // Stan z AED Sync: „Sprawny” → sprawne, „Niesprawny” → niesprawne, „Nieznany” = brak danych.
+  const statusSurowy = tekst(wej.status_urzadzenia);
+  const status =
+    statusSurowy?.toLowerCase() === 'nieznany'
+      ? null
+      : (STATUS_AED_SYNC[statusSurowy?.toLowerCase() ?? ''] ?? statusSurowy);
   r.status_urzadzenia = status && (STATUS_URZADZENIA as readonly string[]).includes(status) ? status : null;
   if (status && !r.status_urzadzenia)
     ostrzez('status_urzadzenia', `Wartość spoza słownika (${STATUS_URZADZENIA.join(', ')})` + PUSTE, status);
 
-  const typ = tekst(wej.typ_dysponenta);
-  r.typ_dysponenta = typ && (TYP_DYSPONENTA as readonly string[]).includes(typ) ? typ : null;
-  if (typ && !r.typ_dysponenta) ostrzez('typ_dysponenta', 'Wartość spoza słownika typów dysponenta' + PUSTE, typ);
+  const typ = tekst(wej.typ_odpowiedzialnego_za_aed);
+  r.typ_odpowiedzialnego_za_aed = typ && (TYP_ODPOWIEDZIALNEGO as readonly string[]).includes(typ) ? typ : null;
+  if (typ && !r.typ_odpowiedzialnego_za_aed)
+    ostrzez('typ_odpowiedzialnego_za_aed', 'Wartość spoza słownika typów podmiotu' + PUSTE, typ);
 
-  // Godziny w składni opening_hours.
+  // Godziny dla każdego dnia (HH:MM-HH:MM, „Niedostępny”, „24h”). Pusta komórka = brak danych.
+  const dni = POLA_DNI.map((pole, i) => {
+    const surowa = tekst(wej[pole]);
+    const v = normalizujDzien(surowa);
+    if (v === undefined) {
+      ostrzez(
+        pole,
+        `Godziny dnia (${DNI_PL[i]}) nie mają formatu HH:MM-HH:MM, „Niedostępny” ani „24h”` + PUSTE,
+        surowa,
+      );
+      return null;
+    }
+    return v;
+  });
+  POLA_DNI.forEach((pole, i) => ((r as Record<string, unknown>)[pole] = dni[i]));
+  const bezDanych = DNI_PL.filter((_, i) => dni[i] === null && !tekst(wej[POLA_DNI[i]]));
+  if (bezDanych.length > 0 && bezDanych.length < 7)
+    ostrzez(
+      'poniedzialek_godziny',
+      'Brak godzin w części dni – pusta komórka nie oznacza dostępności całodobowej; w tych dniach AED uznano za niedostępny.',
+      bezDanych.join(', '),
+    );
+
+  // Godziny w składni opening_hours: wpisane wprost albo wyliczone z kolumn dni.
   const godziny = tekst(wej.godziny_dostepnosci);
   r.godziny_dostepnosci = godziny && czyDostepnyTeraz(godziny) !== null ? godziny : null;
   if (godziny && !r.godziny_dostepnosci)
@@ -191,27 +252,35 @@ export function walidujRekord(wej: RekordWejsciowy): WynikWalidacji {
       'Godziny nie są w składni opening_hours (np. Mo-Fr 08:00-16:00 albo 24/7)' + PUSTE,
       godziny,
     );
+  if (!r.godziny_dostepnosci) r.godziny_dostepnosci = godzinyZDni(dni);
 
   // Numery bez spacji i łączników (ST s. 15–16).
-  const regon = tekst(wej.dysponent_regon)?.replace(/[\s-]/g, '') ?? null;
-  r.dysponent_regon = regon && /^(\d{9}|\d{14})$/.test(regon) ? regon : null;
-  if (regon && !r.dysponent_regon) ostrzez('dysponent_regon', 'REGON powinien mieć 9 albo 14 cyfr' + PUSTE, regon);
+  const regon = tekst(wej.regon_odpowiedzialnego_za_aed)?.replace(/[\s-]/g, '') ?? null;
+  r.regon_odpowiedzialnego_za_aed = regon && /^(\d{9}|\d{14})$/.test(regon) ? regon : null;
+  if (regon && !r.regon_odpowiedzialnego_za_aed)
+    ostrzez('regon_odpowiedzialnego_za_aed', 'REGON powinien mieć 9 albo 14 cyfr' + PUSTE, regon);
 
-  const telefonSurowy = tekst(wej.telefon_kontaktowy);
+  const telefonSurowy = tekst(wej.telefon_odpowiedzialnego_za_aed);
   const telefon = telefonSurowy?.replace(/^'/, '').replace(/[\s\-.()]/g, '') ?? null;
-  r.telefon_kontaktowy = telefon && /^(\d{9}|\+\d{10,14})$/.test(telefon) ? telefon : null;
-  if (telefonSurowy && !r.telefon_kontaktowy)
+  r.telefon_odpowiedzialnego_za_aed = telefon && /^(\d{9}|\+\d{10,14})$/.test(telefon) ? telefon : null;
+  if (telefonSurowy && !r.telefon_odpowiedzialnego_za_aed)
     ostrzez(
-      'telefon_kontaktowy',
+      'telefon_odpowiedzialnego_za_aed',
       'Telefon powinien mieć 9 cyfr albo numer kierunkowy kraju (+48…)' + PUSTE,
       telefonSurowy,
     );
   else if (telefonSurowy && telefonSurowy.startsWith("'"))
     ostrzez(
-      'telefon_kontaktowy',
+      'telefon_odpowiedzialnego_za_aed',
       'Usunięto apostrof na początku numeru (ślad po arkuszu kalkulacyjnym).',
       telefonSurowy,
     );
+
+  // E-mail do zgłaszania usterek.
+  const email = tekst(wej.email_odpowiedzialnego_za_aed);
+  r.email_odpowiedzialnego_za_aed = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+  if (email && !r.email_odpowiedzialnego_za_aed)
+    ostrzez('email_odpowiedzialnego_za_aed', 'Adres e-mail ma zły format' + PUSTE, email);
 
   // Data ISO 8601 (yyyy-mm-dd).
   const przeglad = tekst(wej.data_ostatniego_przegladu);

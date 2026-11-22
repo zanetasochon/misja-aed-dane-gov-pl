@@ -347,7 +347,7 @@
                   <li>
                     <article class="zz-karta">
                       <h4 class="zz-karta__tytul">
-                        {{ r.nazwa_miejsca }}
+                        {{ r.etykieta }}
                       </h4>
                       @if (lokalizacja()) {
                         <p class="zz-karta__odleglosc">{{ opisOdleglosci(odleglosc(r) ?? 0) }} od Ciebie</p>
@@ -418,7 +418,7 @@
                     @for (r of wynikiStrony(); track r.id_aed) {
                       <tr class="datagrid__row">
                         <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
-                          {{ r.nazwa_miejsca }}
+                          {{ r.etykieta }}
                           @if (r.opis_lokalizacji) {
                             <span class="zz-opis">{{ r.opis_lokalizacji }}</span>
                           }
@@ -723,6 +723,23 @@
                             <td class="datagrid__cell">{{ m.uwaga ?? '' }}</td>
                           </tr>
                         }
+                        <tr class="datagrid__row">
+                          <th class="datagrid__cell zz-wiersz-naglowek" scope="row">(brak w źródle)</th>
+                          <td class="datagrid__cell">
+                            <code
+                              >kod_zbioru_danych, dostawca{{
+                                r.zrodlo.obszar ? ', wojewodztwo, powiat, gmina' : ''
+                              }}</code
+                            >
+                          </td>
+                          <td class="datagrid__cell">
+                            Uzupełnia integracja: kod AED-SYNC-PL i dostawca „{{ r.zrodlo.dostawca }}”.
+                            @if (r.zrodlo.obszar; as o) {
+                              Rekordy z miejscowości {{ o.miejscowosc }}: województwo {{ o.wojewodztwo }}, powiat
+                              {{ o.powiat }}, gmina {{ o.gmina }}.
+                            }
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
@@ -821,7 +838,7 @@
                       @for (d of wynik.duplikaty; track d.a.id_aed + d.b.id_aed) {
                         <tr class="datagrid__row">
                           <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
-                            {{ d.a.nazwa_miejsca }}
+                            {{ d.a.etykieta }}
                             <span class="zz-opis">
                               @if (d.a.adresZbioruZrodla) {
                                 <a [href]="d.a.adresZbioruZrodla">{{ d.a.dostawcaZrodla }}</a>
@@ -832,7 +849,7 @@
                             >
                           </th>
                           <td class="datagrid__cell">
-                            {{ d.b.nazwa_miejsca }}
+                            {{ d.b.etykieta }}
                             <span class="zz-opis">
                               @if (d.b.adresZbioruZrodla) {
                                 <a [href]="d.b.adresZbioruZrodla">{{ d.b.dostawcaZrodla }}</a>
@@ -842,7 +859,9 @@
                               , wiersz {{ d.b.wierszZrodla }}</span
                             >
                           </td>
-                          <td class="datagrid__cell">{{ d.odlegloscM }} m</td>
+                          <td class="datagrid__cell">
+                            {{ d.odlegloscM === null ? 'brak współrzędnych' : d.odlegloscM + ' m' }}
+                          </td>
                           <td class="datagrid__cell">{{ d.powod }}</td>
                         </tr>
                       }

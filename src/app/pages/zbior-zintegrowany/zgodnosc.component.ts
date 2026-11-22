@@ -7,6 +7,7 @@ import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/c
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
+import { FileUploadComponent } from '@app/shared/forms/components/file-upload/file-upload.component';
 import { CSV_KROSNO } from './dane/krosno';
 import { BladCsv, wierszeJakoObiekty, wykryjSeparator } from './lib/csv';
 import { doCsv, doJson, kolumnyEksportu, pobierzPlik } from './lib/eksport';
@@ -15,7 +16,8 @@ import { doDatyCzasuWzorca } from './lib/wiek-danych';
 import { ZRODLA } from './lib/zrodla';
 import type { PoleRekordu } from './lib/model';
 import { czyPoprawioneAutomatycznie, jakPoprawic } from './lib/porady';
-import { CELE_DNI, OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
+import { BladXlsx, czytajXlsx } from './lib/xlsx';
+import { OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
 import type { Cel } from './lib/zgodnosc';
 
 interface Plik {
@@ -31,6 +33,7 @@ interface Opcja {
 }
 
 const polaDostawcy = KOLUMNY.filter((k) => k !== 'zrodlo_danych' && k !== 'data_aktualizacji');
+
 const opcjaPola = (k: PoleRekordu): Opcja => ({ wartosc: k as Cel, etykieta: `${k} – ${ETYKIETY[k]}` });
 
 /** Kroki narzędzia (lista kroków u góry strony). */
@@ -47,7 +50,7 @@ const KROKI = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Treść stron jest po polsku także w wersji EN portalu (WCAG 3.1.2).
   host: { lang: 'pl' },
-  imports: [FormsModule, RouterLink, LocalizeRouterPipe],
+  imports: [FormsModule, RouterLink, LocalizeRouterPipe, FileUploadComponent],
   templateUrl: './zgodnosc.component.html',
   // Wspólny arkusz formularzy portalu + nasze style (tabele, status, przyciski).
   styleUrls: ['../../shared/forms/forms.scss', './zbior-zintegrowany.component.scss'],
@@ -62,7 +65,7 @@ export class ZgodnoscComponent {
     { etykieta: 'Pozostałe pola wzorca', opcje: polaDostawcy.filter((k) => !POLA_WYMAGANE.includes(k)).map(opcjaPola) },
     {
       etykieta: 'Kolumny do rozbicia lub połączenia',
-      opcje: (['ADRES', 'CECHA_ULICY', 'GEOMETRIA', ...CELE_DNI] as const).map((c) => ({
+      opcje: (['ADRES', 'CECHA_ULICY', 'GEOMETRIA'] as const).map((c) => ({
         wartosc: c,
         etykieta: OPIS_CELU[c],
       })),
@@ -70,6 +73,8 @@ export class ZgodnoscComponent {
   ];
 
   readonly plik = signal<Plik | null>(null);
+  /** Wartość pola pliku portalu (app-file-upload). */
+  readonly wybranePliki = signal<File[]>([]);
   readonly mapowanie = signal<Cel[]>([]);
   /** Propozycja narzędzia – do oznaczenia „dopasowano automatycznie” / „wybrano ręcznie”. */
   readonly propozycja = signal<Cel[]>([]);
@@ -145,57 +150,112 @@ export class ZgodnoscComponent {
     return r ? kolumnyEksportu(r.rekordy).pominiete : [];
   });
 
+  /** Plik CSV: kodowanie, separator i wiersze. */
   private wczytaj(nazwa: string, tekst: string, zmodyfikowano: string): void {
     try {
       // Plik zapisany np. w Windows-1250 daje po odczycie jako UTF-8 znaki zastępcze „�”.
       if (tekst.includes('\uFFFD'))
         throw new BladCsv('Plik nie jest zapisany w kodowaniu UTF-8. Zapisz go jako „CSV UTF-8” i wgraj ponownie.');
-      this.dataPliku.set(doDatyCzasuWzorca(zmodyfikowano));
       const separator = wykryjSeparator(tekst);
       const { naglowki, wiersze } = wierszeJakoObiekty(tekst, separator);
       if (naglowki.length < 2)
         throw new BladCsv(
           'Plik ma tylko jedną kolumnę. Najczęściej cały wiersz jest ujęty w cudzysłów albo separator jest inny niż przecinek lub średnik.',
         );
-      if (wiersze.length === 0) throw new BladCsv('Plik ma tylko nagłówek, bez danych.');
-      this.plik.set({ nazwa, separator, naglowki, wiersze });
-      const propozycja = zaproponujMapowanie(naglowki, wiersze);
-      this.mapowanie.set(propozycja);
-      this.propozycja.set(propozycja);
-      this.pobrano.set(false);
-      this.komunikatPobierania.set('');
-      this.blad.set('');
-      this.komunikat.set({
-        tekst: `Wczytano plik ${nazwa}: ${wiersze.length} wierszy, ${naglowki.length} kolumn. Sprawdź dopasowanie kolumn w kroku 2.`,
-        typ: 'success',
-      });
+      this.ustawPlik({ nazwa, separator, naglowki, wiersze }, zmodyfikowano);
     } catch (e) {
-      this.plik.set(null);
-      const tresc =
-        e instanceof BladCsv ? e.message : 'Nie udało się odczytać pliku. Zapisz go jako CSV w kodowaniu UTF-8.';
-      this.blad.set(tresc);
-      this.komunikat.set({ tekst: `Nie wczytano pliku. ${tresc}`, typ: 'danger' });
+      this.bladWczytania(
+        e instanceof BladCsv ? e.message : 'Nie udało się odczytać pliku. Zapisz go jako CSV w kodowaniu UTF-8.',
+      );
     }
   }
 
-  async naPlik(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const f = input.files?.[0];
-    if (!f) return;
-    const blad = !/\.csv$/i.test(f.name)
-      ? 'Wybrany plik musi być w formacie CSV. Zapisz arkusz jako „CSV UTF-8 (rozdzielany przecinkami)”.'
+  /**
+   * Plik XLSX: arkusz z danymi to ten, którego nagłówki najlepiej pasują do wzorca
+   * (w szablonie „Dane PL” albo „Data EN”; arkusz „Jak wypełnić” odpada).
+   */
+  private async wczytajXlsx(f: File): Promise<void> {
+    try {
+      const arkusze = (await czytajXlsx(await f.arrayBuffer()))
+        .map((a) => ({ a, dopasowane: zaproponujMapowanie(a.naglowki, a.wiersze).filter(Boolean).length }))
+        .filter((x) => x.dopasowane >= 3);
+      const zDanymi = arkusze.filter((x) => x.a.wiersze.length > 0);
+      const wybor = [...(zDanymi.length ? zDanymi : arkusze)].sort(
+        (x, y) => y.a.wiersze.length - x.a.wiersze.length || y.dopasowane - x.dopasowane,
+      )[0];
+      if (!wybor)
+        throw new BladXlsx(
+          'W pliku nie ma arkusza z nagłówkami wzorca. Wpisz dane do arkusza „Dane PL” albo „Data EN” z pustego szablonu.',
+        );
+      const { a } = wybor;
+      this.ustawPlik(
+        { nazwa: `${f.name} (arkusz „${a.nazwa}”)`, separator: '', naglowki: a.naglowki, wiersze: a.wiersze },
+        new Date(f.lastModified).toISOString(),
+        zDanymi.length > 1 ? ` Dane są w kilku arkuszach – sprawdzam arkusz „${a.nazwa}” (najwięcej wierszy).` : '',
+      );
+    } catch (e) {
+      this.bladWczytania(
+        e instanceof BladXlsx
+          ? e.message
+          : 'Nie udało się odczytać pliku XLSX. Zapisz go ponownie w Excelu albo jako CSV UTF-8.',
+      );
+    }
+  }
+
+  private ustawPlik(p: Plik, zmodyfikowano: string, uwaga = ''): void {
+    if (p.wiersze.length === 0) {
+      this.bladWczytania('Plik ma tylko nagłówek, bez danych.');
+      return;
+    }
+    this.dataPliku.set(doDatyCzasuWzorca(zmodyfikowano));
+    this.plik.set(p);
+    const propozycja = zaproponujMapowanie(p.naglowki, p.wiersze);
+    this.mapowanie.set(propozycja);
+    this.propozycja.set(propozycja);
+    this.pobrano.set(false);
+    this.komunikatPobierania.set('');
+    this.blad.set('');
+    this.komunikat.set({
+      tekst: `Wczytano plik ${p.nazwa}: ${p.wiersze.length} wierszy, ${p.naglowki.length} kolumn.${uwaga} Sprawdź dopasowanie kolumn w kroku 2.`,
+      typ: 'success',
+    });
+  }
+
+  private bladWczytania(tresc: string): void {
+    this.plik.set(null);
+    this.wybranePliki.set([]);
+    this.blad.set(tresc);
+    this.komunikat.set({ tekst: `Nie wczytano pliku. ${tresc}`, typ: 'danger' });
+  }
+
+  /** Zmiana w polu pliku portalu: dodanie albo usunięcie pliku. */
+  async naPliki(pliki: File[] | null): Promise<void> {
+    const f = pliki?.[0];
+    if (!f) {
+      this.wybranePliki.set([]);
+      this.plik.set(null);
+      this.blad.set('');
+      this.komunikat.set(null);
+      return;
+    }
+    const blad = !/\.(csv|xlsx)$/i.test(f.name)
+      ? 'Wybrany plik musi być w formacie CSV albo XLSX.'
       : f.size === 0
         ? 'Wybrany plik jest pusty.'
         : f.size > 2 * 1024 * 1024
           ? 'Wybrany plik musi być mniejszy niż 2 MB.'
           : '';
     if (blad) {
+      // Pole wraca do stanu „Dodaj plik” – komunikaty walidatora portalu mają inne limity (30 MB, 3 pliki).
+      this.wybranePliki.set([]);
       this.plik.set(null);
       this.blad.set(blad);
       this.komunikat.set({ tekst: `Nie wczytano pliku. ${blad}`, typ: 'danger' });
       return;
     }
-    this.wczytaj(f.name, await f.text(), new Date(f.lastModified).toISOString());
+    this.wybranePliki.set([f]);
+    if (/\.xlsx$/i.test(f.name)) await this.wczytajXlsx(f);
+    else this.wczytaj(f.name, await f.text(), new Date(f.lastModified).toISOString());
   }
 
   uzyjPrzykladu(): void {
@@ -233,7 +293,7 @@ export class ZgodnoscComponent {
   pobierz(format: 'csv' | 'json'): void {
     const r = this.raport();
     if (!r) return;
-    const nazwa = `${this.identyfikator().trim() || 'moj-zbior-aed'}-wzorzec-v1-2.${format}`;
+    const nazwa = `${this.identyfikator().trim() || 'moj-zbior-aed'}-wzorzec-v1-3.${format}`;
     if (format === 'csv') pobierzPlik(doCsv(r.rekordy), nazwa, 'text/csv;charset=utf-8');
     else pobierzPlik(doJson(r.rekordy), nazwa, 'application/json');
     this.pobrano.set(true);

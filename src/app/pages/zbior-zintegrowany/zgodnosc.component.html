@@ -3,11 +3,10 @@
   <h1 class="form-header">Sprawdź zgodność ze wzorcem AED</h1>
   <div class="form-description col-md-10 col-lg-8">
     <p>
-      Wgraj plik CSV ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych AED (v1.2) masz, których
-      brakuje i które wartości mają zły format. Na końcu pobierzesz plik przekształcony do wzorca – gotowy do publikacji
-      jako zasób Twojego zbioru na dane.gov.pl.
+      Wgraj plik CSV albo XLSX ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych AED (v1.3) masz,
+      których brakuje i które wartości mają zły format. Na końcu pobierzesz plik przekształcony do wzorca – gotowy do
+      publikacji jako zasób Twojego zbioru na dane.gov.pl.
     </p>
-    <p>Plik nie jest nigdzie wysyłany: sprawdzanie działa w Twojej przeglądarce.</p>
   </div>
 
   <section class="form-part col-md-10 col-lg-8" aria-labelledby="zg-wzor">
@@ -16,15 +15,14 @@
     </div>
     <p>
       Wpisz dane o swoich defibrylatorach do pustego szablonu. Dzięki temu Twój zbiór połączy się z danymi innych
-      dostawców. Gotowy arkusz zapisz jako CSV UTF-8 i sprawdź go w kroku 2. Opis wszystkich pól i dozwolonych wartości
-      jest we wzorze.
+      dostawców. Wypełniony szablon sprawdź w kroku 2. Opis wszystkich pól i dozwolonych wartości jest we wzorze.
     </p>
     <div class="zz-przyciski">
-      <a class="btn btn-primary" href="/assets/hacknation/szablon-danych-AED-v1.2.xlsx" download
-        >Pobierz pusty szablon (XLSX, ok. 55 KB)</a
+      <a class="btn btn-primary" href="/assets/hacknation/szablon-danych-AED-v1.3.xlsx" download
+        >Pobierz pusty szablon (XLSX, ok. 80 KB)</a
       >
-      <a class="btn btn-outline-primary" href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx" download
-        >Pobierz wzór z opisem pól (XLSX, ok. 21 KB)</a
+      <a class="btn btn-outline-primary" href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.3.xlsx" download
+        >Pobierz wzór z opisem pól (XLSX, ok. 24 KB)</a
       >
     </div>
   </section>
@@ -69,28 +67,23 @@
       <legend class="fieldset-header fieldset-header--compact">
         <h3>2.1 Wybierz plik</h3>
       </legend>
-      <div class="form-field">
-        <label for="zg-plik-input" class="form-label">Plik CSV z danymi o AED</label>
-        <small id="zg-plik-opis" class="field-hint">
-          Plik CSV w kodowaniu UTF-8, z wierszem nagłówka. Separator: przecinek albo średnik. Najwyżej 2 MB.
-        </small>
-        <div class="input-wrapper" [class.is-invalid]="blad()">
-          <input
-            id="zg-plik-input"
-            type="file"
-            accept=".csv,text/csv"
-            class="form-control"
-            [class.is-invalid]="blad()"
-            [attr.aria-invalid]="blad() ? true : null"
-            [attr.aria-describedby]="blad() ? 'zg-plik-opis zg-plik-blad' : 'zg-plik-opis'"
-            (change)="naPlik($event)" />
+      <!-- Pole pliku portalu (shared/forms/components/file-upload) 1:1. -->
+      <app-file-upload
+        labelTranslationKey="Datasets.IntegratedFileLabel"
+        [maxFiles]="1"
+        [maxTotalSizeMb]="2"
+        [acceptedFormats]="['CSV', 'XLSX']"
+        [ngModel]="wybranePliki()"
+        (ngModelChange)="naPliki($event)" />
+      <small id="zg-plik-opis" class="field-hint">
+        CSV w kodowaniu UTF-8 albo XLSX (np. wypełniony szablon), z jednym wierszem nagłówka. W CSV separator: przecinek
+        albo średnik.
+      </small>
+      @if (blad()) {
+        <div class="invalid-feedback d-block" id="zg-plik-blad">
+          <span class="visually-hidden">Błąd: </span>{{ blad() }}
         </div>
-        @if (blad()) {
-          <div class="invalid-feedback d-block" id="zg-plik-blad">
-            <span class="visually-hidden">Błąd: </span>{{ blad() }}
-          </div>
-        }
-      </div>
+      }
       <div class="form-field">
         <p class="zz-podpowiedz mb-2">Nie masz pliku pod ręką? Sprawdź, jak działa narzędzie, na prawdziwych danych:</p>
         <button type="button" class="btn btn-outline-primary" (click)="uzyjPrzykladu()">
@@ -195,8 +188,8 @@
           }
           @if (r.brakujaceWymagane.length) {
             <p>
-              <a href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.2.xlsx" download
-                >Pobierz wzór (XLSX, ok. 21 KB)</a
+              <a href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.3.xlsx" download
+                >Pobierz wzór (XLSX, ok. 24 KB)</a
               >
             </p>
           }
@@ -337,7 +330,7 @@
           </legend>
           <p>
             Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy: CSV w UTF-8 (RFC 4180) albo JSON, kolumny
-            w kolejności wzorca v1.2. Pole data_aktualizacji: {{ dataPliku() }} (data i godzina ostatniej zmiany
+            w kolejności wzorca v1.3. Pole data_aktualizacji: {{ dataPliku() }} (data i godzina ostatniej zmiany
             wgranego pliku).
             @if (pominiete().length) {
               Pominięte kolumny puste we wszystkich wierszach (Standard techniczny, s. 21):
@@ -374,7 +367,7 @@
         </fieldset>
 
         <!-- CO DALEJ -->
-        <section class="form-part col-md-10 col-lg-8" aria-labelledby="zg-co-dalej">
+        <section class="form-part col-md-10 col-lg-8 mt-5" aria-labelledby="zg-co-dalej">
           <h2 id="zg-co-dalej" class="heading heading--sm">Co dalej</h2>
           <ol class="zg-co-dalej">
             @if (r.brakujaceWymagane.length || r.odrzucone.length || grupyProblemow().doPoprawy.length) {
