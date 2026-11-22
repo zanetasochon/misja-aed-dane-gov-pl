@@ -6,25 +6,23 @@ Prototyp na HackNation 2026, wyzwanie „Misja AED – Dane na ratunek”. To zm
 
 ## Na czym polega rozwiązanie
 
-Dane o defibrylatorach AED są rozproszone: na dane.gov.pl jest kilka zbiorów AED od różnych urzędów, każdy w innym układzie kolumn. Prototyp pokazuje w zakładce „Dane” dodatkowy **zbiór zintegrowany**:
+Dane o defibrylatorach AED są rozproszone i nikt nie bierze za nie odpowiedzialności. Rozwiązanie (zgodnie z ustaleniami z mentorem z Ministerstwa Cyfryzacji):
 
-- łączy zbiory AED od różnych dostawców w jeden zbiór według **wzorcowego zakresu danych AED v1.3** (`wzorcowy-zakres-danych-AED-v1.3.xlsx`: 43 pola, 9 wymaganych, nagłówki PL i EN – zob. „Wzorzec v1.3 i format AED Sync”);
-- **każdy dostawca nadal odpowiada za swój zbiór źródłowy**, a każdy rekord zachowuje `zrodlo_danych` (identyfikator zbioru źródłowego) i `data_aktualizacji` ze źródła;
-- dane można przeglądać na liście i na mapie, z filtrami i wyszukiwaniem, oraz pobrać w CSV, JSON i GeoJSON;
-- dostawca może sprawdzić swój plik narzędziem „Sprawdź zgodność ze wzorcem” i pobrać wersję gotową do publikacji jako zasób swojego zbioru.
+- **dostawcy sami dostarczają dane** – urzędy, szkoły, szpitale, firmy publikują na dane.gov.pl zbiór o swoich AED, wypełniony według wspólnego **szablonu AED Sync v15** (pusty szablon `szablon-danych-AED-Sync-v15.xlsx` i instrukcja `instrukcja-i-zasady-AED-Sync-v15.xlsx`: 28 pól, 15 obowiązkowych, nagłówki PL i EN, kod zbioru `AED-SYNC-PL`);
+- **każdy dostawca odpowiada za swój zbiór**; nie zbieramy danych sami i nie łączymy cudzych, rozproszonych zbiorów w innych układach;
+- portal pokazuje w zakładce „Dane” **zbiór zintegrowany**, który wyświetla dane dostawców w uporządkowany sposób: lista i mapa z filtrami i wyszukiwaniem, kontrola kompletności danych każdego dostawcy, pobieranie w CSV, JSON i GeoJSON;
+- dostawca może przed publikacją sprawdzić swój plik (CSV albo XLSX) narzędziem „Sprawdź zgodność ze wzorcem” i pobrać wersję w układzie szablonu.
 
-### Źródła danych w prototypie
+### Dane w prototypie
 
-| Źródło                                                                                                                                                            | Dostawca                                  | Licencja                                                         | Charakter                                                                                                                                                           |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Defibrylatory zlokalizowane w Mieście Krosno](https://dane.gov.pl/pl/dataset/3624,defibrylatory-zlokalizowane-w-miescie-krosno) (zasób 54632, dane z 2024-02-19) | Urząd Miasta Krosna                       | CC0 1.0                                                          | **prawdziwe**, plik bez zmian                                                                                                                                       |
-| [Zdrowie – wykaz defibrylatorów AED w Legionowie](https://dane.gov.pl/pl/dataset/40593,zdowie) (zasób 2625221, dane z 2026-09-14)                                 | Urząd Miasta Legionowo                    | CC0 1.0                                                          | **prawdziwe**, plik bez zmian                                                                                                                                       |
-| [Lokalizacje AED w Przemyślu](https://dane.gov.pl/pl/dataset/4581,lokalizacje-aed-automatycznych-defibrylatorow-zewn) (zasób 62095, dane z 2024-11-06)            | Urząd Miejski w Przemyślu                 | CC0 1.0                                                          | **prawdziwe**, plik bez zmian (współrzędne w kolumnie `geometry` jako GeoJSON)                                                                                      |
-| [Defibrylatory na terenie Miasta Marki](https://dane.gov.pl/pl/dataset/4955,defibrylatory-zlokalizowane-na-terenie-miasta-markI) (zasób 68353, dane z 2025-07-10) | Urząd Miasta Marki                        | CC BY 4.0 – „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0” | **prawdziwe**, plik bez zmian (uszkodzony u źródła, naprawiany przy odczycie)                                                                                       |
-| [Lokalizacja defibrylatorów (AED)](https://dane.gov.pl/pl/dataset/39512,lokalizacja-defibryzatorow-aed)                                                           | Urząd m.st. Warszawy                      | CC BY 4.0                                                        | **niewykorzystane**: źródło niedostępne maszynowo (link prowadzi do strony HTML); nie pobieramy danych ze strony                                                    |
-| Defibrylatory w porcie lotniczym                                                                                                                                  | Port Lotniczy Przykładowo S.A. (fikcyjny) | –                                                                | **fikcyjne** (`dane/port-lotniczy.ts`): 4 AED na liście (3 także na mapie, jeden bez współrzędnych) jak inne, fikcyjność widać w nazwie dostawcy i w zakładce „Zbiory źródłowe”; nie trafia do eksportu |
+Prawdziwych zbiorów w formacie AED Sync jeszcze nie ma, więc zbiór zintegrowany pokazuje **dwa fikcyjne zbiory dostawców** (11 AED), wzorowo wypełnione według szablonu v15:
 
-Pliki leżą w `src/app/pages/zbior-zintegrowany/dane/`, a w nagłówku każdego pliku jest źródło, licencja i data pobrania (2026-11-21).
+| Zbiór (strona w portalu) | Dostawca | Plik |
+| --- | --- | --- |
+| Defibrylatory AED w Porcie Lotniczym Przykładowo (`/pl/dataset/9900001`) | Port Lotniczy Przykładowo S.A. (fikcyjny) | `dane/port-lotniczy.ts` – 6 AED, nagłówki PL („DANE PL”) |
+| Defibrylatory AED w budynkach Uniwersytetu Przykładowego (`/pl/dataset/9900002`) | Uniwersytet Przykładowy (fikcyjny) | `dane/uczelnia.ts` – 5 AED, nagłówki EN („DATA EN”) |
+
+Każdy z nich ma w portalu **zwykłą stronę zbioru i zasobu** (opis, pasek akcji, zakładki „Dane / Warunki wykorzystywania / Historia zbioru”, zasób CSV z widokiem tabeli i pobieraniem), renderowaną **niezmienionym kodem portalu**. Odpowiedzi API dla ich identyfikatorów (zbiory 9900001–9900002, zasoby 9900011–9900012) podaje interceptor `fikcyjne-zbiory.interceptor.ts` w tym samym kształcie JSON:API co api.dane.gov.pl (`lib/fikcyjne-api.ts`); pliki CSV do pobrania są w `src/assets/hacknation/dane/`. Nazwy, współrzędne, telefony (`+48 00 …`) i adresy e-mail (domena `.example`) są nieprawdziwe. Do narzędzia zgodności jest dodatkowo fikcyjny plik z typowymi błędami (`dane/przyklad-z-bledami.ts`).
 
 ## Uruchomienie
 
@@ -35,7 +33,7 @@ npm ci
 npm run start:public -- --port 4300
 ```
 
-Prototyp będzie pod adresem http://localhost:4300/pl/dataset. Konfiguracja `public` kieruje zapytania przez proxy deweloperskie, tylko do odczytu, na publiczne API `https://api.dane.gov.pl/1.4`. Lista zbiorów pokazuje więc prawdziwe dane portalu. Zbiór zintegrowany jest liczony w przeglądarce z plików źródłowych dołączonych do kodu.
+Prototyp będzie pod adresem http://localhost:4300/pl/dataset (wersja online: https://misja-aed-gamma.vercel.app/pl/dataset). Konfiguracja `public` kieruje zapytania przez proxy deweloperskie, tylko do odczytu, na publiczne API `https://api.dane.gov.pl/1.4`, więc lista zbiorów pokazuje prawdziwe dane portalu. Zbiór zintegrowany jest liczony w przeglądarce z plików dostawców dołączonych do kodu.
 
 Build i lint:
 
@@ -46,75 +44,67 @@ npx eslint src/app/pages/zbior-zintegrowany
 
 ## Jak przetestować
 
-1. **Lista zbiorów:** otwórz http://localhost:4300/pl/dataset. Pierwszy na liście jest zbiór **„Defibrylatory AED w Polsce – zbiór zintegrowany”**, wyróżniony niebieską ramką i etykietą „Zbiór zintegrowany”. Wpisz w wyszukiwarkę portalu „defibrylator”: zobaczysz prawdziwe, osobne zbiory AED różnych urzędów.
-2. **Zbiór zintegrowany:** kliknij jego tytuł (adres `/pl/dataset/zbior-zintegrowany-aed`).
-   - **Informacje o zbiorze:** opis, kategoria, częstotliwość aktualizacji, licencja, data aktualizacji oraz „Prowadzący zbiór zintegrowany: Ministerstwo Cyfryzacji (administrator portalu). Za treść rekordów odpowiadają dostawcy zbiorów źródłowych.”
-   - **Zbiory źródłowe:** dostawca, format, licencja i data danych.
-   - **Raport harmonizacji** dla każdego źródła: mapowanie kolumn na pola wzorca, kompletność pól wymaganych (prawdziwe źródła 7/9 – brakuje opisu lokalizacji i podmiotu odpowiedzialnego za AED; port lotniczy 9/9), pola uzupełnione przez integrację (kod zbioru, dostawca, województwo, powiat, gmina), odrzucone wiersze z powodem i ostrzeżenia, np. adres w jednym polu albo brak numeru budynku.
-   - **Możliwe duplikaty:** 4 pary w prawdziwych danych. Nie usuwamy ich automatycznie, bo w jednym budynku mogą być dwa AED.
-3. **Filtry i wyszukiwanie:** w sekcji „Dane: lista i mapa” wpisz nazwę albo ulicę i użyj filtrów: miejscowość, dostęp, wewnątrz lub na zewnątrz, dostawca źródłowy, „Dostępny teraz”. Liczba wyników jest ogłaszana czytnikom ekranu.
-4. **W pobliżu:** kliknij „Przykładowa lokalizacja (Legionowo)” albo „Użyj mojej lokalizacji” i wybierz promień. Lista pokazuje AED od najbliższego, z odległością i czasem dojścia. Z przykładowej lokalizacji w promieniu 500 m są 4 AED.
-
-5. **Mapa:** znaczniki AED na podkładzie OpenStreetMap. Można przesuwać strzałkami, gdy mapa ma fokus, albo przyciskami „Przesuń…”, „Przybliż”, „Oddal”. Do znaczników prowadzi klawisz Tab, a Enter pokazuje opis. Lista pod mapą jest jej pełnym tekstowym odpowiednikiem. Na telefonie domyślnie widać listę, a mapę włącza przycisk „Pokaż mapę”.
-6. **Eksport:** przyciski „Pobierz CSV”, „Pobierz JSON” i „Pobierz GeoJSON”. CSV jest w UTF-8, zgodnie z RFC 4180, bez całkowicie pustych kolumn (Standard techniczny, s. 21). JSON i GeoJSON mają te same pola wzorca.
-7. **Narzędzie zgodności:** przycisk „Sprawdź zgodność ze wzorcem” (adres `/pl/dataset/zgodnosc-ze-wzorcem`).
-   - Krok 1: pobierz pusty szablon (XLSX, arkusze „Dane PL” i „Data EN”) albo wzór z opisem pól.
-   - Wgraj własny plik CSV albo XLSX (np. wypełniony szablon) w polu pliku portalu albo kliknij „Użyj przykładu: plik z Krosna”.
-   - Zobaczysz propozycję mapowania kolumn, którą możesz zmienić, oraz raport zgodności („Spełnione / Niespełnione”): pola wymagane, adres w osobnych polach, formaty wartości i współrzędne.
-   - Pobierz plik zgodny ze wzorcem (CSV albo JSON).
+1. **Lista zbiorów:** otwórz `/pl/dataset`. Pierwszy na liście jest **„Defibrylatory AED w Polsce – zbiór zintegrowany”**, wyróżniony niebieską ramką i etykietą „Zbiór zintegrowany”.
+2. **Zbiór zintegrowany** (`/pl/dataset/zbior-zintegrowany-aed`):
+   - **Informacje o zbiorze:** prowadzący (Ministerstwo Cyfryzacji, propozycja), licencja, liczba dostawców, szablon danych (AED Sync v15), liczba rekordów, data aktualizacji;
+   - **Lista i mapa:** wyszukiwanie i filtry (miejscowość, stan AED, dostawca), potem zakładki **„Tabela” / „Mapa”** jak na stronie zasobu portalu (widać jedno albo drugie). W tabeli: godziny dla każdego dnia, „Dostępny teraz”, stan AED z datą weryfikacji, podmiot odpowiedzialny z telefonem i e-mailem oraz link do zbioru dostawcy;
+   - **Zbiory dostawców:** zbiór każdego dostawcy z licencją i datą danych; tytuł prowadzi do strony zbioru w portalu;
+   - **Kontrola danych dostawców:** dla każdego dostawcy – ile z 15 pól obowiązkowych jest kompletnych (oba 15/15), pominięte wiersze, ostrzeżenia, możliwe duplikaty (oznaczane, nieusuwane).
+3. **Zbiór dostawcy:** kliknij nazwę zbioru (np. „Port Lotniczy Przykładowo S.A. (fikcyjny)”) – otwiera się zwykła strona zbioru portalu, a z niej zasób z tabelą danych w układzie szablonu v15.
+4. **Mapa:** zakładka „Mapa” – znaczniki AED na podkładzie OpenStreetMap; przesuwanie strzałkami i przyciskami, Tab do znaczników, Enter otwiera opis. Tekstowym odpowiednikiem mapy jest zakładka „Tabela”.
+5. **Eksport:** CSV, JSON, GeoJSON i „Źródła i licencje (CSV)”.
+6. **Narzędzie zgodności** (`/pl/dataset/zgodnosc-ze-wzorcem`):
+   - krok 1: „Pobierz szablon danych AED” (pusty plik z arkuszami „DANE PL” i „DATA EN”) i „Pobierz instrukcję i zasady” (arkusze „OPIS KOLUMN” i „ZASADY”);
+   - krok 2: wgraj plik CSV albo XLSX albo kliknij „Użyj przykładu: plik z błędami (dane fikcyjne)”; zobaczysz dopasowanie kolumn, werdykt, problemy z poradą „Jak poprawić” i plik w układzie szablonu do pobrania.
 
 ### Przycisk „Pokaż najbliższe dostępne defibrylatory” (promień 250 m)
 
-Przycisk jest na górze zakładki „Lista i mapa” i służy sytuacji awaryjnej: ktoś obok zasłabł, a świadek szuka AED, po który zdąży pójść. Po kliknięciu przeglądarka ustala lokalizację, a lista i mapa pokazują tylko AED **dostępne teraz** (według godzin z pola `godziny_dostepnosci`) w promieniu **250 m**, od najbliższego. Lokalizacja jest liczona tylko w przeglądarce i nigdzie nie jest wysyłana.
+Przycisk jest na górze zakładki „Lista i mapa” i służy sytuacji awaryjnej: ktoś obok zasłabł, a świadek szuka AED, po który zdąży pójść. Po kliknięciu lista i mapa pokazują tylko AED **dostępne teraz** (według godzin z kolumn dni, z pominięciem AED oznaczonych jako „Niesprawny”) w promieniu **250 m**, od najbliższego. Lokalizacja jest liczona tylko w przeglądarce i nigdzie nie jest wysyłana.
 
-Gdy w promieniu nie ma AED, o którym wiadomo, że jest teraz dostępny, albo gdy nie da się ustalić lokalizacji, strona pokazuje czerwony komunikat „Dzwoń 112” z przyciskiem „Zadzwoń 112” (`tel:112`).
+Gdy w promieniu nie ma AED, o którym wiadomo, że jest teraz dostępny, strona pokazuje czerwony komunikat „Dzwoń 112” z przyciskiem „Zadzwoń 112” (`tel:112`).
 
-Dlaczego 250 m: wytyczne AHA dla miejsc pracy zakładają AED osiągalny w 3–5 minut w obie strony, czyli ok. 1,5–2,5 minuty szybkiego marszu w jedną stronę (ok. 150–250 m). Badania rozmieszczenia AED przyjmują nawet ok. 100 m.
+**Wersja pokazowa:** dane są fikcyjne, więc przycisk nie pyta o lokalizację przeglądarki – szuka od przykładowej lokalizacji przed terminalem Portu Lotniczego Przykładowo (informacja pod przyciskiem). O każdej porze w promieniu 250 m są tam co najmniej 2 dostępne AED (parking i straż, całodobowe). Docelowo przycisk używa lokalizacji z przeglądarki (`navigator.geolocation`), liczonej tylko na urządzeniu.
 
-Ograniczenie: żaden obecny zbiór źródłowy nie podaje godzin dostępności, więc przy prawdziwych danych przycisk zawsze kończy się komunikatem 112. To uczciwy wynik: AED o nieznanych godzinach może być zamknięty. Pokazuje też, po co we wzorcu są kolumny godzin dla każdego dnia (`poniedzialek_godziny` … `niedziela_godziny`).
+**Wyniki od razu pod przyciskiem:** do 3 najbliższych dostępnych AED (nazwa i opis, gdzie dokładnie jest) z przyciskiem „Wyznacz trasę”; fokus przechodzi na te wyniki (WCAG 2.4.3).
 
-Źródła: [AHA – AED Implementation Guide (2023)](https://ECCGuidelines.Heart.org/-/media/CPR-Files/Training-Programs/AED-Implementation/2023-updates/KJ1683-AED-Guide.pdf), [badanie rozmieszczenia AED – PMC4992180](https://pmc.ncbi.nlm.nih.gov/articles/PMC4992180).
+**Trasa:** przy każdym AED ze współrzędnymi (tabela, karty, dymek na mapie) jest link „Wyznacz trasę” do trasy pieszej w Google Maps (`https://www.google.com/maps/dir/?api=1&destination=…&travelmode=walking`, bez klucza API; nic nie jest wysyłane przed kliknięciem).
 
-## Wzorzec v1.3 i format AED Sync
+Dlaczego 250 m: wytyczne AHA dla miejsc pracy zakładają AED osiągalny w 3–5 minut w obie strony, czyli ok. 1,5–2,5 minuty szybkiego marszu w jedną stronę (ok. 150–250 m). Źródła: [AHA – AED Implementation Guide (2023)](https://ECCGuidelines.Heart.org/-/media/CPR-Files/Training-Programs/AED-Implementation/2023-updates/KJ1683-AED-Guide.pdf), [badanie rozmieszczenia AED – PMC4992180](https://pmc.ncbi.nlm.nih.gov/articles/PMC4992180).
 
-Wzorzec v1.3 (22.11) przejmuje rozwiązania formatu AED Sync (`AED_Sync_instrukcja_i_opis_pol_v11.xlsx`), które są prostsze dla urzędnika:
+## Szablon AED Sync v15
 
-- **9 pól wymaganych** zamiast 15: `kod_zbioru_danych`, `opis_lokalizacji`, `wojewodztwo`, `powiat`, `gmina`, `miejscowosc`, `numer_budynku`, `odpowiedzialny_za_aed`, `dostawca`. Identyfikator, źródło i datę aktualizacji nadaje narzędzie;
-- **współrzędne opcjonalne** – AED bez współrzędnych jest na liście, ale nie na mapie (rekord musi mieć wtedy miejscowość); w GeoJSON ma `geometry: null`;
-- **godziny osobno dla każdego dnia** (`poniedzialek_godziny` … `niedziela_godziny`, np. `08:00-16:30`, `Niedostępny`, `24h`). Narzędzie wylicza z nich `godziny_dostepnosci` w składni opening_hours (np. `Mo-Th 08:00-16:30; Fr 08:00-15:30`). **Pusta komórka dnia to brak danych, a nie dostępność całodobowa** (inaczej niż w AED Sync) – żeby brak danych nie wyglądał jak AED dostępny w nocy;
-- **województwo, powiat i gmina słownie** (województwo ze słownika 16 nazw); kody TERYT są opcjonalne;
-- **osobno dostawca danych i odpowiedzialny za AED**, z telefonem i **e-mailem do zgłaszania usterek**;
-- **nagłówki PL i EN** – narzędzie rozpoznaje oba zestawy (np. `wojewodztwo` / `voivodeship`), a także nazwy z v1.2 (`dysponent_nazwa` → `odpowiedzialny_za_aed` itd.) i nagłówki AED Sync (`komentarz_aed`, `stan_aed` …);
-- **`kod_zbioru_danych` = `AED-SYNC-PL`** – znacznik, po którym integrator rozpoznaje dane; gdy go brak, narzędzie uzupełnia go samo;
-- stan urządzenia: „Sprawny” / „Niesprawny” z AED Sync → `sprawne` / `niesprawne`, „Nieznany” → puste.
+Szablon jest w dwóch plikach (`src/assets/hacknation/`, te same kopie w materiałach do oddania): **pusty szablon danych** `szablon-danych-AED-Sync-v15.xlsx` z arkuszami do wypełnienia „DANE PL” i „DATA EN” (pola obowiązkowe z żółtym nagłówkiem, listy wartości: województwo, stan AED, kod zbioru; kolumny tekstowe, żeby Excel nie usuwał zer z kodów) oraz **instrukcja i zasady** `instrukcja-i-zasady-AED-Sync-v15.xlsx` – plik `AED_Sync_instrukcja_i_opis_pol_v15.xlsx` bez zmian (arkusze „OPIS KOLUMN” i „ZASADY”).
 
-W zbiorze zintegrowanym integracja uzupełnia tylko to, co wynika ze źródła: kod zbioru, dostawcę (wydawca zbioru źródłowego) oraz województwo, powiat i gminę dla rekordów z miejscowości, której dotyczy zbiór (np. Legionowo → mazowieckie, legionowski, Legionowo).
+Najważniejsze zasady (arkusz „ZASADY”), które sprawdza walidacja (`lib/walidacja-rekordu.ts`):
 
-**Odczyt XLSX** (`lib/xlsx.ts`) działa w przeglądarce bez dodatkowych bibliotek: plik XLSX to archiwum ZIP z plikami XML, rozpakowywane przez `DecompressionStream`. Narzędzie wybiera arkusz z danymi (ten, którego nagłówki pasują do wzorca; przy kilku – z największą liczbą wierszy).
+- jeden wiersz to jeden AED; adres: województwo, powiat, gmina, miejscowość i numer budynku obowiązkowe, ulica opcjonalna; kody TERC i SIMC opcjonalne, 7 cyfr jako tekst;
+- współrzędne WGS84 opcjonalne – AED bez współrzędnych jest na liście, ale nie na mapie (w GeoJSON `geometry: null`);
+- godziny: jedna kolumna na dzień; `8-12`, `08:00-12:30`, kilka przedziałów po przecinku; `Całodobowo` / `24/7`; `Niedostępny` / `Closed`; **pusta komórka = brak danych, nie dostępność całodobowa**;
+- stan AED (`Sprawny`, `Niesprawny`, `Nieznany`) i data weryfikacji stanu obowiązkowe; telefon i e-mail podmiotu odpowiedzialnego obowiązkowe; data dostarczenia danych obowiązkowa;
+- `kod_zbioru_danych` = `AED-SYNC-PL` w każdym wierszu (narzędzie uzupełnia go, gdy brak kolumny).
+
+Narzędzie rozpoznaje nagłówki PL i EN szablonu, popularne nazwy kolumn (np. `lat`, `telefon`) i nazwy z naszych wcześniejszych wzorców (v1.2, v1.3). **Odczyt XLSX** (`lib/xlsx.ts`) działa w przeglądarce bez dodatkowych bibliotek: plik XLSX to archiwum ZIP z plikami XML, rozpakowywane przez `DecompressionStream`.
 
 ## Format plików eksportu
 
-Szczegóły techniczne przeniesione ze strony zbioru (21.11), bo użytkownikowi nic nie mówią, a dokumentują zgodność ze Standardem technicznym dane.gov.pl (ST).
-
-- **CSV:** UTF-8, przecinek, CRLF, zgodnie z RFC 4180, dokładnie jeden wiersz nagłówka, bez pustych wierszy (ST s. 20–21).
-- **JSON:** zgodny z RFC 8259 (ST s. 23). **GeoJSON:** współrzędne WGS84; w polu `zrodla` lista zbiorów źródłowych z licencją i uznaniem autorstwa.
-- **Pola:** wszystkie trzy formaty mają te same pola wzorcowego zakresu danych AED v1.3, w kolejności wzorca. Pole `zrodlo_danych` to adres zbioru źródłowego na dane.gov.pl.
-- **Kolumny całkowicie puste są pomijane** (ST s. 21). Przy obecnych źródłach eksport ma 18 kolumn, a pominiętych jest 25 pól (m.in. opis lokalizacji, godziny dni, dostęp, odpowiedzialny za AED). Lista zmienia się, gdy źródło zacznie dostarczać pole.
-- **Uznanie autorstwa:** wymagane licencjami źródeł (np. „Źródło: Urząd Miasta Marki, dane.gov.pl, CC BY 4.0”) jest w pliku „Źródła i licencje (CSV)” i w GeoJSON. Na stronie zbioru zostało jedno zdanie, które o tym przypomina.
+- **CSV:** UTF-8, przecinek, CRLF, zgodnie z RFC 4180, dokładnie jeden wiersz nagłówka, bez pustych wierszy (Standard techniczny dane.gov.pl, s. 20–21).
+- **JSON:** zgodny z RFC 8259 (ST s. 23). **GeoJSON:** współrzędne WGS84; w polu `zrodla` lista zbiorów dostawców z licencją.
+- **Pola:** kolumny szablonu AED Sync v15 z nagłówkami PL, w kolejności szablonu. Godziny są zapisane w postaci znormalizowanej (`8-12` → `08:00-12:00`, `24/7` → `Całodobowo`).
+- **Kolumny całkowicie puste są pomijane** (ST s. 21). Przy obecnych danych eksport ma 26 kolumn (puste są tylko opcjonalne `kod_terc` i `kod_simc`).
 
 ## Ograniczenia prototypu
 
-- Zbiór zintegrowany jest liczony w przeglądarce z dołączonych plików. Docelowo powstaje jako zwykły zbiór na dane.gov.pl, z zasobem generowanym przez narzędzie integrujące. Prowadzi go Ministerstwo Cyfryzacji jako administrator portalu, a za treść rekordów odpowiadają dostawcy zbiorów źródłowych.
-- Prawdziwe źródła nie mają godzin, dostępu ani informacji o wnętrzu budynku. Filtr „Dostępny teraz” obejmuje więc tylko AED z godzinami. To brak w danych źródłowych, który wzorzec ma uzupełnić.
-- Współrzędne nie są geokodowane z adresu. AED bez współrzędnych jest tylko na liście, nie na mapie i nie w wynikach „W pobliżu”.
+- Zbiór zintegrowany jest liczony w przeglądarce z dołączonych plików. Docelowo powstaje jako zwykły zbiór na dane.gov.pl, z zasobem generowanym okresowo ze zbiorów oznaczonych kodem `AED-SYNC-PL`. Prowadzi go Ministerstwo Cyfryzacji jako administrator portalu (propozycja), a za treść rekordów odpowiadają dostawcy.
+- Prawdziwych zbiorów w formacie AED Sync jeszcze nie ma – oba zbiory dostawców są fikcyjne. Ich strony w portalu działają dzięki interceptorowi z odpowiedziami API; strona instytucji dostawcy i zbiory te nie pojawiają się w wyszukiwarce portalu.
+- Współrzędne nie są geokodowane z adresu.
 - Nowe ekrany są tylko po polsku. Teksty nie są w plikach tłumaczeń portalu.
-- Brak formularza do ręcznego wpisania AED w tym forku.
-- Prototyp nie jest wdrożony publicznie. Uruchamia się lokalnie z proxy do publicznego API.
+- Brak formularza do ręcznego wpisania AED; dostawca wypełnia szablon XLSX.
 
 ## Licencje
 
 - **Kod:** GNU GPL v3, jak kod portalu dane.gov.pl. Pełny tekst licencji jest w pliku [COPYING](COPYING). Stopka każdej strony prototypu ma zastrzeżenie „Prototyp HackNation 2026. Nie jest to oficjalny portal dane.gov.pl.”, informację o licencji, braku gwarancji i link do kodu. Strony mają `noindex`, więc wyszukiwarki ich nie indeksują. Nasze pliki są w `src/app/pages/zbior-zintegrowany/` i mają nagłówek z datą. Zmiany w plikach portalu opisuje `ZMIANY-HACKNATION.md`.
-- **Dane źródłowe:** Krosno i Legionowo na CC0 1.0. Źródło „Port Lotniczy Przykładowo” jest fikcyjne.
+- **Dane:** wyłącznie fikcyjne („Port Lotniczy Przykładowo”, „Uniwersytet Przykładowy”, „Gmina Przykładowo”).
+- **Szablon AED Sync v15:** opis kolumn i zasady – materiał zespołu (plik `AED_Sync_instrukcja_i_opis_pol_v15.xlsx`).
 - **Podkład mapy:** © OpenStreetMap contributors (ODbL). Atrybucja jest widoczna na mapie.
 - **Biblioteka mapy:** Leaflet 1.9 (BSD-2-Clause), już będąca zależnością portalu.
 

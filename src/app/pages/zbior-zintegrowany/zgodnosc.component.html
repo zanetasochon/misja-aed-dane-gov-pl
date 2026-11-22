@@ -3,26 +3,27 @@
   <h1 class="form-header">Sprawdź zgodność ze wzorcem AED</h1>
   <div class="form-description col-md-10 col-lg-8">
     <p>
-      Wgraj plik CSV albo XLSX ze swoimi danymi o AED. Zobaczysz, które pola wzorcowego zakresu danych AED (v1.3) masz,
-      których brakuje i które wartości mają zły format. Na końcu pobierzesz plik przekształcony do wzorca – gotowy do
-      publikacji jako zasób Twojego zbioru na dane.gov.pl.
+      Wgraj plik CSV albo XLSX ze swoimi danymi o AED. Zobaczysz, które pola szablonu AED Sync masz, których brakuje i
+      które wartości mają zły format. Na końcu pobierzesz plik w układzie szablonu – gotowy do publikacji jako zasób
+      Twojego zbioru na dane.gov.pl.
     </p>
   </div>
 
   <section class="form-part col-md-10 col-lg-8" aria-labelledby="zg-wzor">
     <div class="fieldset-header">
-      <h2 id="zg-wzor">Krok 1. Pobierz wzór</h2>
+      <h2 id="zg-wzor">Krok 1. Pobierz szablon</h2>
     </div>
     <p>
-      Wpisz dane o swoich defibrylatorach do pustego szablonu. Dzięki temu Twój zbiór połączy się z danymi innych
-      dostawców. Wypełniony szablon sprawdź w kroku 2. Opis wszystkich pól i dozwolonych wartości jest we wzorze.
+      Wpisz dane o swoich defibrylatorach do arkusza „DANE PL” albo „DATA EN” pustego szablonu. Co wpisać w każdej
+      kolumnie i jak zapisać np. godziny, opisują instrukcja i zasady. Dzięki wspólnemu szablonowi Twoje dane pojawią
+      się w zbiorze zintegrowanym razem z danymi innych dostawców. Wypełniony szablon sprawdź w kroku 2.
     </p>
     <div class="zz-przyciski">
-      <a class="btn btn-primary" href="/assets/hacknation/szablon-danych-AED-v1.3.xlsx" download
-        >Pobierz pusty szablon (XLSX, ok. 80 KB)</a
+      <a class="btn btn-primary" href="/assets/hacknation/szablon-danych-AED-Sync-v15.xlsx" download
+        >Pobierz szablon danych AED (XLSX, ok. 60 KB)</a
       >
-      <a class="btn btn-outline-primary" href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.3.xlsx" download
-        >Pobierz wzór z opisem pól (XLSX, ok. 24 KB)</a
+      <a class="btn btn-outline-primary" href="/assets/hacknation/instrukcja-i-zasady-AED-Sync-v15.xlsx" download
+        >Pobierz instrukcję i zasady (XLSX, ok. 8 KB)</a
       >
     </div>
   </section>
@@ -86,9 +87,9 @@
         </div>
       }
       <div class="form-field">
-        <p class="zz-podpowiedz mb-2">Nie masz pliku pod ręką? Sprawdź, jak działa narzędzie, na prawdziwych danych:</p>
+        <p class="zz-podpowiedz mb-2">Nie masz pliku pod ręką? Sprawdź, jak działa narzędzie, na przykładowym pliku:</p>
         <button type="button" class="btn btn-outline-primary" (click)="uzyjPrzykladu()">
-          Użyj przykładu: plik z Krosna (dane.gov.pl, CC0 1.0)
+          Użyj przykładu: plik z błędami (dane fikcyjne)
         </button>
       </div>
     </fieldset>
@@ -106,20 +107,20 @@
           <div class="fieldset-header">
             <h3 id="zg-mapowanie">2.2 Sprawdź dopasowanie kolumn</h3>
             <p>
-              Dla każdej kolumny Twojego pliku zaproponowaliśmy pole wzorca na podstawie jej nazwy i zawartości. Jeśli
+              Dla każdej kolumny Twojego pliku zaproponowaliśmy pole szablonu na podstawie jej nazwy i zawartości. Jeśli
               propozycja jest zła, wybierz inne pole – raport w kroku 3 zmieni się od razu.
             </p>
           </div>
           <p class="zg-podsumowanie">
             Dopasowano {{ dopasowane() }} z {{ p.naglowki.length }} kolumn.
             @if (r.brakujaceWymagane.length) {
-              Brakuje {{ r.brakujaceWymagane.length }} z {{ polaWymagane.length }} pól wymaganych:
+              Brakuje {{ r.brakujaceWymagane.length }} z {{ polaWymagane.length }} pól obowiązkowych:
               @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
                 {{ etykietaPola(b) }}{{ ostatni ? '.' : ',' }}
               }
               Jeśli masz je w innej kolumnie, wybierz ją niżej.
             } @else {
-              Plik ma wszystkie pola wymagane.
+              Plik ma wszystkie pola obowiązkowe.
             }
           </p>
           <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-mapowanie-podpis" tabindex="0">
@@ -129,13 +130,13 @@
                 {{
                   p.nazwa
                 }}
-                i pola wzorca
+                i pola szablonu
               </caption>
               <thead>
                 <tr>
                   <th class="datagrid__heading" scope="col">Kolumna w pliku</th>
                   <th class="datagrid__heading" scope="col">Przykładowa wartość</th>
-                  <th class="datagrid__heading" scope="col">Pole wzorca</th>
+                  <th class="datagrid__heading" scope="col">Pole szablonu</th>
                   <th class="datagrid__heading" scope="col">Stan</th>
                 </tr>
               </thead>
@@ -147,7 +148,7 @@
                     </th>
                     <td class="datagrid__cell">{{ p.wiersze[0][h] }}</td>
                     <td class="datagrid__cell">
-                      <label class="visually-hidden" [for]="'zg-map-' + i">Pole wzorca dla kolumny {{ h }}</label>
+                      <label class="visually-hidden" [for]="'zg-map-' + i">Pole szablonu dla kolumny {{ h }}</label>
                       <select
                         class="form-select"
                         [id]="'zg-map-' + i"
@@ -189,15 +190,15 @@
           }
           @if (r.brakujaceWymagane.length) {
             <p>
-              <a href="/assets/hacknation/wzorcowy-zakres-danych-AED-v1.3.xlsx" download
-                >Pobierz wzór (XLSX, ok. 24 KB)</a
+              <a href="/assets/hacknation/instrukcja-i-zasady-AED-Sync-v15.xlsx" download
+                >Pobierz instrukcję i zasady (XLSX, ok. 8 KB)</a
               >
             </p>
           }
 
           <ul class="vertical-list zg-raport">
             <li class="vertical-list__item">
-              <span class="vertical-list__item-label">Pola wymagane:</span>
+              <span class="vertical-list__item-label">Pola obowiązkowe:</span>
               {{ polaWymagane.length - r.brakujaceWymagane.length }} z {{ polaWymagane.length }} (pola id_aed,
               zrodlo_danych i data_aktualizacji nadaje narzędzie).
             </li>
@@ -206,7 +207,7 @@
               {{ r.rekordy.length }} z {{ r.wierszy }}.
             </li>
             <li class="vertical-list__item">
-              <span class="vertical-list__item-label">Adres w osobnych polach (Standard techniczny, s. 16):</span>
+              <span class="vertical-list__item-label">Adres w osobnych polach:</span>
               {{ r.adresWJednymPolu ? 'nie – narzędzie rozbije go automatycznie.' : 'tak.' }}
             </li>
           </ul>
@@ -218,12 +219,12 @@
             </h4>
             @if (r.brakujaceWymagane.length) {
               <p>
-                Brakujące pola wymagane:
+                Brakujące pola obowiązkowe:
                 @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
                   <code>{{ b }}</code> ({{ etykietaPola(b) }}){{ ostatni ? '.' : ',' }}
                 }
-                Jak poprawić: dodaj te kolumny do swoich danych. Opis każdego pola jest w arkuszu „Zakres danych”
-                wzorca.
+                Jak poprawić: dodaj te kolumny do swoich danych. Opis każdego pola jest w instrukcji (arkusz „OPIS
+                KOLUMN”).
               </p>
             }
             @if (r.odrzucone.length) {
@@ -327,36 +328,20 @@
         <!-- 4. POBIERZ -->
         <fieldset id="zg-krok-4" class="form-part col-md-10 col-lg-8" tabindex="-1">
           <legend class="fieldset-header">
-            <h3>2.4 Pobierz plik zgodny ze wzorcem</h3>
+            <h3>2.4 Pobierz plik zgodny z szablonem</h3>
           </legend>
           <p>
-            Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy: CSV w UTF-8 (RFC 4180) albo JSON, kolumny
-            w kolejności wzorca v1.3. Pole data_aktualizacji: {{ dataPliku() }} (data i godzina ostatniej zmiany
-            wgranego pliku).
+            Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy (CSV albo JSON), kolumny i nagłówki PL w
+            kolejności szablonu AED Sync v15.
             @if (pominiete().length) {
-              Pominięte kolumny puste we wszystkich wierszach (Standard techniczny, s. 21):
+              Pominięte kolumny puste we wszystkich wierszach:
               <code>{{ pominiete().join(', ') }}</code
               >.
             }
           </p>
-          <div class="form-field">
-            <label for="zg-identyfikator" class="form-label">Adres Twojego zbioru na dane.gov.pl</label>
-            <small id="zg-identyfikator-opis" class="field-hint">
-              Trafi do pola zrodlo_danych w każdym wierszu, np. https://dane.gov.pl/pl/dataset/1234.
-            </small>
-            <div class="input-wrapper">
-              <input
-                id="zg-identyfikator"
-                class="form-control"
-                type="text"
-                aria-describedby="zg-identyfikator-opis"
-                [ngModel]="identyfikator()"
-                (ngModelChange)="identyfikator.set($event)" />
-            </div>
-          </div>
           <div class="zz-przyciski">
             <button type="button" class="btn btn-primary" (click)="pobierz('csv')">
-              Pobierz CSV zgodny ze wzorcem
+              Pobierz CSV zgodny z szablonem
             </button>
             <button type="button" class="btn btn-outline-primary" (click)="pobierz('json')">Pobierz JSON</button>
           </div>
@@ -374,12 +359,12 @@
             @if (r.brakujaceWymagane.length || r.odrzucone.length || grupyProblemow().doPoprawy.length) {
               <li>Popraw dane według raportu w kroku 3 i sprawdź plik jeszcze raz.</li>
             }
-            <li>Pobierz plik zgodny ze wzorcem (krok 4).</li>
+            <li>Pobierz plik zgodny z szablonem (krok 4).</li>
             <li>
               Opublikuj go na dane.gov.pl jako nowy zasób <strong>swojego</strong> zbioru – za dane odpowiadasz Ty.
             </li>
             <li>Ustaw częstotliwość aktualizacji zbioru i aktualizuj plik po każdej zmianie AED.</li>
-            <li>Zbiór zintegrowany AED pobierze Twoje dane przy najbliższym przeliczeniu.</li>
+            <li>Zbiór zintegrowany AED pokaże Twoje dane przy najbliższej aktualizacji.</li>
           </ol>
         </section>
       }

@@ -2,7 +2,8 @@
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
  * Strona zbioru zintegrowanego „Defibrylatory AED w Polsce – zbiór zintegrowany”:
- * metadane, zbiory źródłowe, raport harmonizacji, eksport oraz widok danych (lista + mapa + filtry).
+ * metadane, zbiory dostawców, kontrola danych dostawców, eksport oraz widok danych (lista + mapa + filtry).
+ * Dane pochodzą od dostawców, którzy publikują je na dane.gov.pl według szablonu AED Sync v15.
  */
 
 import { isPlatformBrowser, LowerCasePipe } from '@angular/common';
@@ -34,18 +35,20 @@ import {
 } from './lib/element-listy';
 import { doCsv, doCsvZrodel, doGeoJson, doJson, opisyZrodel, pobierzPlik } from './lib/eksport';
 import { czyDostepnyTeraz } from './lib/godziny';
-import { integruj } from './lib/harmonizacja';
-import { ZRODLA, ZRODLA_NIEDOSTEPNE, ZRODLO_DEMO } from './lib/zrodla';
-import type { RaportZrodla, RekordZintegrowany } from './lib/harmonizacja';
-import { DOSTEP, ETYKIETY, POLA_WYMAGANE } from './lib/model';
+import { integruj } from './lib/integracja';
+import { ZRODLA } from './lib/zrodla';
+import type { RaportZrodla, RekordZintegrowany } from './lib/integracja';
+import { ETYKIETY, POLA_DNI, POLA_WYMAGANE, STAN_AED } from './lib/model';
+import { opisGodzin } from './lib/godziny-dni';
+import { trasaDoAed } from './lib/trasa';
 import { czyNieaktualne, wiekWMiesiacach } from './lib/wiek-danych';
 import { odlegloscM } from './lib/geometria';
 import { InfoTooltipDirective } from '@app/shared/info-tooltip/info-tooltip.directive';
 import { ItemsPerPageComponent } from '@app/shared/items-per-page/items-per-page.component';
 import { PaginationComponent } from '@app/shared/pagination/pagination.component';
 import { MapaAedComponent } from './mapa-aed.component';
+import { SeoService } from '@app/services/seo.service';
 
-type TakNie = '' | 'tak' | 'nie' | 'brak';
 type Zakladka = 'dane' | 'zrodla' | 'raport';
 
 export interface Lokalizacja {
@@ -53,9 +56,6 @@ export interface Lokalizacja {
   dlug: number;
   opis: string;
 }
-
-/** Średnie tempo marszu do szacowania czasu dojścia: 5 km/h ≈ 83 m na minutę. */
-const METRY_NA_MINUTE = 5000 / 60;
 
 /** Promień wyszukiwania najbliższych dostępnych AED: ok. 3 minuty marszu tam i z powrotem. */
 export const PROMIEN_AWARYJNY_M = 250;
@@ -85,14 +85,11 @@ export const PROMIEN_AWARYJNY_M = 250;
   styleUrl: './zbior-zintegrowany.component.scss',
 })
 export class ZbiorZintegrowanyComponent {
-  // Prawdziwe źródła + źródło fikcyjne (port lotniczy) – nigdy w eksporcie.
-  readonly wynik = integruj([...ZRODLA, ZRODLO_DEMO]);
-  readonly niedostepne = ZRODLA_NIEDOSTEPNE;
-  readonly doEksportu = this.wynik.rekordy.filter((r) => !r.fikcyjne);
-  readonly opisyZrodelEksportu = opisyZrodel(
-    this.wynik.raporty.filter((r) => r.zrodlo.prawdziwe),
-    ZRODLA_NIEDOSTEPNE,
-  );
+  // Dane dostawców wgrane według szablonu AED Sync v15 (w prototypie dwa fikcyjne zbiory).
+  readonly wynik = integruj(ZRODLA);
+  readonly doEksportu = this.wynik.rekordy;
+  readonly opisyZrodelEksportu = opisyZrodel(this.wynik.raporty);
+
   /** Ten sam tytuł, opis i słowa kluczowe co na liście zbiorów. */
   readonly tytul = TYTUL_ZBIORU;
   readonly opis = OPIS_ZBIORU;
@@ -121,24 +118,24 @@ export class ZbiorZintegrowanyComponent {
       id: 'dane',
       etykieta: 'Lista i mapa',
       podpowiedz:
-        'Wszystkie AED ze zbiorów źródłowych na liście i mapie. Możesz je przeszukiwać, filtrować, znaleźć najbliższe dostępne i pobrać zbiór w CSV, JSON albo GeoJSON.',
+        'Wszystkie AED od dostawców na liście i mapie. Możesz je przeszukiwać, filtrować, znaleźć najbliższe dostępne i pobrać zbiór w CSV, JSON albo GeoJSON.',
     },
     {
       id: 'zrodla',
-      etykieta: 'Zbiory źródłowe',
+      etykieta: 'Zbiory dostawców',
       podpowiedz:
-        'Zbiory o AED opublikowane na dane.gov.pl przez różnych dostawców, z licencją i datą danych. Za dane w każdym zbiorze odpowiada jego dostawca.',
+        'Zbiory o AED, które dostawcy sami publikują na dane.gov.pl według szablonu AED Sync. Za dane w każdym zbiorze odpowiada jego dostawca.',
     },
     {
       id: 'raport',
-      etykieta: 'Raport harmonizacji',
+      etykieta: 'Kontrola danych dostawców',
       podpowiedz:
-        'Jak dane z każdego źródła pasują do wzorcowego zakresu danych AED: mapowanie kolumn, brakujące pola wymagane, odrzucone wiersze i możliwe duplikaty.',
+        'Czy dane każdego dostawcy są kompletne według szablonu: pola obowiązkowe, pominięte wiersze, ostrzeżenia i możliwe duplikaty. Poprawić dane może tylko dostawca.',
     },
   ];
   readonly etykiety = ETYKIETY;
   readonly polaWymagane = POLA_WYMAGANE;
-  readonly dostepy = DOSTEP;
+  readonly stany = STAN_AED;
   /** Rozmiary plików do pobrania – dane są stałe, więc liczymy raz. */
   readonly rozmiary = {
     csv: rozmiarPliku(doCsv(this.doEksportu)),
@@ -159,11 +156,15 @@ export class ZbiorZintegrowanyComponent {
   // Filtry i wyszukiwanie
   readonly szukaj = signal('');
   readonly miejscowosc = signal('');
-  readonly dostep = signal('');
+  readonly stan = signal('');
   readonly tylkoTeraz = signal(false);
-  readonly wewnatrz = signal<TakNie>('');
   readonly dostawca = signal('');
-  readonly mapaNaTelefonie = signal(false);
+  /** Tabela albo mapa – zakładki jak na stronie zasobu portalu (teksty z kluczy tłumaczeń portalu). */
+  readonly widok = signal<'tabela' | 'mapa'>('tabela');
+  readonly widoki = [
+    { id: 'tabela' as const, etykieta: 'Resources.TableView', podpowiedz: 'Tour.Tooltip.DataResource.Table.text' },
+    { id: 'mapa' as const, etykieta: 'Resources.MapView', podpowiedz: 'Tour.Tooltip.DataResource.Map.text' },
+  ];
   /** Komunikat po pobraniu pliku – pokazywany pod przyciskami „Pobierz zbiór”. */
   readonly komunikatPobierania = signal('');
 
@@ -183,20 +184,18 @@ export class ZbiorZintegrowanyComponent {
     const teraz = this.teraz();
     const lok = this.lokalizacja();
     const lista = this.wynik.rekordy.filter((r) => {
-      if (q && !this.normalizuj([r.etykieta, r.opis_lokalizacji, r.ulica, r.miejscowosc].join(' ')).includes(q))
+      if (q && !this.normalizuj([r.etykieta, r.komentarz_aed, r.ulica, r.miejscowosc].join(' ')).includes(q))
         return false;
       if (this.miejscowosc() && r.miejscowosc !== this.miejscowosc()) return false;
-      if (this.dostep() === 'brak' ? r.dostep !== null : this.dostep() && r.dostep !== this.dostep()) return false;
-      const w = this.wewnatrz();
-      if (w === 'tak' && r.wewnatrz_budynku !== true) return false;
-      if (w === 'nie' && r.wewnatrz_budynku !== false) return false;
-      if (w === 'brak' && r.wewnatrz_budynku !== null) return false;
+      if (this.stan() === 'brak' ? r.stan_aed !== null : this.stan() && r.stan_aed !== this.stan()) return false;
       if (this.dostawca() && r.zrodloId !== this.dostawca()) return false;
-      if (this.tylkoTeraz() && (!teraz || czyDostepnyTeraz(r.godziny_dostepnosci, teraz) !== true)) return false;
+      // „Dostępny teraz”: godziny obejmują aktualną porę i AED nie jest oznaczony jako niesprawny.
+      if (this.tylkoTeraz() && (!teraz || czyDostepnyTeraz(r.godziny, teraz) !== true || r.stan_aed === 'Niesprawny'))
+        return false;
       return true;
     });
     if (!lok) return lista.map((r) => ({ r, m: null as number | null }));
-    // AED bez współrzędnych (opcjonalne w v1.3) nie ma odległości – nie trafia do wyników w promieniu.
+    // AED bez współrzędnych (opcjonalne w szablonie) nie ma odległości – nie trafia do wyników w promieniu.
     return lista
       .map((r) => ({ r, m: this.odleglosc(r) }))
       .filter((x): x is { r: RekordZintegrowany; m: number } => x.m !== null)
@@ -223,8 +222,7 @@ export class ZbiorZintegrowanyComponent {
   private readonly filtry = computed(() => [
     this.szukaj(),
     this.miejscowosc(),
-    this.dostep(),
-    this.wewnatrz(),
+    this.stan(),
     this.dostawca(),
     this.tylkoTeraz(),
     this.lokalizacja(),
@@ -251,12 +249,10 @@ export class ZbiorZintegrowanyComponent {
   /** Aktywne filtry jako usuwalne tagi. */
   readonly aktywneFiltry = computed(() => {
     const t: { klucz: string; etykieta: string }[] = [];
-    const opisWewnatrz: Record<string, string> = { tak: 'wewnątrz budynku', nie: 'na zewnątrz', brak: 'brak danych' };
     if (this.szukaj().trim()) t.push({ klucz: 'szukaj', etykieta: `Szukaj: ${this.szukaj().trim()}` });
     if (this.miejscowosc()) t.push({ klucz: 'miejscowosc', etykieta: `Miejscowość: ${this.miejscowosc()}` });
-    if (this.dostep())
-      t.push({ klucz: 'dostep', etykieta: `Dostęp: ${this.dostep() === 'brak' ? 'brak danych' : this.dostep()}` });
-    if (this.wewnatrz()) t.push({ klucz: 'wewnatrz', etykieta: `Położenie: ${opisWewnatrz[this.wewnatrz()]}` });
+    if (this.stan())
+      t.push({ klucz: 'stan', etykieta: `Stan AED: ${this.stan() === 'brak' ? 'brak danych' : this.stan()}` });
     if (this.dostawca()) {
       const d = this.dostawcy.find((x) => x.id === this.dostawca());
       t.push({ klucz: 'dostawca', etykieta: `Dostawca: ${d?.nazwa ?? this.dostawca()}` });
@@ -271,8 +267,7 @@ export class ZbiorZintegrowanyComponent {
   usunFiltr(klucz: string, indeks: number): void {
     if (klucz === 'szukaj') this.szukaj.set('');
     else if (klucz === 'miejscowosc') this.miejscowosc.set('');
-    else if (klucz === 'dostep') this.dostep.set('');
-    else if (klucz === 'wewnatrz') this.wewnatrz.set('');
+    else if (klucz === 'stan') this.stan.set('');
     else if (klucz === 'dostawca') this.dostawca.set('');
     else if (klucz === 'teraz') this.tylkoTeraz.set(false);
     else if (klucz === 'lokalizacja') this.lokalizacja.set(null);
@@ -290,13 +285,8 @@ export class ZbiorZintegrowanyComponent {
   /** Odległość w metrach od lokalizacji użytkownika (null bez lokalizacji). */
   odleglosc(r: RekordZintegrowany): number | null {
     const lok = this.lokalizacja();
-    if (!lok || r.szerokosc_geograficzna === null || r.dlugosc_geograficzna === null) return null;
-    return odlegloscM(lok, { szer: r.szerokosc_geograficzna, dlug: r.dlugosc_geograficzna });
-  }
-
-  opisOdleglosci(m: number): string {
-    const tekst = m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`;
-    return `${tekst} (ok. ${Math.max(1, Math.ceil(m / METRY_NA_MINUTE))} min pieszo)`;
+    if (!lok || r.szerokosc_geograficzna_aed === null || r.dlugosc_geograficzna_aed === null) return null;
+    return odlegloscM(lok, { szer: r.szerokosc_geograficzna_aed, dlug: r.dlugosc_geograficzna_aed });
   }
 
   opisPromienia(m: number): string {
@@ -308,44 +298,43 @@ export class ZbiorZintegrowanyComponent {
    * Lokalizacja zostaje w przeglądarce. Gdy nie da się jej ustalić albo nie ma wyników – czerwony komunikat 112.
    */
   pokazNajblizszeDostepne(): void {
-    if (this.ustalaLokalizacje()) return;
-    if (!this.wPrzegladarce || !('geolocation' in navigator)) {
-      this.bladLokalizacji.set('Ta przeglądarka nie udostępnia lokalizacji.');
-      return;
-    }
-    this.ustalaLokalizacje.set(true);
+    // Wersja pokazowa: dane są fikcyjne, więc zamiast lokalizacji z przeglądarki używamy przykładowej –
+    // przed terminalem fikcyjnego portu. W promieniu 250 m są tam AED dostępne całą dobę (parking 82 m,
+    // straż 218 m), a w godzinach 4:00–23:30 także oba terminale.
     this.bladLokalizacji.set('');
-    navigator.geolocation.getCurrentPosition(
-      (poz) => {
-        this.ustalaLokalizacje.set(false);
-        this.promien.set(PROMIEN_AWARYJNY_M);
-        this.tylkoTeraz.set(true);
-        this.lokalizacja.set({
-          szer: poz.coords.latitude,
-          dlug: poz.coords.longitude,
-          opis: `Twoja lokalizacja (dokładność ok. ${Math.round(poz.coords.accuracy)} m)`,
-        });
-      },
-      (err) => {
-        this.ustalaLokalizacje.set(false);
-        this.bladLokalizacji.set(
-          err.code === err.PERMISSION_DENIED
-            ? 'Nie udzielono zgody na lokalizację.'
-            : 'Nie udało się ustalić Twojej lokalizacji.',
-        );
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    this.promien.set(PROMIEN_AWARYJNY_M);
+    this.tylkoTeraz.set(true);
+    this.lokalizacja.set({
+      szer: 52.0706,
+      dlug: 19.2252,
+      opis: 'Twoja lokalizacja (przykładowa): przed terminalem Portu Lotniczego Przykładowo',
+    });
+    // Fokus na wynikach pod przyciskiem (WCAG 2.4.3) – albo na komunikacie 112, gdy wyników nie ma.
+    setTimeout(() =>
+      (document.getElementById('zz-najblizsze') ?? document.querySelector<HTMLElement>('.zz-112'))?.focus(),
     );
   }
+
+  /** Do 3 najbliższych AED dostępnych teraz – pokazywane od razu pod przyciskiem awaryjnym. */
+  readonly najblizsze = computed(() => (this.lokalizacja() && this.tylkoTeraz() ? this.wyniki().slice(0, 3) : []));
 
   /** Wyjście z trybu awaryjnego: znów wszystkie AED. */
   pokazWszystkie(): void {
     this.lokalizacja.set(null);
     this.tylkoTeraz.set(false);
     this.bladLokalizacji.set('');
+    // Przewinięcie do tabeli i fokus na niej (WCAG 2.4.3) – po odświeżeniu widoku.
+    this.widok.set('tabela');
+    setTimeout(() => {
+      const tabela = document.getElementById('lista-aed');
+      tabela?.scrollIntoView({ block: 'start' });
+      tabela?.focus({ preventScroll: true });
+    });
   }
 
   constructor() {
+    // Tytuł strony jak na stronach zbiorów portalu: „Tytuł - Otwarte Dane” (WCAG 2.4.2).
+    inject(SeoService).setPageTitle(TYTUL_ZBIORU);
     afterNextRender(() => {
       if (!this.wPrzegladarce) return;
       this.teraz.set(new Date());
@@ -380,8 +369,32 @@ export class ZbiorZintegrowanyComponent {
   stanTeraz(r: RekordZintegrowany): string {
     const t = this.teraz();
     if (!t) return '–';
-    const v = czyDostepnyTeraz(r.godziny_dostepnosci, t);
+    const v = czyDostepnyTeraz(r.godziny, t);
     return v === null ? 'brak danych' : v ? 'tak' : 'nie';
+  }
+
+  /** Godziny z 7 kolumn dni w skrócie, np. „pon.–pt. 08:00-16:00; sob.–niedz. Niedostępny”. */
+  godziny(r: RekordZintegrowany): string | null {
+    return opisGodzin(POLA_DNI.map((p) => r[p]));
+  }
+
+  /** Trasa piesza w Google Maps od bieżącej lokalizacji do AED (bez klucza API; nic nie jest wysyłane przed kliknięciem). */
+  trasa(r: RekordZintegrowany): string | null {
+    return trasaDoAed(r);
+  }
+
+  /** Numer do linku tel: bez spacji. */
+  bezSpacji(s: string): string {
+    return s.replace(/\s/g, '');
+  }
+
+  adres(r: RekordZintegrowany): string {
+    return [
+      [r.ulica, r.numer_budynku].filter(Boolean).join(' '),
+      [r.kod_pocztowy, r.miejscowosc].filter(Boolean).join(' '),
+    ]
+      .filter(Boolean)
+      .join(', ');
   }
 
   /** Data jak w portalu, np. „14 września 2026”. */
@@ -401,11 +414,11 @@ export class ZbiorZintegrowanyComponent {
     return `${dzien}, ${godzina}`;
   }
 
-  /** Etykiety pól wymaganych, których źródło nie dostarcza w żadnym rekordzie. */
-  brakujaceWymagane(r: RaportZrodla): string[] {
+  /** Pola obowiązkowe, które nie są wypełnione we wszystkich rekordach dostawcy (z liczbą pustych). */
+  niekompletneWymagane(r: RaportZrodla): string[] {
     return r.kompletnosc
-      .filter((k) => k.wypelnione === 0 && this.polaWymagane.includes(k.pole))
-      .map((k) => ETYKIETY[k.pole]);
+      .filter((k) => k.wypelnione < r.przyjete)
+      .map((k) => `${ETYKIETY[k.pole]} (puste: ${r.przyjete - k.wypelnione})`);
   }
 
   /** Dane starsze niż 12 miesięcy dostają ostrzeżenie. */
@@ -419,10 +432,6 @@ export class ZbiorZintegrowanyComponent {
     return lata >= 2 ? `ponad ${lata} lata` : lata === 1 ? 'ponad rok' : `${m} mies.`;
   }
 
-  takNie(v: boolean | null): string {
-    return v === null ? 'brak danych' : v ? 'wewnątrz' : 'na zewnątrz';
-  }
-
   procent(n: number, z: number): string {
     return z === 0 ? '0%' : `${Math.round((n / z) * 100)}%`;
   }
@@ -430,9 +439,8 @@ export class ZbiorZintegrowanyComponent {
   wyczyscFiltry(): void {
     this.szukaj.set('');
     this.miejscowosc.set('');
-    this.dostep.set('');
+    this.stan.set('');
     this.tylkoTeraz.set(false);
-    this.wewnatrz.set('');
     this.dostawca.set('');
     this.lokalizacja.set(null);
     this.promien.set(PROMIEN_AWARYJNY_M);

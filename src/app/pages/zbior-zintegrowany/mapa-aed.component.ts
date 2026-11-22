@@ -19,23 +19,24 @@ import {
   input,
 } from '@angular/core';
 import type * as Leaflet from 'leaflet';
-import type { RekordZintegrowany } from './lib/harmonizacja';
+import { InfoTooltipDirective } from '@app/shared/info-tooltip/info-tooltip.directive';
+import type { RekordZintegrowany } from './lib/integracja';
+import { opisGodzin } from './lib/godziny-dni';
+import { trasaDoAed } from './lib/trasa';
+import { POLA_DNI } from './lib/model';
 
 @Component({
   selector: 'app-mapa-aed',
   standalone: true,
+  imports: [InfoTooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mapa-aed">
-      <p class="mapa-aed__opis" id="mapa-aed-opis">
-        Mapa pokazuje {{ naMapie().length }} AED z listy.
-        @if (bezWspolrzednych() > 0) {
-          {{ bezWspolrzednych() }} AED bez współrzędnych jest tylko na liście.
-        }
-        Pełny zestaw jest w tabeli –
-        <a href="#lista-aed" (click)="przejdzDoListy($event)">przejdź do listy</a>. Przesuwaj mapę strzałkami, gdy ma
-        fokus, albo przyciskami.
+      <!-- Opis mapy w podpowiedzi „?”; tekstowy odpowiednik mapy to zakładka „Tabela”. -->
+      <p class="mapa-aed__opis">
+        <span tooltipTitle="Mapa AED" [appInfoTooltip]="opis()" withoutMargin>Mapa ({{ naMapie().length }} AED)</span>
       </p>
+      <p class="visually-hidden" id="mapa-aed-opis">{{ opis() }}</p>
       <div class="mapa-aed__przyciski" role="group" aria-label="Sterowanie mapą">
         <button type="button" class="btn btn-sm btn-outline-primary" (click)="przesun(0, -1)">Przesuń w górę</button>
         <button type="button" class="btn btn-sm btn-outline-primary" (click)="przesun(0, 1)">Przesuń w dół</button>
@@ -64,11 +65,17 @@ export class MapaAedComponent implements OnDestroy {
   /** Współrzędne są opcjonalne (wzorzec v1.3) – na mapie tylko AED, które je mają. */
   readonly naMapie = computed(() =>
     this.rekordy().filter(
-      (r): r is RekordZintegrowany & { szerokosc_geograficzna: number; dlugosc_geograficzna: number } =>
-        r.szerokosc_geograficzna !== null && r.dlugosc_geograficzna !== null,
+      (r): r is RekordZintegrowany & { szerokosc_geograficzna_aed: number; dlugosc_geograficzna_aed: number } =>
+        r.szerokosc_geograficzna_aed !== null && r.dlugosc_geograficzna_aed !== null,
     ),
   );
   readonly bezWspolrzednych = computed(() => this.rekordy().length - this.naMapie().length);
+  readonly opis = computed(
+    () =>
+      `Mapa pokazuje ${this.naMapie().length} AED z listy.` +
+      (this.bezWspolrzednych() > 0 ? ` ${this.bezWspolrzednych()} AED bez współrzędnych jest tylko na liście.` : '') +
+      ' Pełny zestaw jest w zakładce „Tabela”. Przesuwaj mapę strzałkami, gdy ma fokus, albo przyciskami.',
+  );
 
   @ViewChild('kontener', { static: true }) kontener!: ElementRef<HTMLDivElement>;
 
@@ -134,7 +141,7 @@ export class MapaAedComponent implements OnDestroy {
     for (const r of this.naMapie()) {
       const adres = [r.ulica, r.numer_budynku, r.miejscowosc].filter(Boolean).join(' ');
       const etykieta = `AED: ${r.etykieta}${adres ? ', ' + adres : ''}`;
-      const m = L.marker([r.szerokosc_geograficzna, r.dlugosc_geograficzna], {
+      const m = L.marker([r.szerokosc_geograficzna_aed, r.dlugosc_geograficzna_aed], {
         icon: ikona,
         keyboard: true,
         title: etykieta,
@@ -170,28 +177,50 @@ export class MapaAedComponent implements OnDestroy {
     const h = document.createElement('strong');
     h.textContent = r.etykieta;
     div.append(h);
-    const linie = [
+    // Klucz pogrubiony, wartość zwykłym tekstem (np. „Godziny: pon.–pt. 08:00-16:00”).
+    const pole = (klucz: string, wartosc: string | Node) => {
+      const w = document.createElement('div');
+      const k = document.createElement('strong');
+      k.textContent = `${klucz}: `;
+      w.append(k, wartosc);
+      div.append(w);
+    };
+    const adres = [
       [r.ulica, r.numer_budynku].filter(Boolean).join(' '),
       [r.kod_pocztowy, r.miejscowosc].filter(Boolean).join(' '),
-      r.nazwa_miejsca ? (r.opis_lokalizacji ?? '') : '',
-      `Godziny: ${r.godziny_dostepnosci ?? 'brak danych w źródle'}`,
-    ].filter(Boolean);
-    for (const l of linie) {
-      const p = document.createElement('div');
-      p.textContent = l;
-      div.append(p);
+    ]
+      .filter(Boolean)
+      .join(', ');
+    if (adres) pole('Adres', adres);
+    if (r.nazwa_obiektu && r.komentarz_aed) pole('Gdzie', r.komentarz_aed);
+    pole('Godziny', opisGodzin(POLA_DNI.map((p) => r[p])) ?? 'brak danych');
+    pole('Stan', r.stan_aed ?? 'brak danych');
+    if (r.odpowiedzialny_za_aed)
+      pole(
+        'Odpowiedzialny',
+        `${r.odpowiedzialny_za_aed}${r.telefon_odpowiedzialnego_za_aed ? ', tel. ' + r.telefon_odpowiedzialnego_za_aed : ''}`,
+      );
+    const url = trasaDoAed(r);
+    if (url) {
+      const trasa = document.createElement('a');
+      trasa.href = url;
+      trasa.target = '_blank';
+      trasa.rel = 'noopener';
+      trasa.textContent = 'Wyznacz trasę (Google Maps, nowa karta)';
+      const w = document.createElement('div');
+      w.append(trasa);
+      div.append(w);
     }
-    // Źródło z linkiem do zbioru na dane.gov.pl – kto odpowiada za ten rekord.
-    const zrodlo = document.createElement('div');
-    zrodlo.append('Źródło: ');
+    // Zbiór dostawcy z linkiem – kto odpowiada za ten rekord.
+    const zbior = document.createDocumentFragment();
     if (r.adresZbioruZrodla) {
       const a = document.createElement('a');
       a.href = r.adresZbioruZrodla;
       a.textContent = r.dostawcaZrodla;
-      zrodlo.append(a);
-    } else zrodlo.append(r.dostawcaZrodla);
-    zrodlo.append(`, dane z ${r.dataDanychZrodla}`);
-    div.append(zrodlo);
+      zbior.append(a);
+    } else zbior.append(r.dostawcaZrodla);
+    zbior.append(`, dane z ${r.dataDanychZrodla}`);
+    pole('Zbiór', zbior);
     if (r.atrybucjaZrodla) {
       const at = document.createElement('div');
       at.textContent = r.atrybucjaZrodla;
@@ -221,22 +250,10 @@ export class MapaAedComponent implements OnDestroy {
     }
     if (r.length === 0) this.mapa.setView([52.0, 19.4], 6);
     else
-      this.mapa.fitBounds(L.latLngBounds(r.map((x) => [x.szerokosc_geograficzna, x.dlugosc_geograficzna])), {
+      this.mapa.fitBounds(L.latLngBounds(r.map((x) => [x.szerokosc_geograficzna_aed, x.dlugosc_geograficzna_aed])), {
         padding: [24, 24],
         maxZoom: 15,
       });
-  }
-
-  /**
-   * Link „przejdź do listy”: strona ma <base href="/">, więc samo href="#lista-aed" przeniosłoby
-   * na stronę główną. Przewijamy i przenosimy fokus na listę (WCAG 2.4.3).
-   */
-  przejdzDoListy(event: Event): void {
-    const lista = document.getElementById('lista-aed');
-    if (!lista) return;
-    event.preventDefault();
-    lista.scrollIntoView({ block: 'start' });
-    lista.focus();
   }
 
   ngOnDestroy(): void {

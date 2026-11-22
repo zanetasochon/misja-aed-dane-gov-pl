@@ -1,48 +1,28 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
  *
- * Model rekordu zbioru zintegrowanego: 43 pola ze wzorcowego zakresu danych AED v1.3
- * (arkusz „Zakres danych”, ta sama kolejność kolumn). v1.3 (2026-11-22) przejmuje rozwiązania
- * formatu AED Sync: 9 pól wymaganych, opcjonalne współrzędne, godziny osobno dla każdego dnia,
- * województwo, powiat i gminę słownie, osobno dostawcę i podmiot odpowiedzialny za AED (z e-mailem),
- * nagłówki PL i EN oraz kod zbioru AED-SYNC-PL. W zbiorze zintegrowanym pola, których źródło
- * nie dostarcza, mają wartość null – integracja nie zmyśla danych.
+ * Model rekordu: 28 pól szablonu AED Sync v15 (AED_Sync_instrukcja_i_opis_pol_v15.xlsx, arkusz
+ * „OPIS KOLUMN”) – te same nazwy PL, nagłówki EN, kolejność i obowiązkowość. Dostawcy wgrywają
+ * dane na dane.gov.pl według tego szablonu; zbiór zintegrowany je wyświetla. Puste pole = brak danych.
  */
 
-export const DOSTEP = ['publiczny', 'klienci', 'ograniczony'] as const;
-export type Dostep = (typeof DOSTEP)[number];
-
-export const OPIS_DOSTEPU: Record<Dostep, string> = {
-  publiczny: 'Dostęp bez ograniczeń',
-  klienci: 'W godzinach otwarcia obiektu',
-  ograniczony: 'Wymaga zgody lub udziału osoby trzeciej',
-};
-
-/** Stała wartość pola kod_zbioru_danych – po niej integrator rozpoznaje dane do zbioru zintegrowanego. */
+/** Stała wartość pola kod_zbioru_danych – po niej integrator rozpoznaje dane AED Sync. */
 export const KOD_ZBIORU = 'AED-SYNC-PL';
 
 export interface RekordAed {
-  id_aed: string;
-  kod_zbioru_danych: string | null;
-  nazwa_miejsca: string | null;
-  opis_lokalizacji: string | null;
-  opis_lokalizacji_en: string | null;
+  nazwa_obiektu: string | null;
   wojewodztwo: string | null;
   powiat: string | null;
   gmina: string | null;
+  kod_terc: string | null;
+  kod_simc: string | null;
   miejscowosc: string | null;
   ulica: string | null;
   numer_budynku: string | null;
-  numer_lokalu: string | null;
   kod_pocztowy: string | null;
-  teryt_terc: string | null;
-  teryt_simc: string | null;
-  teryt_ulic: string | null;
-  szerokosc_geograficzna: number | null;
-  dlugosc_geograficzna: number | null;
-  wewnatrz_budynku: boolean | null;
-  pietro: number | null;
-  dostep: Dostep | null;
+  komentarz_aed: string | null;
+  szerokosc_geograficzna_aed: number | null;
+  dlugosc_geograficzna_aed: number | null;
   poniedzialek_godziny: string | null;
   wtorek_godziny: string | null;
   sroda_godziny: string | null;
@@ -50,138 +30,89 @@ export interface RekordAed {
   piatek_godziny: string | null;
   sobota_godziny: string | null;
   niedziela_godziny: string | null;
-  /** Godziny w składni opening_hours (OSM) – wpisane albo wyliczone z kolumn dni. */
-  godziny_dostepnosci: string | null;
+  stan_aed: string | null;
+  data_weryfikacji_stanu_aed: string | null;
   odpowiedzialny_za_aed: string | null;
-  typ_odpowiedzialnego_za_aed: string | null;
-  regon_odpowiedzialnego_za_aed: string | null;
   telefon_odpowiedzialnego_za_aed: string | null;
   email_odpowiedzialnego_za_aed: string | null;
   dostawca: string | null;
-  producent: string | null;
-  model: string | null;
-  status_urzadzenia: string | null;
-  data_ostatniego_przegladu: string | null;
-  opis_dodatkowy: string | null;
-  osm_id: string | null;
-  /** W zbiorze zintegrowanym: adres zbioru źródłowego (np. https://dane.gov.pl/pl/dataset/3624). */
-  zrodlo_danych: string;
-  /** Data danych ze źródła – integracja nie nadpisuje jej datą scalenia. */
-  data_aktualizacji: string;
+  data_dostarczenia_danych: string | null;
+  kod_zbioru_danych: string | null;
 }
 
 export type PoleRekordu = keyof RekordAed;
 
-export type Obowiazkowosc = 'wymagane' | 'zalecane' | 'opcjonalne' | 'nadaje narzędzie';
-
-/** Pola wzorca v1.3 w kolejności kolumn: nazwa techniczna, nagłówek EN, etykieta i obowiązkowość. */
-export const POLA: readonly { pole: PoleRekordu; en: string; etykieta: string; obowiazkowosc: Obowiazkowosc }[] = [
-  { pole: 'id_aed', en: 'aed_id', etykieta: 'Identyfikator', obowiazkowosc: 'nadaje narzędzie' },
-  { pole: 'kod_zbioru_danych', en: 'dataset_code', etykieta: 'Kod zbioru danych', obowiazkowosc: 'wymagane' },
-  { pole: 'nazwa_miejsca', en: 'facility_name', etykieta: 'Nazwa miejsca', obowiazkowosc: 'zalecane' },
-  { pole: 'opis_lokalizacji', en: 'aed_location', etykieta: 'Gdzie dokładnie jest AED', obowiazkowosc: 'wymagane' },
+/** Pola szablonu v15 w kolejności kolumn: nazwa PL, nagłówek EN, nazwa pola i obowiązkowość („Tak”). */
+export const POLA: readonly { pole: PoleRekordu; en: string; etykieta: string; wymagane: boolean }[] = [
+  { pole: 'nazwa_obiektu', en: 'facility_name', etykieta: 'Nazwa obiektu', wymagane: true },
+  { pole: 'wojewodztwo', en: 'voivodeship', etykieta: 'Województwo', wymagane: true },
+  { pole: 'powiat', en: 'county', etykieta: 'Powiat', wymagane: true },
+  { pole: 'gmina', en: 'municipality', etykieta: 'Gmina', wymagane: true },
+  { pole: 'kod_terc', en: 'terc_code', etykieta: 'Kod TERC', wymagane: false },
+  { pole: 'kod_simc', en: 'simc_code', etykieta: 'Kod SIMC', wymagane: false },
+  { pole: 'miejscowosc', en: 'locality', etykieta: 'Miejscowość', wymagane: true },
+  { pole: 'ulica', en: 'street', etykieta: 'Ulica', wymagane: false },
+  { pole: 'numer_budynku', en: 'building_number', etykieta: 'Numer budynku', wymagane: true },
+  { pole: 'kod_pocztowy', en: 'postal_code', etykieta: 'Kod pocztowy', wymagane: false },
+  { pole: 'komentarz_aed', en: 'aed_comment', etykieta: 'Komentarz o AED', wymagane: true },
   {
-    pole: 'opis_lokalizacji_en',
-    en: 'aed_location_en',
-    etykieta: 'Opis lokalizacji po angielsku',
-    obowiazkowosc: 'opcjonalne',
-  },
-  { pole: 'wojewodztwo', en: 'voivodeship', etykieta: 'Województwo', obowiazkowosc: 'wymagane' },
-  { pole: 'powiat', en: 'county', etykieta: 'Powiat', obowiazkowosc: 'wymagane' },
-  { pole: 'gmina', en: 'municipality', etykieta: 'Gmina', obowiazkowosc: 'wymagane' },
-  { pole: 'miejscowosc', en: 'locality', etykieta: 'Miejscowość', obowiazkowosc: 'wymagane' },
-  { pole: 'ulica', en: 'street', etykieta: 'Ulica', obowiazkowosc: 'zalecane' },
-  { pole: 'numer_budynku', en: 'building_number', etykieta: 'Numer budynku', obowiazkowosc: 'wymagane' },
-  { pole: 'numer_lokalu', en: 'unit_number', etykieta: 'Numer lokalu', obowiazkowosc: 'opcjonalne' },
-  { pole: 'kod_pocztowy', en: 'postal_code', etykieta: 'Kod pocztowy', obowiazkowosc: 'zalecane' },
-  { pole: 'teryt_terc', en: 'teryt_terc', etykieta: 'Kod TERC', obowiazkowosc: 'opcjonalne' },
-  { pole: 'teryt_simc', en: 'teryt_simc', etykieta: 'Kod SIMC', obowiazkowosc: 'opcjonalne' },
-  { pole: 'teryt_ulic', en: 'teryt_ulic', etykieta: 'Kod ULIC', obowiazkowosc: 'opcjonalne' },
-  { pole: 'szerokosc_geograficzna', en: 'aed_latitude', etykieta: 'Szerokość geograficzna', obowiazkowosc: 'zalecane' },
-  { pole: 'dlugosc_geograficzna', en: 'aed_longitude', etykieta: 'Długość geograficzna', obowiazkowosc: 'zalecane' },
-  { pole: 'wewnatrz_budynku', en: 'indoor', etykieta: 'Wewnątrz budynku', obowiazkowosc: 'zalecane' },
-  { pole: 'pietro', en: 'level', etykieta: 'Piętro', obowiazkowosc: 'opcjonalne' },
-  { pole: 'dostep', en: 'access', etykieta: 'Kto ma dostęp', obowiazkowosc: 'zalecane' },
-  { pole: 'poniedzialek_godziny', en: 'monday_hours', etykieta: 'Poniedziałek – godziny', obowiazkowosc: 'zalecane' },
-  { pole: 'wtorek_godziny', en: 'tuesday_hours', etykieta: 'Wtorek – godziny', obowiazkowosc: 'zalecane' },
-  { pole: 'sroda_godziny', en: 'wednesday_hours', etykieta: 'Środa – godziny', obowiazkowosc: 'zalecane' },
-  { pole: 'czwartek_godziny', en: 'thursday_hours', etykieta: 'Czwartek – godziny', obowiazkowosc: 'zalecane' },
-  { pole: 'piatek_godziny', en: 'friday_hours', etykieta: 'Piątek – godziny', obowiazkowosc: 'zalecane' },
-  { pole: 'sobota_godziny', en: 'saturday_hours', etykieta: 'Sobota – godziny', obowiazkowosc: 'zalecane' },
-  { pole: 'niedziela_godziny', en: 'sunday_hours', etykieta: 'Niedziela – godziny', obowiazkowosc: 'zalecane' },
-  {
-    pole: 'godziny_dostepnosci',
-    en: 'opening_hours',
-    etykieta: 'Godziny (składnia opening_hours)',
-    obowiazkowosc: 'opcjonalne',
+    pole: 'szerokosc_geograficzna_aed',
+    en: 'aed_latitude',
+    etykieta: 'Szerokość geograficzna AED',
+    wymagane: false,
   },
   {
-    pole: 'odpowiedzialny_za_aed',
-    en: 'aed_responsible_entity',
-    etykieta: 'Odpowiedzialny za AED',
-    obowiazkowosc: 'wymagane',
+    pole: 'dlugosc_geograficzna_aed',
+    en: 'aed_longitude',
+    etykieta: 'Długość geograficzna AED',
+    wymagane: false,
   },
+  { pole: 'poniedzialek_godziny', en: 'monday_hours', etykieta: 'Poniedziałek – dostępność', wymagane: false },
+  { pole: 'wtorek_godziny', en: 'tuesday_hours', etykieta: 'Wtorek – dostępność', wymagane: false },
+  { pole: 'sroda_godziny', en: 'wednesday_hours', etykieta: 'Środa – dostępność', wymagane: false },
+  { pole: 'czwartek_godziny', en: 'thursday_hours', etykieta: 'Czwartek – dostępność', wymagane: false },
+  { pole: 'piatek_godziny', en: 'friday_hours', etykieta: 'Piątek – dostępność', wymagane: false },
+  { pole: 'sobota_godziny', en: 'saturday_hours', etykieta: 'Sobota – dostępność', wymagane: false },
+  { pole: 'niedziela_godziny', en: 'sunday_hours', etykieta: 'Niedziela – dostępność', wymagane: false },
+  { pole: 'stan_aed', en: 'aed_status', etykieta: 'Stan AED', wymagane: true },
   {
-    pole: 'typ_odpowiedzialnego_za_aed',
-    en: 'aed_responsible_type',
-    etykieta: 'Typ odpowiedzialnego za AED',
-    obowiazkowosc: 'opcjonalne',
+    pole: 'data_weryfikacji_stanu_aed',
+    en: 'aed_status_verification_date',
+    etykieta: 'Data weryfikacji stanu AED',
+    wymagane: true,
   },
-  {
-    pole: 'regon_odpowiedzialnego_za_aed',
-    en: 'aed_responsible_regon',
-    etykieta: 'REGON odpowiedzialnego za AED',
-    obowiazkowosc: 'opcjonalne',
-  },
+  { pole: 'odpowiedzialny_za_aed', en: 'aed_responsible_entity', etykieta: 'Odpowiedzialny za AED', wymagane: true },
   {
     pole: 'telefon_odpowiedzialnego_za_aed',
     en: 'aed_responsible_phone',
     etykieta: 'Telefon odpowiedzialnego za AED',
-    obowiazkowosc: 'zalecane',
+    wymagane: true,
   },
   {
     pole: 'email_odpowiedzialnego_za_aed',
     en: 'aed_responsible_email',
     etykieta: 'E-mail odpowiedzialnego za AED',
-    obowiazkowosc: 'zalecane',
+    wymagane: true,
   },
-  { pole: 'dostawca', en: 'provider', etykieta: 'Dostawca danych', obowiazkowosc: 'wymagane' },
-  { pole: 'producent', en: 'manufacturer', etykieta: 'Producent', obowiazkowosc: 'opcjonalne' },
-  { pole: 'model', en: 'model', etykieta: 'Model', obowiazkowosc: 'opcjonalne' },
-  { pole: 'status_urzadzenia', en: 'aed_status', etykieta: 'Stan urządzenia', obowiazkowosc: 'zalecane' },
+  { pole: 'dostawca', en: 'provider', etykieta: 'Dostawca', wymagane: true },
   {
-    pole: 'data_ostatniego_przegladu',
-    en: 'aed_status_verification_date',
-    etykieta: 'Data ostatniego przeglądu',
-    obowiazkowosc: 'zalecane',
+    pole: 'data_dostarczenia_danych',
+    en: 'data_delivery_date',
+    etykieta: 'Data dostarczenia danych',
+    wymagane: true,
   },
-  { pole: 'opis_dodatkowy', en: 'additional_info', etykieta: 'Dodatkowe informacje', obowiazkowosc: 'opcjonalne' },
-  { pole: 'osm_id', en: 'osm_id', etykieta: 'Identyfikator OSM', obowiazkowosc: 'opcjonalne' },
-  { pole: 'zrodlo_danych', en: 'data_source', etykieta: 'Źródło danych', obowiazkowosc: 'nadaje narzędzie' },
-  {
-    pole: 'data_aktualizacji',
-    en: 'last_update',
-    etykieta: 'Data aktualizacji',
-    obowiazkowosc: 'nadaje narzędzie',
-  },
+  { pole: 'kod_zbioru_danych', en: 'dataset_code', etykieta: 'Kod zbioru danych', wymagane: true },
 ];
 
 export const KOLUMNY: readonly PoleRekordu[] = POLA.map((p) => p.pole);
 
 export const ETYKIETY = Object.fromEntries(POLA.map((p) => [p.pole, p.etykieta])) as Record<PoleRekordu, string>;
 
-/** Nagłówki EN (jak w AED Sync) – narzędzie rozpoznaje plik z nagłówkami PL albo EN. */
+/** Nagłówki EN (arkusz „DATA EN”) – narzędzie rozpoznaje plik z nagłówkami PL albo EN. */
 export const NAGLOWKI_EN = Object.fromEntries(POLA.map((p) => [p.pole, p.en])) as Record<PoleRekordu, string>;
 
-/** 9 pól wymaganych wzorca v1.3 – kompletność źródła liczymy względem tej listy, np. „6 z 9”. */
-export const POLA_WYMAGANE: readonly PoleRekordu[] = POLA.filter((p) => p.obowiazkowosc === 'wymagane').map(
-  (p) => p.pole,
-);
-
-/** Pola nadawane przez narzędzie integrujące, nie przez dostawcę. */
-export const POLA_SYSTEMOWE: readonly PoleRekordu[] = POLA.filter((p) => p.obowiazkowosc === 'nadaje narzędzie').map(
-  (p) => p.pole,
-);
+/** 15 pól obowiązkowych szablonu v15. */
+export const POLA_WYMAGANE: readonly PoleRekordu[] = POLA.filter((p) => p.wymagane).map((p) => p.pole);
 
 /** Kolumny godzin od poniedziałku do niedzieli. */
 export const POLA_DNI = [
@@ -194,17 +125,9 @@ export const POLA_DNI = [
   'niedziela_godziny',
 ] as const satisfies readonly PoleRekordu[];
 
-/** Słowniki z arkusza „Słowniki” wzorca. */
-export const STATUS_URZADZENIA = ['sprawne', 'niesprawne', 'w serwisie', 'wycofane'] as const;
-export const TYP_ODPOWIEDZIALNEGO = [
-  'administracja publiczna',
-  'edukacja',
-  'ochrona zdrowia',
-  'służby',
-  'transport',
-  'podmiot prywatny',
-  'organizacja pozarządowa',
-] as const;
+/** Lista: Sprawny, Niesprawny, Nieznany (v15). */
+export const STAN_AED = ['Sprawny', 'Niesprawny', 'Nieznany'] as const;
+
 export const WOJEWODZTWA = [
   'dolnośląskie',
   'kujawsko-pomorskie',

@@ -127,26 +127,6 @@
   }
 }
 
-// Telefon: najpierw lista; mapa po przełączniku.
-.zz-mapa {
-  display: none;
-  margin-bottom: 1.5rem;
-
-  &--widoczna {
-    display: block;
-  }
-}
-
-@media (min-width: 768px) {
-  .zz-przelacznik-mapy {
-    display: none;
-  }
-
-  .zz-mapa {
-    display: block;
-  }
-}
-
 // ---- mapa ----
 
 .mapa-aed__opis {
@@ -162,6 +142,16 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+
+  // Telefon: równa siatka 2 kolumn zamiast nierównych rzędów; „Pokaż wszystkie AED” na całą szerokość.
+  @media (max-width: 767.98px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    .btn:last-child {
+      grid-column: 1 / -1;
+    }
+  }
 }
 
 .mapa-aed__kontener {
@@ -478,24 +468,28 @@
   margin-bottom: 0.25rem;
 }
 
-.zz-karta__odleglosc {
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-}
-
 .zz-karta__dane {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.125rem 0.75rem;
-  margin: 0.5rem 0;
+  margin: 0.5rem 0 1rem;
 
+  // Na wąskim ekranie etykieta nad wartością – adres i godziny mają całą szerokość karty.
   dt {
     font-weight: bold;
+    margin-top: 0.5rem;
   }
 
   dd {
     margin: 0;
   }
+}
+
+.zz-karta__trasa {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 2.75rem;
+  margin-bottom: 0.75rem;
+  font-weight: bold;
 }
 
 .zz-karta__zrodlo {
@@ -562,4 +556,90 @@
   min-width: 1.75rem;
   padding: 0 0.3rem;
   border-radius: 1rem;
+}
+
+// Link do trasy w Google Maps pod adresem.
+.zz-trasa {
+  display: inline-block;
+  margin-top: 0.25rem;
+  min-height: 1.5rem; // cel ≥ 24 px (WCAG 2.5.8)
+}
+
+// Ścieżka krytyczna: najbliższe dostępne AED pod przyciskiem awaryjnym.
+.zz-najblizsze {
+  margin: 1rem 0;
+
+  &:focus-visible {
+    outline: 3px solid v.$primary;
+    outline-offset: 4px;
+  }
+}
+
+.zz-najblizsze__tytul {
+  font-size: 1.125rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+}
+
+.zz-najblizsze__lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.zz-najblizsze__aed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid v.$color-grey-light-6;
+  border-left: 5px solid v.$primary;
+  background: v.$color-white;
+}
+
+.zz-najblizsze__opis {
+  flex: 1 1 18rem;
+}
+
+.zz-najblizsze__nazwa {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.zz-najblizsze__trasa {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  font-weight: bold;
+
+  @media (max-width: 767.98px) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  .zz-najblizsze__aed {
+    background: transparent;
+    border-color: var(--contrast-primary);
+  }
+}
+
+// Kod (nazwy kolumn i pól) – kolor Bootstrapa #d63384 na tle #f9f9f9 ma kontrast 4,27:1; ciemniejszy odcień ≥ 4,5:1 (WCAG 1.4.3).
+code {
+  color: #a3195b;
+}
+
+:host-context(.black-white),
+:host-context(.black-yellow),
+:host-context(.yellow-black) {
+  code {
+    color: inherit;
+  }
 }

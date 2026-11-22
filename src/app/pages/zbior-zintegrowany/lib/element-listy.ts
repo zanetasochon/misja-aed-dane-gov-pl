@@ -14,9 +14,8 @@ import { ZRODLA } from './zrodla';
 export const ID_ZBIORU_ZINTEGROWANEGO = 'zbior-zintegrowany-aed';
 
 export const TYTUL_ZBIORU = 'Defibrylatory AED w Polsce – zbiór zintegrowany';
-export const OPIS_ZBIORU =
-  '<p>Ogólnopolski zbiór lokalizacji i dostępności defibrylatorów AED. Powstaje z połączenia zbiorów o AED publikowanych na dane.gov.pl przez różnych dostawców i jest ujednolicony według wzorcowego zakresu danych AED. Każdy rekord wskazuje zbiór źródłowy i datę danych, a za dane odpowiada dostawca zbioru źródłowego.</p>';
-/** Słowa kluczowe jak w arkuszu „Metadane zbioru” wzorca. */
+export const OPIS_ZBIORU = '<p>Ogólnopolski zbiór lokalizacji i dostępności defibrylatorów AED.</p>';
+/** Słowa kluczowe zbioru zintegrowanego. */
 export const SLOWA_KLUCZOWE = ['AED', 'defibrylator', 'pierwsza pomoc', 'ratownictwo', 'zdrowie'];
 
 /**

@@ -3,18 +3,17 @@
  * Strona „Sprawdź zgodność ze wzorcem” dla dostawców danych o AED.
  */
 
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { SeoService } from '@app/services/seo.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
 import { FileUploadComponent } from '@app/shared/forms/components/file-upload/file-upload.component';
 import { InfoTooltipDirective } from '@app/shared/info-tooltip/info-tooltip.directive';
-import { CSV_KROSNO } from './dane/krosno';
+import { CSV_PRZYKLAD_Z_BLEDAMI } from './dane/przyklad-z-bledami';
 import { BladCsv, wierszeJakoObiekty, wykryjSeparator } from './lib/csv';
 import { doCsv, doJson, kolumnyEksportu, pobierzPlik } from './lib/eksport';
 import { ETYKIETY, KOLUMNY, POLA_WYMAGANE } from './lib/model';
-import { doDatyCzasuWzorca } from './lib/wiek-danych';
-import { ZRODLA } from './lib/zrodla';
 import type { PoleRekordu } from './lib/model';
 import { czyPoprawioneAutomatycznie, jakPoprawic } from './lib/porady';
 import { BladXlsx, czytajXlsx } from './lib/xlsx';
@@ -33,7 +32,7 @@ interface Opcja {
   etykieta: string;
 }
 
-const polaDostawcy = KOLUMNY.filter((k) => k !== 'zrodlo_danych' && k !== 'data_aktualizacji');
+const polaDostawcy = KOLUMNY;
 
 const opcjaPola = (k: PoleRekordu): Opcja => ({ wartosc: k as Cel, etykieta: `${k} – ${ETYKIETY[k]}` });
 
@@ -42,7 +41,7 @@ const KROKI = [
   { id: 'zg-krok-1', nazwa: 'Wybierz plik' },
   { id: 'zg-krok-2', nazwa: 'Sprawdź dopasowanie kolumn' },
   { id: 'zg-krok-3', nazwa: 'Przeczytaj raport' },
-  { id: 'zg-krok-4', nazwa: 'Pobierz plik zgodny ze wzorcem' },
+  { id: 'zg-krok-4', nazwa: 'Pobierz plik zgodny z szablonem' },
 ] as const;
 
 @Component({
@@ -58,12 +57,21 @@ const KROKI = [
 })
 export class ZgodnoscComponent {
   readonly etykiety = ETYKIETY;
+
+  constructor() {
+    // Tytuł strony jak w portalu: „Tytuł - Otwarte Dane” (WCAG 2.4.2).
+    inject(SeoService).setPageTitle('Sprawdź zgodność ze wzorcem AED');
+  }
+
   readonly kroki = KROKI;
   readonly pominOpcja: Opcja = { wartosc: '', etykieta: 'Pomiń tę kolumnę' };
   /** Opcje pola wzorca w grupach (optgroup): najpierw pola wymagane. */
   readonly grupyOpcji: { etykieta: string; opcje: Opcja[] }[] = [
-    { etykieta: 'Pola wymagane', opcje: polaDostawcy.filter((k) => POLA_WYMAGANE.includes(k)).map(opcjaPola) },
-    { etykieta: 'Pozostałe pola wzorca', opcje: polaDostawcy.filter((k) => !POLA_WYMAGANE.includes(k)).map(opcjaPola) },
+    { etykieta: 'Pola obowiązkowe', opcje: polaDostawcy.filter((k) => POLA_WYMAGANE.includes(k)).map(opcjaPola) },
+    {
+      etykieta: 'Pozostałe pola szablonu',
+      opcje: polaDostawcy.filter((k) => !POLA_WYMAGANE.includes(k)).map(opcjaPola),
+    },
     {
       etykieta: 'Kolumny do rozbicia lub połączenia',
       opcje: (['ADRES', 'CECHA_ULICY', 'GEOMETRIA'] as const).map((c) => ({
@@ -80,10 +88,7 @@ export class ZgodnoscComponent {
   /** Propozycja narzędzia – do oznaczenia „dopasowano automatycznie” / „wybrano ręcznie”. */
   readonly propozycja = signal<Cel[]>([]);
   readonly pobrano = signal(false);
-  readonly identyfikator = signal('moj-zbior-aed');
   readonly polaWymagane = POLA_WYMAGANE;
-  /** Data i godzina ostatniej zmiany pliku – trafia do data_aktualizacji (nie dzisiejsza data). */
-  readonly dataPliku = signal('');
   readonly blad = signal('');
   /** Komunikat po wczytaniu pliku (pod polem pliku) i po pobraniu pliku wynikowego (w kroku 2.4). */
   readonly komunikat = signal<{ tekst: string; typ: 'success' | 'danger' } | null>(null);
@@ -92,13 +97,7 @@ export class ZgodnoscComponent {
   readonly raport = computed(() => {
     const p = this.plik();
     if (!p) return null;
-    return sprawdzZgodnosc(
-      p.naglowki,
-      p.wiersze,
-      this.mapowanie(),
-      this.identyfikator().trim() || 'moj-zbior-aed',
-      this.dataPliku(),
-    );
+    return sprawdzZgodnosc(p.naglowki, p.wiersze, this.mapowanie());
   });
 
   /** Bieżący krok: 1 bez pliku, 2 po wczytaniu (sprawdź mapowanie i raport), 4 po pobraniu. */
@@ -126,20 +125,20 @@ export class ZgodnoscComponent {
       return {
         poziom: 'danger' as const,
         ikona: '✕',
-        tekst: `Plik wymaga uzupełnienia: brakuje ${braki} z ${POLA_WYMAGANE.length} pól wymaganych.`,
-        opis: 'Możesz już pobrać plik w układzie wzorca, ale przed publikacją uzupełnij brakujące pola w swoich danych.',
+        tekst: `Plik wymaga uzupełnienia: brakuje ${braki} z ${POLA_WYMAGANE.length} pól obowiązkowych.`,
+        opis: 'Możesz już pobrać plik w układzie szablonu, ale przed publikacją uzupełnij brakujące pola w swoich danych.',
       };
     if (doPoprawy > 0)
       return {
         poziom: 'warning' as const,
         ikona: '!',
         tekst: 'Plik można opublikować, ale warto go poprawić.',
-        opis: 'Wszystkie pola wymagane są w pliku. Niektóre wartości mają zły format albo wiersze zostaną pominięte.',
+        opis: 'Wszystkie pola obowiązkowe są w pliku. Niektóre wartości mają zły format albo wiersze zostaną pominięte.',
       };
     return {
       poziom: 'success' as const,
       ikona: '✓',
-      tekst: 'Plik jest zgodny ze wzorcem.',
+      tekst: 'Plik jest zgodny z szablonem.',
       opis: 'Pobierz plik w kroku 4 i opublikuj go jako zasób swojego zbioru na dane.gov.pl.',
     };
   });
@@ -152,7 +151,7 @@ export class ZgodnoscComponent {
   });
 
   /** Plik CSV: kodowanie, separator i wiersze. */
-  private wczytaj(nazwa: string, tekst: string, zmodyfikowano: string): void {
+  private wczytaj(nazwa: string, tekst: string): void {
     try {
       // Plik zapisany np. w Windows-1250 daje po odczycie jako UTF-8 znaki zastępcze „�”.
       if (tekst.includes('\uFFFD'))
@@ -163,7 +162,7 @@ export class ZgodnoscComponent {
         throw new BladCsv(
           'Plik ma tylko jedną kolumnę. Najczęściej cały wiersz jest ujęty w cudzysłów albo separator jest inny niż przecinek lub średnik.',
         );
-      this.ustawPlik({ nazwa, separator, naglowki, wiersze }, zmodyfikowano);
+      this.ustawPlik({ nazwa, separator, naglowki, wiersze });
     } catch (e) {
       this.bladWczytania(
         e instanceof BladCsv ? e.message : 'Nie udało się odczytać pliku. Zapisz go jako CSV w kodowaniu UTF-8.',
@@ -186,12 +185,11 @@ export class ZgodnoscComponent {
       )[0];
       if (!wybor)
         throw new BladXlsx(
-          'W pliku nie ma arkusza z nagłówkami wzorca. Wpisz dane do arkusza „Dane PL” albo „Data EN” z pustego szablonu.',
+          'W pliku nie ma arkusza z nagłówkami szablonu. Wpisz dane do arkusza „DANE PL” albo „DATA EN” szablonu AED Sync.',
         );
       const { a } = wybor;
       this.ustawPlik(
         { nazwa: `${f.name} (arkusz „${a.nazwa}”)`, separator: '', naglowki: a.naglowki, wiersze: a.wiersze },
-        new Date(f.lastModified).toISOString(),
         zDanymi.length > 1 ? ` Dane są w kilku arkuszach – sprawdzam arkusz „${a.nazwa}” (najwięcej wierszy).` : '',
       );
     } catch (e) {
@@ -203,12 +201,11 @@ export class ZgodnoscComponent {
     }
   }
 
-  private ustawPlik(p: Plik, zmodyfikowano: string, uwaga = ''): void {
+  private ustawPlik(p: Plik, uwaga = ''): void {
     if (p.wiersze.length === 0) {
       this.bladWczytania('Plik ma tylko nagłówek, bez danych.');
       return;
     }
-    this.dataPliku.set(doDatyCzasuWzorca(zmodyfikowano));
     this.plik.set(p);
     const propozycja = zaproponujMapowanie(p.naglowki, p.wiersze);
     this.mapowanie.set(propozycja);
@@ -256,16 +253,11 @@ export class ZgodnoscComponent {
     }
     this.wybranePliki.set([f]);
     if (/\.xlsx$/i.test(f.name)) await this.wczytajXlsx(f);
-    else this.wczytaj(f.name, await f.text(), new Date(f.lastModified).toISOString());
+    else this.wczytaj(f.name, await f.text());
   }
 
   uzyjPrzykladu(): void {
-    const krosno = ZRODLA.find((z) => z.id === 'krosno');
-    this.wczytaj(
-      'Defibrylator_jAmxQcp.csv (Urząd Miasta Krosna, CC0 1.0)',
-      CSV_KROSNO,
-      krosno?.zmodyfikowano ?? new Date().toISOString(),
-    );
+    this.wczytaj('przyklad-gmina-przykladowo.csv (dane fikcyjne)', CSV_PRZYKLAD_Z_BLEDAMI);
   }
 
   zmienMapowanie(i: number, cel: Cel): void {
@@ -294,7 +286,7 @@ export class ZgodnoscComponent {
   pobierz(format: 'csv' | 'json'): void {
     const r = this.raport();
     if (!r) return;
-    const nazwa = `${this.identyfikator().trim() || 'moj-zbior-aed'}-wzorzec-v1-3.${format}`;
+    const nazwa = `moj-zbior-aed-sync-v15.${format}`;
     if (format === 'csv') pobierzPlik(doCsv(r.rekordy), nazwa, 'text/csv;charset=utf-8');
     else pobierzPlik(doJson(r.rekordy), nazwa, 'application/json');
     this.pobrano.set(true);

@@ -23,7 +23,7 @@
           </li>
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Prowadzący zbiór zintegrowany: </span>
-            Ministerstwo Cyfryzacji (administrator portalu). Za treść rekordów odpowiadają dostawcy zbiorów źródłowych.
+            Ministerstwo Cyfryzacji (administrator portalu). Za treść rekordów odpowiadają dostawcy.
           </li>
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Kategoria: </span>
@@ -38,12 +38,16 @@
           </li>
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Licencja: </span>
-            CC BY 4.0 z uznaniem autorstwa zbiorów źródłowych (propozycja)
+            CC BY 4.0 z uznaniem autorstwa dostawców (propozycja)
           </li>
           <li class="vertical-list__item">
-            <span class="vertical-list__item-label">Zbiory źródłowe: </span>
+            <span class="vertical-list__item-label">Dostawcy: </span>
             <span class="text-data">{{ wynik.raporty.length }}</span>
-            <span class="zz-opis">oraz {{ niedostepne.length }} niedostępne maszynowo</span>
+            <span class="zz-opis">W prototypie zbiory dostawców i ich dane są fikcyjne.</span>
+          </li>
+          <li class="vertical-list__item">
+            <span class="vertical-list__item-label">Szablon danych: </span>
+            AED Sync v15 (kod zbioru AED-SYNC-PL)
           </li>
           <li class="vertical-list__item">
             <span class="vertical-list__item-label">Liczba rekordów: </span>
@@ -164,8 +168,7 @@
                 {{ ustalaLokalizacje() ? 'Ustalam Twoją lokalizację…' : '' }}
               </p>
               <p id="zz-awaryjne-opis" class="zz-podpowiedz">
-                Pokazuje AED dostępne o aktualnej porze w promieniu {{ opisPromienia(promien()) }} od Ciebie. Twoja
-                lokalizacja nie jest nigdzie wysyłana.
+                Pokazuje AED dostępne o aktualnej porze w promieniu {{ opisPromienia(promien()) }} od Ciebie.
               </p>
 
               @if (bladLokalizacji() || brakDostepnychWPoblizu()) {
@@ -186,14 +189,52 @@
                   </div>
                 </div>
               }
+              <!-- Ścieżka krytyczna: najbliższe dostępne AED od razu pod przyciskiem, z trasą. -->
+              @if (lokalizacja() && tylkoTeraz() && najblizsze().length) {
+                <div
+                  class="zz-najblizsze"
+                  role="region"
+                  tabindex="-1"
+                  id="zz-najblizsze"
+                  aria-labelledby="zz-najblizsze-tytul">
+                  <h3 id="zz-najblizsze-tytul" class="zz-najblizsze__tytul">
+                    Najbliższe dostępne teraz ({{ najblizsze().length }} z {{ wyniki().length }})
+                  </h3>
+                  <ol class="zz-najblizsze__lista">
+                    @for (r of najblizsze(); track r.id) {
+                      <li class="zz-najblizsze__aed">
+                        <div class="zz-najblizsze__opis">
+                          <p class="zz-najblizsze__nazwa">{{ r.etykieta }}</p>
+                          @if (r.komentarz_aed) {
+                            <p class="zz-opis mb-0">{{ r.komentarz_aed }}</p>
+                          }
+                        </div>
+                        @if (trasa(r); as url) {
+                          <a class="btn btn-primary zz-najblizsze__trasa" [href]="url" target="_blank" rel="noopener"
+                            >Wyznacz trasę<span class="visually-hidden">
+                              do {{ r.etykieta }} w Google Maps (nowa karta)</span
+                            ></a
+                          >
+                        }
+                      </li>
+                    }
+                  </ol>
+                </div>
+              }
               @if (lokalizacja() && tylkoTeraz()) {
                 <button type="button" class="btn btn-link p-0" (click)="pokazWszystkie()">Pokaż wszystkie AED</button>
               }
             </section>
 
             <!-- pobieranie -->
-            <div class="zz-pobieranie">
-              <span class="dropdown-label">Pobierz zbiór:</span>
+            <div class="zz-pobieranie mb-4">
+              <span
+                class="dropdown-label"
+                tooltipTitle="Źródła i licencje"
+                appInfoTooltip="Korzystając z danych, podaj ich źródła – lista dostawców i licencji jest w pliku „Źródła i licencje”."
+                withoutMargin
+                >Pobierz zbiór:</span
+              >
               <button type="button" class="btn btn-outline-primary btn-sm" (click)="pobierz('csv')">
                 CSV ({{ rozmiary.csv }})
               </button>
@@ -212,9 +253,6 @@
                 <p class="alert alert-success mb-2">{{ komunikatPobierania() }}</p>
               }
             </div>
-            <p class="zz-podpowiedz">
-              Korzystając z danych, podaj ich źródła – lista dostawców i licencji jest w pliku „Źródła i licencje”.
-            </p>
 
             <!-- filtry -->
             <form
@@ -223,7 +261,7 @@
               aria-label="Filtry zbioru zintegrowanego"
               (submit)="$event.preventDefault()">
               <div class="zz-pole zz-pole--szerokie">
-                <label class="form-label" for="zz-szukaj">Szukaj (nazwa miejsca, ulica, miejscowość)</label>
+                <label class="form-label" for="zz-szukaj">Szukaj (nazwa obiektu, ulica, miejscowość)</label>
                 <input
                   id="zz-szukaj"
                   class="form-control"
@@ -247,36 +285,22 @@
                 </select>
               </div>
               <div class="zz-pole">
-                <label class="form-label" for="zz-dostep">Kto ma dostęp</label>
+                <label class="form-label" for="zz-stan">Stan AED</label>
                 <select
-                  id="zz-dostep"
+                  id="zz-stan"
                   class="form-select"
-                  name="dostep"
-                  [ngModel]="dostep()"
-                  (ngModelChange)="dostep.set($event)">
+                  name="stan"
+                  [ngModel]="stan()"
+                  (ngModelChange)="stan.set($event)">
                   <option value="">Wszystkie</option>
-                  @for (d of dostepy; track d) {
-                    <option [value]="d">{{ d }}</option>
+                  @for (s of stany; track s) {
+                    <option [value]="s">{{ s }}</option>
                   }
-                  <option value="brak">brak danych w źródle</option>
+                  <option value="brak">brak danych</option>
                 </select>
               </div>
               <div class="zz-pole">
-                <label class="form-label" for="zz-wewnatrz">Wewnątrz czy na zewnątrz</label>
-                <select
-                  id="zz-wewnatrz"
-                  class="form-select"
-                  name="wewnatrz"
-                  [ngModel]="wewnatrz()"
-                  (ngModelChange)="wewnatrz.set($event)">
-                  <option value="">Wszystkie</option>
-                  <option value="tak">wewnątrz budynku</option>
-                  <option value="nie">na zewnątrz</option>
-                  <option value="brak">brak danych w źródle</option>
-                </select>
-              </div>
-              <div class="zz-pole">
-                <label class="form-label" for="zz-dostawca">Dostawca źródłowy</label>
+                <label class="form-label" for="zz-dostawca">Dostawca</label>
                 <select
                   id="zz-dostawca"
                   class="form-select"
@@ -312,175 +336,225 @@
 
             <p role="status" class="zz-status">{{ tekstWynikow() }}</p>
 
-            <p class="zz-przelacznik-mapy">
-              <button
-                type="button"
-                class="btn btn-outline-primary btn-sm"
-                aria-controls="zz-mapa"
-                [attr.aria-expanded]="mapaNaTelefonie()"
-                (click)="mapaNaTelefonie.set(!mapaNaTelefonie())">
-                {{ mapaNaTelefonie() ? 'Ukryj mapę' : 'Pokaż mapę' }}
-              </button>
-            </p>
-
-            <div id="zz-mapa" class="zz-mapa" [class.zz-mapa--widoczna]="mapaNaTelefonie()">
-              <app-mapa-aed
-                [rekordy]="wyniki()"
-                [lokalizacja]="lokalizacja()"
-                [promienM]="lokalizacja() ? promien() : null"></app-mapa-aed>
-            </div>
-
-            <section id="lista-aed" class="zz-lista" tabindex="-1" aria-labelledby="lista-aed-tytul">
-              <h3 id="lista-aed-tytul" class="visually-hidden">Lista AED</h3>
-              @if (wyniki().length === 0 && !brakDostepnychWPoblizu()) {
-                <div class="alert alert-info">
-                  Brak AED dla wybranych filtrów{{ lokalizacja() ? ' w wybranym promieniu' : '' }}.
-                  @if (aktywneFiltry().length) {
-                    <button type="button" class="btn btn-link p-0 align-baseline" (click)="wyczyscFiltry()">
-                      Wyczyść filtry
-                    </button>
-                  }
-                </div>
-              }
-              <ul class="zz-karty d-md-none" aria-label="Lista AED">
-                @for (r of wynikiStrony(); track r.id_aed) {
-                  <li>
-                    <article class="zz-karta">
-                      <h4 class="zz-karta__tytul">
-                        {{ r.etykieta }}
-                      </h4>
-                      @if (lokalizacja()) {
-                        <p class="zz-karta__odleglosc">{{ opisOdleglosci(odleglosc(r) ?? 0) }} od Ciebie</p>
-                      }
-                      @if (r.opis_lokalizacji) {
-                        <p class="zz-opis">{{ r.opis_lokalizacji }}</p>
-                      }
-                      <dl class="zz-karta__dane">
-                        <dt>Adres</dt>
-                        <dd>
-                          {{ [r.ulica, r.numer_budynku].join(' ').trim() || '–' }}, {{ r.kod_pocztowy ?? '' }}
-                          {{ r.miejscowosc ?? '' }}
-                        </dd>
-                        <dt>Dostęp</dt>
-                        <dd>{{ r.dostep ?? 'brak danych' }}</dd>
-                        <dt>Godziny</dt>
-                        <dd>{{ r.godziny_dostepnosci ?? 'brak danych' }}</dd>
-                        <dt>Dostępny teraz</dt>
-                        <dd>{{ stanTeraz(r) }}</dd>
-                        <dt>Położenie</dt>
-                        <dd>{{ takNie(r.wewnatrz_budynku) }}</dd>
-                      </dl>
-                      <p class="zz-karta__zrodlo">
-                        Źródło:
-                        @if (r.adresZbioruZrodla) {
-                          <a [href]="r.adresZbioruZrodla">{{ r.dostawcaZrodla }}</a>
-                        } @else {
-                          {{ r.dostawcaZrodla }}
-                        }
-                        · dane z <time [attr.datetime]="r.dataDanychZrodla">{{ data(r.dataDanychZrodla) }}</time>
-                        @if (nieaktualne(r.dataDanychZrodla)) {
-                          <span class="zz-ostrzezenie">Uwaga: dane sprzed {{ opisWieku(r.dataDanychZrodla) }}</span>
-                        }
-                      </p>
-                    </article>
+            <!-- Tabela albo mapa – zakładki jak na stronie zasobu portalu (dataset-resource: Tabela / Wykres / Mapa). -->
+            <div class="tabs">
+              <ul class="tab-list row no-gutters" role="tablist" aria-label="Widok AED">
+                @for (w of widoki; track w.id) {
+                  <li class="tab-list__item col-12 col-md-4" role="presentation">
+                    <a
+                      class="tab-list__link"
+                      role="tab"
+                      [id]="'zz-widok-' + w.id"
+                      appInfoTooltip="{{ w.podpowiedz | translate }}"
+                      tooltipTitle="{{ w.etykieta | translate }}"
+                      withoutMargin
+                      [routerLink]="[]"
+                      [class.tab-list__link--active]="widok() === w.id"
+                      [attr.aria-selected]="widok() === w.id ? true : null"
+                      [attr.aria-controls]="w.id === 'tabela' ? 'lista-aed' : 'zz-widok-panel-mapa'"
+                      (click)="$event.preventDefault(); widok.set(w.id)">
+                      {{ w.etykieta | translate }}
+                    </a>
                   </li>
                 }
               </ul>
+            </div>
+
+            <div class="tabs-content">
               <div
-                class="scrollable-table-wrapper d-none d-md-block"
-                role="region"
-                aria-labelledby="lista-aed-podpis"
-                tabindex="0">
-                <table class="datagrid">
-                  <caption
-                    class="zz-podpis"
-                    tooltipTitle="Lista AED"
-                    appInfoTooltip="Lista zawiera te same AED co mapa – to jej tekstowy odpowiednik. Możesz z niej korzystać zamiast mapy, np. z klawiatury albo z czytnikiem ekranu."
-                    withoutMargin>
-                    <span id="lista-aed-podpis">Lista AED ({{ wyniki().length }})</span>
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th class="datagrid__heading" scope="col">Nazwa miejsca</th>
-                      @if (lokalizacja()) {
-                        <th class="datagrid__heading" scope="col">Odległość</th>
-                      }
-                      <th class="datagrid__heading" scope="col">Adres</th>
-                      <th class="datagrid__heading" scope="col">Dostęp</th>
-                      <th class="datagrid__heading" scope="col">Godziny</th>
-                      <th class="datagrid__heading" scope="col">Dostępny teraz</th>
-                      <th class="datagrid__heading" scope="col">Położenie</th>
-                      <th class="datagrid__heading" scope="col">Źródło</th>
-                      <th class="datagrid__heading" scope="col">Data danych</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (r of wynikiStrony(); track r.id_aed) {
-                      <tr class="datagrid__row">
-                        <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
+                id="zz-widok-panel-mapa"
+                role="tabpanel"
+                aria-labelledby="zz-widok-mapa"
+                [hidden]="widok() !== 'mapa'">
+                <app-mapa-aed
+                  [rekordy]="wyniki()"
+                  [lokalizacja]="lokalizacja()"
+                  [promienM]="lokalizacja() ? promien() : null"></app-mapa-aed>
+              </div>
+
+              <section
+                id="lista-aed"
+                class="zz-lista"
+                role="tabpanel"
+                tabindex="-1"
+                aria-labelledby="zz-widok-tabela"
+                [hidden]="widok() !== 'tabela'">
+                <h3 id="lista-aed-tytul" class="visually-hidden">Lista AED</h3>
+                @if (wyniki().length === 0 && !brakDostepnychWPoblizu()) {
+                  <div class="alert alert-info">
+                    Brak AED dla wybranych filtrów{{ lokalizacja() ? ' w wybranym promieniu' : '' }}.
+                    @if (aktywneFiltry().length) {
+                      <button type="button" class="btn btn-link p-0 align-baseline" (click)="wyczyscFiltry()">
+                        Wyczyść filtry
+                      </button>
+                    }
+                  </div>
+                }
+                <ul class="zz-karty d-md-none" aria-label="Lista AED">
+                  @for (r of wynikiStrony(); track r.id) {
+                    <li>
+                      <article class="zz-karta">
+                        <h4 class="zz-karta__tytul">
                           {{ r.etykieta }}
-                          @if (r.opis_lokalizacji) {
-                            <span class="zz-opis">{{ r.opis_lokalizacji }}</span>
-                          }
-                        </th>
-                        @if (lokalizacja()) {
-                          <td class="datagrid__cell">{{ opisOdleglosci(odleglosc(r) ?? 0) }}</td>
+                        </h4>
+                        @if (r.komentarz_aed) {
+                          <p class="zz-opis">{{ r.komentarz_aed }}</p>
                         }
-                        <td class="datagrid__cell">
-                          {{ [r.ulica, r.numer_budynku].join(' ').trim() || '–' }}<br />{{ r.kod_pocztowy ?? '' }}
-                          {{ r.miejscowosc ?? '' }}
-                        </td>
-                        <td class="datagrid__cell">{{ r.dostep ?? 'brak danych' }}</td>
-                        <td class="datagrid__cell">
-                          @if (r.godziny_dostepnosci) {
-                            <code>{{ r.godziny_dostepnosci }}</code>
-                          } @else {
-                            <span class="zz-brak">brak danych</span>
-                          }
-                        </td>
-                        <td class="datagrid__cell">{{ stanTeraz(r) }}</td>
-                        <td class="datagrid__cell">{{ takNie(r.wewnatrz_budynku) }}</td>
-                        <td class="datagrid__cell">
+                        <dl class="zz-karta__dane">
+                          <dt>Adres</dt>
+                          <dd>{{ adres(r) || '–' }}</dd>
+                          <dt>Godziny</dt>
+                          <dd>{{ godziny(r) ?? 'brak danych' }}</dd>
+                          <dt>Dostępny teraz</dt>
+                          <dd>{{ stanTeraz(r) }}</dd>
+                          <dt>Stan AED</dt>
+                          <dd>{{ r.stan_aed ?? 'brak danych' }}</dd>
+                          <dt>Odpowiedzialny</dt>
+                          <dd>
+                            {{ r.odpowiedzialny_za_aed ?? 'brak danych' }}
+                            @if (r.telefon_odpowiedzialnego_za_aed; as tel) {
+                              <br /><a [href]="'tel:' + bezSpacji(tel)">{{ tel }}</a>
+                            }
+                          </dd>
+                        </dl>
+                        @if (trasa(r); as url) {
+                          <a class="btn btn-primary zz-karta__trasa" [href]="url" target="_blank" rel="noopener"
+                            >Wyznacz trasę<span class="visually-hidden">
+                              do {{ r.etykieta }} w Google Maps (nowa karta)</span
+                            ></a
+                          >
+                        }
+                        <p class="zz-karta__zrodlo">
+                          Zbiór:
                           @if (r.adresZbioruZrodla) {
-                            <a [href]="r.adresZbioruZrodla">{{ r.dostawcaZrodla }}</a>
+                            <a [routerLink]="r.adresZbioruZrodla">{{ r.dostawcaZrodla }}</a>
                           } @else {
                             {{ r.dostawcaZrodla }}
                           }
-                          @if (r.atrybucjaZrodla) {
-                            <span class="zz-opis">{{ r.atrybucjaZrodla }}</span>
+                          @if (r.data_dostarczenia_danych; as d) {
+                            · dane z <time [attr.datetime]="d">{{ data(d) }}</time>
+                            @if (nieaktualne(d)) {
+                              <span class="zz-ostrzezenie">Uwaga: dane sprzed {{ opisWieku(d) }}</span>
+                            }
                           }
-                        </td>
-                        <td class="datagrid__cell">
-                          <time [attr.datetime]="r.dataDanychZrodla">{{ data(r.dataDanychZrodla) }}</time>
-                          @if (nieaktualne(r.dataDanychZrodla)) {
-                            <span class="zz-ostrzezenie">Uwaga: dane sprzed {{ opisWieku(r.dataDanychZrodla) }}</span>
-                          }
-                        </td>
+                        </p>
+                      </article>
+                    </li>
+                  }
+                </ul>
+                <div
+                  class="scrollable-table-wrapper d-none d-md-block"
+                  role="region"
+                  aria-labelledby="lista-aed-podpis"
+                  tabindex="0">
+                  <table class="datagrid">
+                    <caption
+                      class="zz-podpis"
+                      tooltipTitle="Lista AED"
+                      appInfoTooltip="Lista zawiera te same AED co mapa – to jej tekstowy odpowiednik. Możesz z niej korzystać zamiast mapy, np. z klawiatury albo z czytnikiem ekranu."
+                      withoutMargin>
+                      <span id="lista-aed-podpis">Lista AED ({{ wyniki().length }})</span>
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th class="datagrid__heading" scope="col">Nazwa obiektu</th>
+                        <th class="datagrid__heading" scope="col">Adres</th>
+                        <th class="datagrid__heading" scope="col">Godziny</th>
+                        <th class="datagrid__heading" scope="col">Dostępny teraz</th>
+                        <th class="datagrid__heading" scope="col">Stan AED</th>
+                        <th class="datagrid__heading" scope="col">Odpowiedzialny za AED</th>
+                        <th class="datagrid__heading" scope="col">Zbiór dostawcy</th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      @for (r of wynikiStrony(); track r.id) {
+                        <tr class="datagrid__row">
+                          <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
+                            {{ r.etykieta }}
+                            @if (r.komentarz_aed) {
+                              <span class="zz-opis">{{ r.komentarz_aed }}</span>
+                            }
+                          </th>
+                          <td class="datagrid__cell">
+                            {{ adres(r) || '–' }}
+                            @if (trasa(r); as url) {
+                              <a class="zz-trasa" [href]="url" target="_blank" rel="noopener"
+                                >Wyznacz trasę<span class="visually-hidden">
+                                  do {{ r.etykieta }} w Google Maps (nowa karta)</span
+                                ></a
+                              >
+                            }
+                          </td>
+                          <td class="datagrid__cell">
+                            @if (godziny(r); as g) {
+                              {{ g }}
+                            } @else {
+                              <span class="zz-brak">brak danych</span>
+                            }
+                          </td>
+                          <td class="datagrid__cell">{{ stanTeraz(r) }}</td>
+                          <td class="datagrid__cell">
+                            {{ r.stan_aed ?? 'brak danych' }}
+                            @if (r.data_weryfikacji_stanu_aed; as d) {
+                              <span class="zz-opis"
+                                >sprawdzono <time [attr.datetime]="d">{{ data(d) }}</time></span
+                              >
+                            }
+                          </td>
+                          <td class="datagrid__cell">
+                            {{ r.odpowiedzialny_za_aed ?? 'brak danych' }}
+                            @if (r.telefon_odpowiedzialnego_za_aed; as tel) {
+                              <span class="zz-opis"
+                                ><a [href]="'tel:' + bezSpacji(tel)">{{ tel }}</a></span
+                              >
+                            }
+                            @if (r.email_odpowiedzialnego_za_aed; as email) {
+                              <span class="zz-opis"
+                                ><a [href]="'mailto:' + email">{{ email }}</a></span
+                              >
+                            }
+                          </td>
+                          <td class="datagrid__cell">
+                            @if (r.adresZbioruZrodla) {
+                              <a [routerLink]="r.adresZbioruZrodla">{{ r.dostawcaZrodla }}</a>
+                            } @else {
+                              {{ r.dostawcaZrodla }}
+                            }
+                            @if (r.data_dostarczenia_danych; as d) {
+                              <span class="zz-opis"
+                                >dane z <time [attr.datetime]="d">{{ data(d) }}</time></span
+                              >
+                              @if (nieaktualne(d)) {
+                                <span class="zz-ostrzezenie">Uwaga: dane sprzed {{ opisWieku(d) }}</span>
+                              }
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
 
-              <!-- RESULTS FOOTER -->
-              @if (wyniki().length) {
-                <footer class="results-footer pt-5">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <!-- results per page -->
-                    <app-items-per-page [selected]="naStronie()" (selectedChange)="zmienNaStronie($event)">
-                    </app-items-per-page>
+                <!-- RESULTS FOOTER -->
+                @if (wyniki().length) {
+                  <footer class="results-footer pt-5">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <!-- results per page -->
+                      <app-items-per-page [selected]="naStronie()" (selectedChange)="zmienNaStronie($event)">
+                      </app-items-per-page>
 
-                    <!-- pagination -->
-                    <app-pagination
-                      [itemsPerPage]="naStronie()"
-                      [totalItems]="wyniki().length"
-                      [page]="strona()"
-                      (pageChange)="zmienStrone($event)">
-                    </app-pagination>
-                  </div>
-                </footer>
-              }
-            </section>
+                      <!-- pagination -->
+                      <app-pagination
+                        [itemsPerPage]="naStronie()"
+                        [totalItems]="wyniki().length"
+                        [page]="strona()"
+                        (pageChange)="zmienStrone($event)">
+                      </app-pagination>
+                    </div>
+                  </footer>
+                }
+              </section>
+            </div>
           </div>
 
           <!-- ===== ZBIORY ŹRÓDŁOWE ===== -->
@@ -491,18 +565,20 @@
             id="zz-panel-zrodla"
             aria-labelledby="zz-tab-zrodla"
             tabindex="0">
-            <h2 class="heading heading--sm">Zbiory źródłowe</h2>
-            <p>
-              Każdy zbiór źródłowy publikuje i aktualizuje jego dostawca. Zbiór zintegrowany tylko je łączy i ujednolica
-              według wzorca.
-            </p>
+            <h2
+              class="heading heading--sm"
+              tooltipTitle="Zbiory dostawców"
+              appInfoTooltip="Każdy dostawca sam publikuje na dane.gov.pl swój zbiór, wypełniony według szablonu AED Sync, i sam za niego odpowiada. Zbiór zintegrowany tylko pokazuje te dane w jednym miejscu."
+              withoutMargin>
+              Zbiory dostawców
+            </h2>
             <div class="results-section">
               @for (r of wynik.raporty; track r.zrodlo.id) {
                 <div class="result-item">
                   <div class="result-item__left col-lg-8 col-xl-9 col-xxl-10 px-3">
                     <h3 class="heading heading--primary-link heading--sm result-item-heading">
                       @if (r.zrodlo.adresZbioru) {
-                        <a [href]="r.zrodlo.adresZbioru">{{ r.zrodlo.tytul }}</a>
+                        <a [routerLink]="r.zrodlo.adresZbioru">{{ r.zrodlo.tytul }}</a>
                       } @else {
                         {{ r.zrodlo.tytul }}
                       }
@@ -547,44 +623,7 @@
                         </div>
                         <div class="result-item-attributes__list-item pt-lg-3">
                           <strong>W zbiorze zintegrowanym: </strong>
-                          <span class="d-lg-block">{{ r.przyjete }} z {{ r.wierszy }} rekordów</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              }
-              @for (n of niedostepne; track n.adresZbioru) {
-                <div class="result-item">
-                  <div class="result-item__left col-lg-8 col-xl-9 col-xxl-10 px-3">
-                    <h3 class="heading heading--primary-link heading--sm result-item-heading">
-                      <a [href]="n.adresZbioru">{{ n.tytul }}</a>
-                    </h3>
-                    <div>
-                      <strong class="pr-1">Dostawca danych:</strong>
-                      {{ n.dostawca }}
-                    </div>
-                    <div>
-                      <strong class="pr-1">Licencja:</strong>
-                      {{ n.licencja }}
-                    </div>
-                    <div class="zz-ostrzezenie">Nie wykorzystano: {{ n.powod }}.</div>
-                  </div>
-                  <div class="result-item__right col-lg-4 col-xl-3 col-xxl-2 px-3">
-                    <div class="result-item-attributes">
-                      <div class="result-item-attributes__heading">
-                        <p class="result-item-attributes__text">Zbiór danych</p>
-                      </div>
-                      <div class="result-item-attributes__list">
-                        <div class="result-item-attributes__list-item">
-                          <strong>Data danych: </strong>
-                          <span class="d-lg-block">
-                            <time [attr.datetime]="n.dataDanych">{{ data(n.dataDanych) }}</time>
-                          </span>
-                        </div>
-                        <div class="result-item-attributes__list-item pt-lg-3">
-                          <strong>W zbiorze zintegrowanym: </strong>
-                          <span class="d-lg-block">0 rekordów</span>
+                          <span class="d-lg-block">{{ r.przyjete }} z {{ r.wierszy }} AED</span>
                         </div>
                       </div>
                     </div>
@@ -594,7 +633,7 @@
             </div>
           </div>
 
-          <!-- ===== RAPORT HARMONIZACJI ===== -->
+          <!-- ===== KONTROLA DANYCH DOSTAWCÓW ===== -->
 
           <div
             [hidden]="zakladka() !== 'raport'"
@@ -602,11 +641,10 @@
             id="zz-panel-raport"
             aria-labelledby="zz-tab-raport"
             tabindex="0">
-            <h2 class="heading heading--sm">Raport harmonizacji</h2>
+            <h2 class="heading heading--sm">Kontrola danych dostawców</h2>
             <p>
-              Dla każdego źródła: jak zmapowano kolumny na pola wzorca, ile z {{ polaWymagane.length }} pól wymaganych
-              źródło dostarcza, które wiersze odrzucono i dlaczego. Brakujących pól integracja nie uzupełnia – zostają
-              puste, żeby nie udawać danych, których nie ma.
+              Dla każdego dostawcy: czy {{ polaWymagane.length }} pól obowiązkowych szablonu jest wypełnionych, które
+              wiersze pominięto i dlaczego oraz jakie wartości mają zły format. Poprawić dane może tylko dostawca.
             </p>
 
             <div
@@ -616,15 +654,14 @@
               tabindex="0">
               <table class="datagrid">
                 <caption id="zz-porownanie-podpis" class="zz-podpis">
-                  Porównanie zbiorów źródłowych
+                  Podsumowanie dostawców
                 </caption>
                 <thead>
                   <tr>
-                    <th class="datagrid__heading" scope="col">Źródło</th>
-                    <th class="datagrid__heading" scope="col">Pola wymagane</th>
-                    <th class="datagrid__heading" scope="col">Brakujące pola wymagane</th>
-                    <th class="datagrid__heading" scope="col">Przyjęte AED</th>
-                    <th class="datagrid__heading" scope="col">Odrzucone</th>
+                    <th class="datagrid__heading" scope="col">Dostawca</th>
+                    <th class="datagrid__heading" scope="col">Pola obowiązkowe kompletne</th>
+                    <th class="datagrid__heading" scope="col">AED w zbiorze</th>
+                    <th class="datagrid__heading" scope="col">Pominięte wiersze</th>
                     <th class="datagrid__heading" scope="col">Ostrzeżenia</th>
                     <th class="datagrid__heading" scope="col">Data danych</th>
                   </tr>
@@ -633,10 +670,9 @@
                   @for (r of wynik.raporty; track r.zrodlo.id) {
                     <tr class="datagrid__row">
                       <th class="datagrid__cell zz-wiersz-naglowek" scope="row">{{ r.zrodlo.dostawca }}</th>
-                      <td class="datagrid__cell">{{ r.polaWymaganeObecne }} z {{ polaWymagane.length }}</td>
-                      <td class="datagrid__cell">{{ brakujaceWymagane(r).join(', ') || 'brak' }}</td>
+                      <td class="datagrid__cell">{{ r.polaWymaganeKompletne }} z {{ polaWymagane.length }}</td>
                       <td class="datagrid__cell">{{ r.przyjete }} z {{ r.wierszy }}</td>
-                      <td class="datagrid__cell">{{ r.odrzucone.length }}</td>
+                      <td class="datagrid__cell">{{ r.pominiete.length }}</td>
                       <td class="datagrid__cell">{{ r.ostrzezenia.length }}</td>
                       <td class="datagrid__cell zz-nowrap">
                         {{ r.zrodlo.dataDanych }}
@@ -653,28 +689,27 @@
             @for (r of wynik.raporty; track r.zrodlo.id) {
               <section class="zz-raport" [attr.aria-labelledby]="'zz-raport-' + r.zrodlo.id">
                 <h3 [id]="'zz-raport-' + r.zrodlo.id" class="heading heading--sm">{{ r.zrodlo.dostawca }}</h3>
-                <ul class="vertical-list zz-raport__liczby">
-                  <li class="vertical-list__item">
-                    <span class="vertical-list__item-label">Pola wymagane: </span>
-                    <span class="text-data">{{ r.polaWymaganeObecne }} z {{ polaWymagane.length }}</span>
-                  </li>
-                  <li class="vertical-list__item">
-                    <span class="vertical-list__item-label">Przyjęto: </span>
-                    <span class="text-data">{{ r.przyjete }} z {{ r.wierszy }}</span>
-                  </li>
-                  <li class="vertical-list__item">
-                    <span class="vertical-list__item-label">Odrzucono: </span>
-                    <span class="text-data">{{ r.odrzucone.length }}</span>
-                  </li>
-                  <li class="vertical-list__item">
-                    <span class="vertical-list__item-label">Ostrzeżenia: </span>
-                    <span class="text-data">{{ r.ostrzezenia.length }}</span>
-                  </li>
-                </ul>
-                @if (brakujaceWymagane(r).length) {
+                @if (niekompletneWymagane(r).length) {
+                  <p><strong>Niekompletne pola obowiązkowe:</strong> {{ niekompletneWymagane(r).join(', ') }}.</p>
+                } @else {
+                  <p>Wszystkie pola obowiązkowe są wypełnione we wszystkich rekordach.</p>
+                }
+                @if (r.kolumnySpozaSzablonu.length) {
                   <p>
-                    <strong>Brakujące pola wymagane:</strong> {{ brakujaceWymagane(r).join(', ') }}. Integracja ich nie
-                    uzupełnia – może je dodać tylko dostawca źródła.
+                    <strong>Kolumny spoza szablonu (pominięte):</strong>
+                    {{ r.kolumnySpozaSzablonu.join(', ') }}.
+                  </p>
+                }
+                @if (!r.wedlugSzablonu) {
+                  <p>
+                    Zbiór nie jest jeszcze w układzie szablonu AED Sync – kolumny przypisano do pól szablonu (niżej).
+                    Danych nie zmyślamy. Uzupełniliśmy tylko to, co wynika ze zbioru albo jest prawdą z definicji:
+                    dostawcę, województwo, powiat i gminę
+                    @if (r.zrodlo.obszar; as o) {
+                      ({{ o.miejscowosc }}: {{ o.wojewodztwo }}, {{ o.powiat }}, {{ o.gmina }})
+                    }
+                    , datę dostarczenia (data danych zasobu), kod zbioru AED-SYNC-PL i stan AED „Nieznany”. Godziny,
+                    datę weryfikacji, podmiot odpowiedzialny i kontakt może dodać tylko dostawca.
                   </p>
                 }
                 @if (r.zrodlo.uwagiDoPliku?.length) {
@@ -685,68 +720,52 @@
                     }
                   </ul>
                 }
-
-                <details class="zz-szczegoly">
-                  <summary>Mapowanie kolumn ({{ r.zrodlo.mapowanie.length }})</summary>
-                  <div
-                    class="scrollable-table-wrapper"
-                    role="region"
-                    [attr.aria-labelledby]="'zz-map-' + r.zrodlo.id"
-                    tabindex="0">
-                    <table class="datagrid">
-                      <caption [id]="'zz-map-' + r.zrodlo.id" class="zz-podpis">
-                        Mapowanie kolumn:
-                        {{
-                          r.zrodlo.dostawca
-                        }}
-                      </caption>
-                      <thead>
-                        <tr>
-                          <th class="datagrid__heading" scope="col">Kolumna w źródle</th>
-                          <th class="datagrid__heading" scope="col">Pole wzorca</th>
-                          <th class="datagrid__heading" scope="col">Uwagi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (m of r.zrodlo.mapowanie; track m.kolumna) {
-                          <tr class="datagrid__row">
-                            <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
-                              <code>{{ m.kolumna }}</code>
-                            </th>
-                            <td class="datagrid__cell">
-                              @if (m.pola.length) {
-                                <code>{{ m.pola.join(', ') }}</code>
-                              } @else {
-                                <span class="zz-brak">pominięta</span>
-                              }
-                            </td>
-                            <td class="datagrid__cell">{{ m.uwaga ?? '' }}</td>
+                @if (r.zrodlo.mapowanie?.length) {
+                  <details class="zz-szczegoly">
+                    <summary>Przypisanie kolumn do pól szablonu ({{ r.zrodlo.mapowanie!.length }})</summary>
+                    <div
+                      class="scrollable-table-wrapper"
+                      role="region"
+                      [attr.aria-labelledby]="'zz-map-' + r.zrodlo.id"
+                      tabindex="0">
+                      <table class="datagrid">
+                        <caption [id]="'zz-map-' + r.zrodlo.id" class="zz-podpis">
+                          Przypisanie kolumn:
+                          {{
+                            r.zrodlo.dostawca
+                          }}
+                        </caption>
+                        <thead>
+                          <tr>
+                            <th class="datagrid__heading" scope="col">Kolumna w zbiorze</th>
+                            <th class="datagrid__heading" scope="col">Pole szablonu</th>
+                            <th class="datagrid__heading" scope="col">Uwagi</th>
                           </tr>
-                        }
-                        <tr class="datagrid__row">
-                          <th class="datagrid__cell zz-wiersz-naglowek" scope="row">(brak w źródle)</th>
-                          <td class="datagrid__cell">
-                            <code
-                              >kod_zbioru_danych, dostawca{{
-                                r.zrodlo.obszar ? ', wojewodztwo, powiat, gmina' : ''
-                              }}</code
-                            >
-                          </td>
-                          <td class="datagrid__cell">
-                            Uzupełnia integracja: kod AED-SYNC-PL i dostawca „{{ r.zrodlo.dostawca }}”.
-                            @if (r.zrodlo.obszar; as o) {
-                              Rekordy z miejscowości {{ o.miejscowosc }}: województwo {{ o.wojewodztwo }}, powiat
-                              {{ o.powiat }}, gmina {{ o.gmina }}.
-                            }
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </details>
+                        </thead>
+                        <tbody>
+                          @for (m of r.zrodlo.mapowanie; track m.kolumna) {
+                            <tr class="datagrid__row">
+                              <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
+                                <code>{{ m.kolumna }}</code>
+                              </th>
+                              <td class="datagrid__cell">
+                                @if (m.pola.length) {
+                                  <code>{{ m.pola.join(', ') }}</code>
+                                } @else {
+                                  <span class="zz-brak">pominięta</span>
+                                }
+                              </td>
+                              <td class="datagrid__cell">{{ m.uwaga ?? '' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                }
 
                 <details class="zz-szczegoly">
-                  <summary>Kompletność pól wymaganych</summary>
+                  <summary>Kompletność pól obowiązkowych</summary>
                   <div
                     class="scrollable-table-wrapper"
                     role="region"
@@ -754,14 +773,14 @@
                     tabindex="0">
                     <table class="datagrid">
                       <caption [id]="'zz-komp-' + r.zrodlo.id" class="zz-podpis">
-                        Kompletność pól wymaganych:
+                        Kompletność pól obowiązkowych:
                         {{
                           r.zrodlo.dostawca
                         }}
                       </caption>
                       <thead>
                         <tr>
-                          <th class="datagrid__heading" scope="col">Pole wzorca</th>
+                          <th class="datagrid__heading" scope="col">Pole szablonu</th>
                           <th class="datagrid__heading" scope="col">Wypełnione</th>
                           <th class="datagrid__heading" scope="col">Udział</th>
                         </tr>
@@ -779,10 +798,10 @@
                   </div>
                 </details>
 
-                @if (r.odrzucone.length) {
-                  <h4 class="zz-h4">Odrzucone wiersze</h4>
+                @if (r.pominiete.length) {
+                  <h4 class="zz-h4">Pominięte wiersze</h4>
                   <ul>
-                    @for (o of r.odrzucone; track o.wiersz) {
+                    @for (o of r.pominiete; track o.wiersz) {
                       <li>Wiersz {{ o.wiersz }} („{{ o.nazwa }}”): {{ o.powod }}</li>
                     }
                   </ul>
@@ -800,25 +819,11 @@
               </section>
             }
 
-            <section class="zz-raport" aria-labelledby="zz-niedostepne">
-              <h3 id="zz-niedostepne" class="heading heading--sm">
-                Źródła odrzucone w całości ({{ niedostepne.length }})
-              </h3>
-              <ul>
-                @for (n of niedostepne; track n.adresZbioru) {
-                  <li>
-                    <a [href]="n.adresZbioru">{{ n.dostawca }} – {{ n.tytul }}</a
-                    >: odrzucone – zasób nie jest plikiem danych ({{ n.powod }}). Nie pobieramy danych ze strony HTML.
-                  </li>
-                }
-              </ul>
-            </section>
-
             <section class="zz-raport" aria-labelledby="zz-duplikaty">
               <h3 id="zz-duplikaty" class="heading heading--sm">Możliwe duplikaty ({{ wynik.duplikaty.length }})</h3>
               <p>
                 Ten sam AED w dwóch rekordach: współrzędne w promieniu 20 m albo ta sama nazwa i adres. Duplikatów nie
-                usuwamy automatycznie – w jednym budynku mogą być dwa urządzenia. Decyduje dostawca zbioru źródłowego.
+                usuwamy automatycznie, w jednym budynku mogą być dwa urządzenia. Decyduje dostawca.
               </p>
               @if (wynik.duplikaty.length) {
                 <div class="scrollable-table-wrapper" role="region" aria-labelledby="zz-duplikaty-podpis" tabindex="0">
@@ -835,13 +840,13 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @for (d of wynik.duplikaty; track d.a.id_aed + d.b.id_aed) {
+                      @for (d of wynik.duplikaty; track d.a.id + d.b.id) {
                         <tr class="datagrid__row">
                           <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
                             {{ d.a.etykieta }}
                             <span class="zz-opis">
                               @if (d.a.adresZbioruZrodla) {
-                                <a [href]="d.a.adresZbioruZrodla">{{ d.a.dostawcaZrodla }}</a>
+                                <a [routerLink]="d.a.adresZbioruZrodla">{{ d.a.dostawcaZrodla }}</a>
                               } @else {
                                 {{ d.a.dostawcaZrodla }}
                               }
@@ -852,7 +857,7 @@
                             {{ d.b.etykieta }}
                             <span class="zz-opis">
                               @if (d.b.adresZbioruZrodla) {
-                                <a [href]="d.b.adresZbioruZrodla">{{ d.b.dostawcaZrodla }}</a>
+                                <a [routerLink]="d.b.adresZbioruZrodla">{{ d.b.dostawcaZrodla }}</a>
                               } @else {
                                 {{ d.b.dostawcaZrodla }}
                               }

@@ -45,6 +45,7 @@ import { UserService } from '@app/services/user.service';
 import { TourDataService } from '@app/shared/tour/tour-data.service';
 import { TourService } from '@app/shared/tour/tour.service';
 import { AuthGuard } from '@app/user/auth/auth.guard';
+import { FikcyjneZbioryInterceptor } from './app/pages/zbior-zintegrowany/fikcyjne-zbiory.interceptor';
 
 if (environment.production) {
   enableProdMode();
@@ -72,6 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ObserveService,
       InstitutionsService,
       NotificationsFrontService,
+      // HackNation 2026 (zmiana 2026-11-22): fikcyjne zbiory AED (prototyp) – odpowiedzi API dla ich identyfikatorów.
+      { provide: HTTP_INTERCEPTORS, useClass: FikcyjneZbioryInterceptor, multi: true },
       { provide: HTTP_INTERCEPTORS, useClass: UnregisteredInterceptor, multi: true },
       { provide: HTTP_INTERCEPTORS, useClass: OfflineInterceptorService, multi: true },
       { provide: HTTP_INTERCEPTORS, useClass: HomepageInterceptorService, multi: true },
