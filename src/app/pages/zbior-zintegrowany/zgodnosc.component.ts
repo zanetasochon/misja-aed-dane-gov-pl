@@ -13,12 +13,11 @@ import { InfoTooltipDirective } from '@app/shared/info-tooltip/info-tooltip.dire
 import { CSV_PRZYKLAD_Z_BLEDAMI } from './dane/przyklad-z-bledami';
 import { BladCsv, wierszeJakoObiekty, wykryjSeparator } from './lib/csv';
 import { doCsv, doJson, kolumnyEksportu, pobierzPlik } from './lib/eksport';
-import { ETYKIETY, KOLUMNY, POLA_WYMAGANE } from './lib/model';
+import { ETYKIETY, POLA_WYMAGANE } from './lib/model';
 import type { PoleRekordu } from './lib/model';
 import { czyPoprawioneAutomatycznie, jakPoprawic } from './lib/porady';
 import { BladXlsx, czytajXlsx } from './lib/xlsx';
-import { OPIS_CELU, sprawdzZgodnosc, zaproponujMapowanie } from './lib/zgodnosc';
-import type { Cel } from './lib/zgodnosc';
+import { liczbaKolumnSzablonu, sprawdzZgodnosc } from './lib/zgodnosc';
 
 interface Plik {
   nazwa: string;
@@ -27,21 +26,11 @@ interface Plik {
   wiersze: Record<string, string>[];
 }
 
-interface Opcja {
-  wartosc: Cel;
-  etykieta: string;
-}
-
-const polaDostawcy = KOLUMNY;
-
-const opcjaPola = (k: PoleRekordu): Opcja => ({ wartosc: k as Cel, etykieta: `${k} – ${ETYKIETY[k]}` });
-
 /** Kroki narzędzia (lista kroków u góry strony). */
 const KROKI = [
   { id: 'zg-krok-1', nazwa: 'Wybierz plik' },
-  { id: 'zg-krok-2', nazwa: 'Sprawdź dopasowanie kolumn' },
-  { id: 'zg-krok-3', nazwa: 'Przeczytaj raport' },
-  { id: 'zg-krok-4', nazwa: 'Pobierz plik zgodny z szablonem' },
+  { id: 'zg-krok-2', nazwa: 'Przeczytaj raport' },
+  { id: 'zg-krok-3', nazwa: 'Pobierz poprawiony plik' },
 ] as const;
 
 @Component({
@@ -64,29 +53,9 @@ export class ZgodnoscComponent {
   }
 
   readonly kroki = KROKI;
-  readonly pominOpcja: Opcja = { wartosc: '', etykieta: 'Pomiń tę kolumnę' };
-  /** Opcje pola wzorca w grupach (optgroup): najpierw pola wymagane. */
-  readonly grupyOpcji: { etykieta: string; opcje: Opcja[] }[] = [
-    { etykieta: 'Pola obowiązkowe', opcje: polaDostawcy.filter((k) => POLA_WYMAGANE.includes(k)).map(opcjaPola) },
-    {
-      etykieta: 'Pozostałe pola szablonu',
-      opcje: polaDostawcy.filter((k) => !POLA_WYMAGANE.includes(k)).map(opcjaPola),
-    },
-    {
-      etykieta: 'Kolumny do rozbicia lub połączenia',
-      opcje: (['ADRES', 'CECHA_ULICY', 'GEOMETRIA'] as const).map((c) => ({
-        wartosc: c,
-        etykieta: OPIS_CELU[c],
-      })),
-    },
-  ];
-
   readonly plik = signal<Plik | null>(null);
   /** Wartość pola pliku portalu (app-file-upload). */
   readonly wybranePliki = signal<File[]>([]);
-  readonly mapowanie = signal<Cel[]>([]);
-  /** Propozycja narzędzia – do oznaczenia „dopasowano automatycznie” / „wybrano ręcznie”. */
-  readonly propozycja = signal<Cel[]>([]);
   readonly pobrano = signal(false);
   readonly polaWymagane = POLA_WYMAGANE;
   readonly blad = signal('');
@@ -97,13 +66,11 @@ export class ZgodnoscComponent {
   readonly raport = computed(() => {
     const p = this.plik();
     if (!p) return null;
-    return sprawdzZgodnosc(p.naglowki, p.wiersze, this.mapowanie());
+    return sprawdzZgodnosc(p.naglowki, p.wiersze);
   });
 
-  /** Bieżący krok: 1 bez pliku, 2 po wczytaniu (sprawdź mapowanie i raport), 4 po pobraniu. */
-  readonly biezacyKrok = computed(() => (!this.plik() ? 1 : this.pobrano() ? 4 : 2));
-
-  readonly dopasowane = computed(() => this.mapowanie().filter((c) => c !== '').length);
+  /** Bieżący krok: 1 bez pliku, 2 po wczytaniu (raport), 3 po pobraniu. */
+  readonly biezacyKrok = computed(() => (!this.plik() ? 1 : this.pobrano() ? 3 : 2));
 
   /** Problemy podzielone na „Warto poprawić” i „Poprawione automatycznie”, z poradą „Jak poprawić”. */
   readonly grupyProblemow = computed(() => {
@@ -120,7 +87,15 @@ export class ZgodnoscComponent {
     const r = this.raport();
     if (!r) return null;
     const braki = r.brakujaceWymagane.length;
-    const doPoprawy = this.grupyProblemow().doPoprawy.length + r.odrzucone.length + r.staleKolumny.length;
+    const doPoprawy =
+      this.grupyProblemow().doPoprawy.length + r.odrzucone.length + r.staleKolumny.length + r.kolumnySpoza.length;
+    if (r.kolumnyZgodne.length === 0)
+      return {
+        poziom: 'danger' as const,
+        ikona: '✕',
+        tekst: 'Plik nie jest w układzie szablonu AED Sync: żadna kolumna nie ma nazwy z szablonu.',
+        opis: 'Przepisz dane do pustego szablonu (krok 1) albo zmień nazwy kolumn według podpowiedzi niżej.',
+      };
     if (braki > 0)
       return {
         poziom: 'danger' as const,
@@ -133,13 +108,13 @@ export class ZgodnoscComponent {
         poziom: 'warning' as const,
         ikona: '!',
         tekst: 'Plik można opublikować, ale warto go poprawić.',
-        opis: 'Wszystkie pola obowiązkowe są w pliku. Niektóre wartości mają zły format albo wiersze zostaną pominięte.',
+        opis: 'Wszystkie pola obowiązkowe są w pliku. Niektóre wartości mają zły format, wiersze zostaną pominięte albo kolumny są spoza szablonu.',
       };
     return {
       poziom: 'success' as const,
       ikona: '✓',
       tekst: 'Plik jest zgodny z szablonem.',
-      opis: 'Pobierz plik w kroku 4 i opublikuj go jako zasób swojego zbioru na dane.gov.pl.',
+      opis: 'Pobierz plik w kroku 2.3 i opublikuj go jako zasób swojego zbioru na dane.gov.pl.',
     };
   });
 
@@ -177,7 +152,7 @@ export class ZgodnoscComponent {
   private async wczytajXlsx(f: File): Promise<void> {
     try {
       const arkusze = (await czytajXlsx(await f.arrayBuffer()))
-        .map((a) => ({ a, dopasowane: zaproponujMapowanie(a.naglowki, a.wiersze).filter(Boolean).length }))
+        .map((a) => ({ a, dopasowane: liczbaKolumnSzablonu(a.naglowki) }))
         .filter((x) => x.dopasowane >= 3);
       const zDanymi = arkusze.filter((x) => x.a.wiersze.length > 0);
       const wybor = [...(zDanymi.length ? zDanymi : arkusze)].sort(
@@ -207,14 +182,11 @@ export class ZgodnoscComponent {
       return;
     }
     this.plik.set(p);
-    const propozycja = zaproponujMapowanie(p.naglowki, p.wiersze);
-    this.mapowanie.set(propozycja);
-    this.propozycja.set(propozycja);
     this.pobrano.set(false);
     this.komunikatPobierania.set('');
     this.blad.set('');
     this.komunikat.set({
-      tekst: `Wczytano plik ${p.nazwa}: ${p.wiersze.length} wierszy, ${p.naglowki.length} kolumn.${uwaga} Sprawdź dopasowanie kolumn w kroku 2.`,
+      tekst: `Wczytano plik ${p.nazwa}: ${p.wiersze.length} wierszy, ${p.naglowki.length} kolumn.${uwaga} Raport jest w kroku 2.2.`,
       typ: 'success',
     });
   }
@@ -258,16 +230,6 @@ export class ZgodnoscComponent {
 
   uzyjPrzykladu(): void {
     this.wczytaj('przyklad-gmina-przykladowo.csv (dane fikcyjne)', CSV_PRZYKLAD_Z_BLEDAMI);
-  }
-
-  zmienMapowanie(i: number, cel: Cel): void {
-    this.mapowanie.update((m) => m.map((x, j) => (j === i ? cel : x)));
-  }
-
-  stanMapowania(i: number): string {
-    const m = this.mapowanie()[i];
-    if (m === '') return 'Pominięta';
-    return m === this.propozycja()[i] ? 'Dopasowano automatycznie' : 'Wybrano ręcznie';
   }
 
   /** Przejście do kroku z listy kroków – ręcznie, bo <base href="/"> psuje zwykłe kotwice. */

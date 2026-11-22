@@ -102,80 +102,10 @@
 
     @if (plik(); as p) {
       @if (raport(); as r) {
-        <!-- 2. MAPOWANIE -->
-        <section id="zg-krok-2" class="form-part" aria-labelledby="zg-mapowanie" tabindex="-1">
+        <!-- 2. RAPORT -->
+        <section id="zg-krok-2" class="form-part" aria-labelledby="zg-raport" tabindex="-1">
           <div class="fieldset-header">
-            <h3 id="zg-mapowanie">2.2 Sprawdź dopasowanie kolumn</h3>
-            <p>
-              Dla każdej kolumny Twojego pliku zaproponowaliśmy pole szablonu na podstawie jej nazwy i zawartości. Jeśli
-              propozycja jest zła, wybierz inne pole – raport w kroku 3 zmieni się od razu.
-            </p>
-          </div>
-          <p class="zg-podsumowanie">
-            Dopasowano {{ dopasowane() }} z {{ p.naglowki.length }} kolumn.
-            @if (r.brakujaceWymagane.length) {
-              Brakuje {{ r.brakujaceWymagane.length }} z {{ polaWymagane.length }} pól obowiązkowych:
-              @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
-                {{ etykietaPola(b) }}{{ ostatni ? '.' : ',' }}
-              }
-              Jeśli masz je w innej kolumnie, wybierz ją niżej.
-            } @else {
-              Plik ma wszystkie pola obowiązkowe.
-            }
-          </p>
-          <div class="scrollable-table-wrapper" role="region" aria-labelledby="zg-mapowanie-podpis" tabindex="0">
-            <table class="datagrid">
-              <caption id="zg-mapowanie-podpis" class="zz-podpis">
-                Kolumny pliku
-                {{
-                  p.nazwa
-                }}
-                i pola szablonu
-              </caption>
-              <thead>
-                <tr>
-                  <th class="datagrid__heading" scope="col">Kolumna w pliku</th>
-                  <th class="datagrid__heading" scope="col">Przykładowa wartość</th>
-                  <th class="datagrid__heading" scope="col">Pole szablonu</th>
-                  <th class="datagrid__heading" scope="col">Stan</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (h of p.naglowki; track $index; let i = $index) {
-                  <tr class="datagrid__row">
-                    <th class="datagrid__cell zz-wiersz-naglowek" scope="row">
-                      <code>{{ h }}</code>
-                    </th>
-                    <td class="datagrid__cell">{{ p.wiersze[0][h] }}</td>
-                    <td class="datagrid__cell">
-                      <label class="visually-hidden" [for]="'zg-map-' + i">Pole szablonu dla kolumny {{ h }}</label>
-                      <select
-                        class="form-select"
-                        [id]="'zg-map-' + i"
-                        [ngModel]="mapowanie()[i]"
-                        (ngModelChange)="zmienMapowanie(i, $event)">
-                        <option [ngValue]="pominOpcja.wartosc">{{ pominOpcja.etykieta }}</option>
-                        @for (g of grupyOpcji; track g.etykieta) {
-                          <optgroup [label]="g.etykieta">
-                            @for (o of g.opcje; track o.wartosc) {
-                              <option [ngValue]="o.wartosc">{{ o.etykieta }}</option>
-                            }
-                          </optgroup>
-                        }
-                      </select>
-                    </td>
-                    <td class="datagrid__cell">{{ stanMapowania(i) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <!-- 3. RAPORT -->
-        <section id="zg-krok-3" class="form-part" aria-labelledby="zg-raport" tabindex="-1">
-          <div class="fieldset-header">
-            <h3 id="zg-raport">2.3 Przeczytaj raport</h3>
+            <h3 id="zg-raport">2.2 Przeczytaj raport</h3>
             <p>Wynik dla {{ r.wierszy }} wierszy pliku {{ p.nazwa }}.</p>
           </div>
 
@@ -198,17 +128,17 @@
 
           <ul class="vertical-list zg-raport">
             <li class="vertical-list__item">
+              <span class="vertical-list__item-label">Kolumny zgodne z szablonem:</span>
+              {{ r.kolumnyZgodne.length }} z {{ r.kolumnyZgodne.length + r.brakujaceKolumny.length }}.
+            </li>
+            <li class="vertical-list__item">
               <span class="vertical-list__item-label">Pola obowiązkowe:</span>
-              {{ polaWymagane.length - r.brakujaceWymagane.length }} z {{ polaWymagane.length }} (pola id_aed,
-              zrodlo_danych i data_aktualizacji nadaje narzędzie).
+              {{ polaWymagane.length - r.brakujaceWymagane.length }} z {{ polaWymagane.length }} (kod zbioru danych
+              narzędzie uzupełnia samo).
             </li>
             <li class="vertical-list__item">
               <span class="vertical-list__item-label">Wiersze w pliku wynikowym:</span>
               {{ r.rekordy.length }} z {{ r.wierszy }}.
-            </li>
-            <li class="vertical-list__item">
-              <span class="vertical-list__item-label">Adres w osobnych polach:</span>
-              {{ r.adresWJednymPolu ? 'nie – narzędzie rozbije go automatycznie.' : 'tak.' }}
             </li>
           </ul>
 
@@ -223,8 +153,8 @@
                 @for (b of r.brakujaceWymagane; track b; let ostatni = $last) {
                   <code>{{ b }}</code> ({{ etykietaPola(b) }}){{ ostatni ? '.' : ',' }}
                 }
-                Jak poprawić: dodaj te kolumny do swoich danych. Opis każdego pola jest w instrukcji (arkusz „OPIS
-                KOLUMN”).
+                Jak poprawić: dodaj te kolumny do swojego pliku – najprościej przepisz dane do pustego szablonu. Opis
+                każdego pola jest w instrukcji (arkusz „OPIS KOLUMN”).
               </p>
             }
             @if (r.odrzucone.length) {
@@ -262,10 +192,26 @@
           }
 
           <!-- WARTO POPRAWIĆ -->
-          @if (grupyProblemow().doPoprawy.length || r.staleKolumny.length) {
+          @if (grupyProblemow().doPoprawy.length || r.staleKolumny.length || r.kolumnySpoza.length) {
             <h4 class="zz-h4 zg-grupa">
               <span class="zg-grupa__ikona zg-grupa__ikona--uwaga" aria-hidden="true">!</span>Warto poprawić
             </h4>
+            @if (r.kolumnySpoza.length) {
+              <p class="mb-1">Kolumny spoza szablonu – nie trafią do pliku wynikowego:</p>
+              <ul>
+                @for (k of r.kolumnySpoza; track k.kolumna) {
+                  <li>
+                    <code>{{ k.kolumna }}</code>
+                    @if (k.podpowiedz) {
+                      – w szablonie: <code>{{ k.podpowiedz }}</code> ({{ etykietaPola(k.podpowiedz) }}). Jak poprawić:
+                      zmień nazwę kolumny.
+                    } @else {
+                      – szablon nie ma takiego pola. Jak poprawić: usuń kolumnę albo zostaw – zostanie pominięta.
+                    }
+                  </li>
+                }
+              </ul>
+            }
             @if (r.staleKolumny.length) {
               <p>
                 Kolumny z tą samą wartością w każdym wierszu: <code>{{ r.staleKolumny.join(', ') }}</code
@@ -307,14 +253,11 @@
           }
 
           <!-- POPRAWIONE AUTOMATYCZNIE -->
-          @if (grupyProblemow().automatycznie.length || r.adresWJednymPolu) {
+          @if (grupyProblemow().automatycznie.length) {
             <h4 class="zz-h4 zg-grupa">
               <span class="zg-grupa__ikona zg-grupa__ikona--ok" aria-hidden="true">✓</span>Poprawione automatycznie
             </h4>
             <ul>
-              @if (r.adresWJednymPolu) {
-                <li>Adres z jednego pola rozbito na ulicę, numer budynku, kod pocztowy i miejscowość.</li>
-              }
               @for (pr of grupyProblemow().automatycznie; track pr.kolumna + pr.opis) {
                 <li>
                   <code>{{ pr.kolumna }}</code
@@ -325,14 +268,15 @@
           }
         </section>
 
-        <!-- 4. POBIERZ -->
-        <fieldset id="zg-krok-4" class="form-part col-md-10 col-lg-8" tabindex="-1">
+        <!-- 3. POBIERZ -->
+        <fieldset id="zg-krok-3" class="form-part col-md-10 col-lg-8" tabindex="-1">
           <legend class="fieldset-header">
-            <h3>2.4 Pobierz plik zgodny z szablonem</h3>
+            <h3>2.3 Pobierz poprawiony plik</h3>
           </legend>
           <p>
-            Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy (CSV albo JSON), kolumny i nagłówki PL w
-            kolejności szablonu AED Sync v15.
+            Narzędzie poprawiło to, co mogło samo (np. godziny „8-16” → „08:00-16:00”, „24/7” → „Całodobowo”, kod zbioru
+            AED-SYNC-PL). Plik będzie miał {{ r.rekordy.length }} z {{ r.wierszy }} wierszy (CSV albo JSON), kolumny i
+            nagłówki PL w kolejności szablonu AED Sync v15.
             @if (pominiete().length) {
               Pominięte kolumny puste we wszystkich wierszach:
               <code>{{ pominiete().join(', ') }}</code
@@ -340,9 +284,7 @@
             }
           </p>
           <div class="zz-przyciski">
-            <button type="button" class="btn btn-primary" (click)="pobierz('csv')">
-              Pobierz CSV zgodny z szablonem
-            </button>
+            <button type="button" class="btn btn-primary" (click)="pobierz('csv')">Pobierz poprawiony plik CSV</button>
             <button type="button" class="btn btn-outline-primary" (click)="pobierz('json')">Pobierz JSON</button>
           </div>
           <div role="status">
@@ -357,9 +299,9 @@
           <h2 id="zg-co-dalej" class="heading heading--sm">Co dalej</h2>
           <ol class="zg-co-dalej">
             @if (r.brakujaceWymagane.length || r.odrzucone.length || grupyProblemow().doPoprawy.length) {
-              <li>Popraw dane według raportu w kroku 3 i sprawdź plik jeszcze raz.</li>
+              <li>Popraw dane według raportu w kroku 2.2 i sprawdź plik jeszcze raz.</li>
             }
-            <li>Pobierz plik zgodny z szablonem (krok 4).</li>
+            <li>Pobierz poprawiony plik (krok 2.3).</li>
             <li>
               Opublikuj go na dane.gov.pl jako nowy zasób <strong>swojego</strong> zbioru – za dane odpowiadasz Ty.
             </li>

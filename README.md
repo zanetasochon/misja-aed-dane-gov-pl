@@ -55,7 +55,7 @@ npx eslint src/app/pages/zbior-zintegrowany
 5. **Eksport:** CSV, JSON, GeoJSON i „Źródła i licencje (CSV)”.
 6. **Narzędzie zgodności** (`/pl/dataset/zgodnosc-ze-wzorcem`):
    - krok 1: „Pobierz szablon danych AED” (pusty plik z arkuszami „DANE PL” i „DATA EN”) i „Pobierz instrukcję i zasady” (arkusze „OPIS KOLUMN” i „ZASADY”);
-   - krok 2: wgraj plik CSV albo XLSX albo kliknij „Użyj przykładu: plik z błędami (dane fikcyjne)”; zobaczysz dopasowanie kolumn, werdykt, problemy z poradą „Jak poprawić” i plik w układzie szablonu do pobrania.
+   - krok 2: wgraj plik CSV albo XLSX albo kliknij „Użyj przykładu: plik z błędami (dane fikcyjne)”. Kolumn się nie dopasowuje – dostawca wypełnia szablon. Raport (2.2) pokazuje kolumny zgodne z szablonem, brakujące i spoza szablonu (z podpowiedzią poprawnej nazwy, np. `lat` → `szerokosc_geograficzna_aed`), werdykt i problemy z poradą „Jak poprawić”; plik w innym układzie dostaje werdykt „nie jest w układzie szablonu”. W 2.3 można pobrać plik z poprawkami, które narzędzie robi samo (godziny, kod pocztowy, kod zbioru).
 
 ### Przycisk „Pokaż najbliższe dostępne defibrylatory” (promień 250 m)
 

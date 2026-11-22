@@ -1,20 +1,7 @@
 /**
  * HackNation 2026 – Misja AED. Plik dodany do forka portalu dane.gov.pl (GPL-3.0), 2026-11-21.
- * Wspólne funkcje geometrii dla harmonizacji i narzędzia zgodności.
+ * Odległość między punktami (wyszukiwanie w pobliżu, wykrywanie duplikatów).
  */
-
-/** Punkt z GeoJSON w komórce, np. {"type":"Point","coordinates":[22.77,49.78]} → [lon, lat]. */
-export function punktZGeoJson(v: string): [number, number] | null {
-  try {
-    const g = JSON.parse(v) as { type?: string; coordinates?: unknown };
-    const c = g.coordinates;
-    if (g.type === 'Point' && Array.isArray(c) && typeof c[0] === 'number' && typeof c[1] === 'number')
-      return [c[0], c[1]];
-  } catch {
-    return null;
-  }
-  return null;
-}
 
 /** Odległość w metrach (wzór haversine, promień Ziemi 6 371 km). */
 export function odlegloscM(a: { szer: number; dlug: number }, b: { szer: number; dlug: number }): number {
