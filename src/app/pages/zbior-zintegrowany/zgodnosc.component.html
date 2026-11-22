@@ -65,7 +65,12 @@
     <!-- 1. PLIK -->
     <fieldset id="zg-krok-1" class="form-part col-md-10 col-lg-8" tabindex="-1">
       <legend class="fieldset-header fieldset-header--compact">
-        <h3>2.1 Wybierz plik</h3>
+        <h3
+          tooltipTitle="Jaki plik"
+          appInfoTooltip="CSV w kodowaniu UTF-8 albo XLSX (np. wypełniony szablon), z jednym wierszem nagłówka. W CSV separator: przecinek albo średnik."
+          withoutMargin>
+          2.1 Wybierz plik
+        </h3>
       </legend>
       <!-- Pole pliku portalu (shared/forms/components/file-upload) 1:1. -->
       <app-file-upload
@@ -75,10 +80,6 @@
         [acceptedFormats]="['CSV', 'XLSX']"
         [ngModel]="wybranePliki()"
         (ngModelChange)="naPliki($event)" />
-      <small id="zg-plik-opis" class="field-hint">
-        CSV w kodowaniu UTF-8 albo XLSX (np. wypełniony szablon), z jednym wierszem nagłówka. W CSV separator: przecinek
-        albo średnik.
-      </small>
       @if (blad()) {
         <div class="invalid-feedback d-block" id="zg-plik-blad">
           <span class="visually-hidden">Błąd: </span>{{ blad() }}

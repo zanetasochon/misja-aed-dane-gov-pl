@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LocalizeRouterPipe } from '@gilsdav/ngx-translate-router';
 import { FileUploadComponent } from '@app/shared/forms/components/file-upload/file-upload.component';
+import { InfoTooltipDirective } from '@app/shared/info-tooltip/info-tooltip.directive';
 import { CSV_KROSNO } from './dane/krosno';
 import { BladCsv, wierszeJakoObiekty, wykryjSeparator } from './lib/csv';
 import { doCsv, doJson, kolumnyEksportu, pobierzPlik } from './lib/eksport';
@@ -50,7 +51,7 @@ const KROKI = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   // Treść stron jest po polsku także w wersji EN portalu (WCAG 3.1.2).
   host: { lang: 'pl' },
-  imports: [FormsModule, RouterLink, LocalizeRouterPipe, FileUploadComponent],
+  imports: [FormsModule, RouterLink, LocalizeRouterPipe, FileUploadComponent, InfoTooltipDirective],
   templateUrl: './zgodnosc.component.html',
   // Wspólny arkusz formularzy portalu + nasze style (tabele, status, przyciski).
   styleUrls: ['../../shared/forms/forms.scss', './zbior-zintegrowany.component.scss'],
