@@ -83,7 +83,7 @@ Najważniejsze zasady (arkusz „ZASADY”), które sprawdza walidacja (`lib/wal
 - stan AED (`Sprawny`, `Niesprawny`, `Nieznany`) i data weryfikacji stanu obowiązkowe; telefon i e-mail podmiotu odpowiedzialnego obowiązkowe; data dostarczenia danych obowiązkowa;
 - `kod_zbioru_danych` = `AED-SYNC-PL` w każdym wierszu (narzędzie uzupełnia go, gdy brak kolumny).
 
-Narzędzie rozpoznaje nagłówki PL i EN szablonu, popularne nazwy kolumn (np. `lat`, `telefon`) i nazwy z naszych wcześniejszych wzorców (v1.2, v1.3). **Odczyt XLSX** (`lib/xlsx.ts`) działa w przeglądarce bez dodatkowych bibliotek: plik XLSX to archiwum ZIP z plikami XML, rozpakowywane przez `DecompressionStream`.
+Narzędzie przyjmuje nagłówki PL i EN szablonu. Kolumn nie dopasowuje: dla kolumny spoza szablonu podpowiada poprawną nazwę, gdy rozpozna literówkę albo popularną nazwę (np. `lat` → `szerokosc_geograficzna_aed`). **Odczyt XLSX** (`lib/xlsx.ts`) działa w przeglądarce bez dodatkowych bibliotek: plik XLSX to archiwum ZIP z plikami XML, rozpakowywane przez `DecompressionStream`.
 
 ## Format plików eksportu
 

@@ -3,6 +3,3 @@ node_modules
 dist
 .angular
 coverage
-CLAUDE.md
-CLAUDE.local.md
-.claude
